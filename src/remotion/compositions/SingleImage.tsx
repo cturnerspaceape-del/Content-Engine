@@ -848,10 +848,9 @@ function DiagonalBanner({ theme, flavor, hook, images }: { theme: FlavorTheme; f
       </div>
       {/* Diagonal banner */}
       <div style={{
-        position: 'absolute', top: 0, left: -200, right: -200,
+        position: 'absolute', top: 440, left: -200, right: -200,
         height: 100, background: theme.primaryColor,
         transform: 'rotate(-15deg)', transformOrigin: 'center',
-        top: 440,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
       }}>

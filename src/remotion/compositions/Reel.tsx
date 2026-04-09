@@ -2,7 +2,7 @@ import { AbsoluteFill, useCurrentFrame, interpolate, spring } from 'remotion'
 import { getFlavorTheme } from '../flavorThemes'
 import type { ReelProps, FlavorTheme } from '../types'
 import {
-  StickerStar, Daisy, Heart, Sparkle, Blob, StickerFrame, SpeechBubble, WavyDivider, Ring, ProductImg,
+  Star, StickerStar, Daisy, Heart, Sparkle, Blob, StickerFrame, SpeechBubble, WavyDivider, Ring, ProductImg,
   polkaDotBg, stripesBg, diagonalHatchBg, concentricCirclesBg,
   seededStripesBg, seededPolkaDotBg,
   outlinedTextStyle, boldShadowStyle, wiggle, brightBg,

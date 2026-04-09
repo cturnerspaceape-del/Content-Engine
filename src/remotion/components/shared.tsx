@@ -527,8 +527,8 @@ export function ShelfLines({ y, width, color, count = 3 }: {
   )
 }
 
-export function ComparisonDivider({ width, height, color }: {
-  width: number; height: number; color: string
+export function ComparisonDivider({ height, color }: {
+  width?: number; height: number; color: string
 }) {
   return (
     <div style={{

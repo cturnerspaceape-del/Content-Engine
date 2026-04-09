@@ -197,7 +197,7 @@ export default function ContentCard({ item, day, theme, index, onShuffle, onGene
         {isGenerated && item.generatedVisual ? (
           format === 'Single Image' ? (
             <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1' }}>
-              <Player<SingleImageProps>
+              <Player
                 component={SingleImage}
                 compositionWidth={1080}
                 compositionHeight={1080}
@@ -217,7 +217,7 @@ export default function ContentCard({ item, day, theme, index, onShuffle, onGene
             </div>
           ) : format === 'Carousel' ? (
             <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1' }}>
-              <Player<CarouselProps>
+              <Player
                 component={Carousel}
                 compositionWidth={1080}
                 compositionHeight={1080}
@@ -241,7 +241,7 @@ export default function ContentCard({ item, day, theme, index, onShuffle, onGene
             </div>
           ) : format === 'Reel' ? (
             <div className="rounded-lg overflow-hidden mb-3" style={{ maxHeight: 200, position: 'relative' }}>
-              <Player<ReelProps>
+              <Player
                 component={Reel}
                 compositionWidth={1080}
                 compositionHeight={1920}

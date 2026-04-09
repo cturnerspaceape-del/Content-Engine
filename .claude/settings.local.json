@@ -52,7 +52,19 @@
       "Bash(awk '/productImages:/{flag=1} flag{print} /\\\\],/{if\\(flag\\) {flag=0; print \"---\"}}' src/remotion/flavorThemes.ts)",
       "Bash(railway status:*)",
       "Bash(railway login:*)",
-      "Bash(RAILWAY_TOKEN=d33228e9-05b4-4ae0-8913-992a8ece9272 railway status:*)"
+      "Bash(RAILWAY_TOKEN=d33228e9-05b4-4ae0-8913-992a8ece9272 railway status:*)",
+      "Bash(railway init:*)",
+      "Bash(railway whoami:*)",
+      "Bash(railway list:*)",
+      "Bash(railway team:*)",
+      "Bash(railway up:*)",
+      "Bash(railway service:*)",
+      "Bash(railway add:*)",
+      "Bash(gh auth:*)",
+      "Bash(RAILWAY_TIMEOUT=300 railway up --detach --verbose)",
+      "Bash(railway logs:*)",
+      "Bash(git:*)",
+      "Bash(where gh:*)"
     ]
   }
 }
