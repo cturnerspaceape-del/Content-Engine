@@ -1,2 +1,8 @@
 [phases.setup]
 nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["rm -rf /app/node_modules/.cache && npm install"]
+
+[phases.build]
+cmds = ["npm run build"]

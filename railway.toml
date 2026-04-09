@@ -1,6 +1,7 @@
 [build]
 builder = "nixpacks"
-buildCommand = "rm -f package-lock.json && npm install --force && npm run build"
+buildCommand = "npm install --force && npm run build"
+noCache = true
 nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
