@@ -25,7 +25,7 @@ export default function HomeScreen({ onLaunch, onStrategy, onPostLog, loggedCoun
                 backgroundClip: 'text',
               }}
             >
-              CONTENT ENGINE
+              SPACELAUNCHER
             </h1>
             <p className="text-lg" style={{ color: 'var(--muted)' }}>
               Plan your weekly content across every platform
