@@ -2,6 +2,7 @@ import { Player } from '@remotion/player'
 import type { ContentItem } from '../types'
 import { SingleImage, Carousel, Reel } from '../remotion/compositions'
 import type { SingleImageProps, CarouselProps, ReelProps } from '../remotion/types'
+import { platformColors } from './PlatformContentItem'
 
 const formatColors: Record<string, string> = {
   'Carousel': '#a855f7',
@@ -103,16 +104,16 @@ function MockVisual({ format, pillar, accentColor }: { format: string; pillar: s
 
 interface ContentCardProps {
   item: ContentItem
-  day: string
-  theme: string
   index: number
   onShuffle: () => void
   onGenerate: () => void
   onLogPost: () => void
 }
 
-export default function ContentCard({ item, day, theme, index, onShuffle, onGenerate, onLogPost }: ContentCardProps) {
-  const accentColor = formatColors[item.contentType] || '#a855f7'
+export default function ContentCard({ item, index, onShuffle, onGenerate, onLogPost }: ContentCardProps) {
+  const formatColor = formatColors[item.contentType] || '#a855f7'
+  const platformColor = platformColors[item.platform] || formatColor
+  const accentColor = formatColor // used by MockVisual + hashtag color
   const isGenerated = item.generated
   const isLogged = item.logged
 
@@ -121,6 +122,10 @@ export default function ContentCard({ item, day, theme, index, onShuffle, onGene
   const pillarSubcat = titleParts[1] || ''
   const pillar = pillarSubcat.split(':')[0]?.trim() || 'General'
   const subcat = pillarSubcat.split(':')[1]?.trim() || ''
+  // Avoid "BRAND BUILDING: BRAND BUILDING" duplication
+  const titleText = subcat && subcat.toLowerCase() !== pillar.toLowerCase()
+    ? `${pillar}: ${subcat}`
+    : pillar
 
   // Split description into lines for display
   const descLines = item.description
@@ -132,19 +137,16 @@ export default function ContentCard({ item, day, theme, index, onShuffle, onGene
     <div
       className="glass-panel flex flex-col card-enter"
       style={{
-        width: 260,
-        minWidth: 260,
-        flexShrink: 0,
-        scrollSnapAlign: 'start',
+        width: '100%',
         animationDelay: `${index * 0.04}s`,
         opacity: isLogged ? 0.5 : 1,
       }}
     >
-      {/* Top color bar */}
+      {/* Top color bar — now reflects the platform */}
       <div
         style={{
           height: 4,
-          background: isLogged ? '#10b981' : accentColor,
+          background: isLogged ? '#10b981' : platformColor,
           borderRadius: '16px 16px 0 0',
         }}
       />
@@ -160,35 +162,30 @@ export default function ContentCard({ item, day, theme, index, onShuffle, onGene
           </div>
         )}
 
-        {/* Title row */}
-        <h3
-          className="text-xs font-bold uppercase leading-tight mb-1"
-          style={{ color: 'var(--text)', letterSpacing: '0.02em' }}
-        >
-          {pillar}{subcat ? `: ${subcat}` : ''}
-        </h3>
-
-        {/* Badges */}
-        <div className="flex items-center gap-1.5 mb-3">
+        {/* Platform + format row */}
+        <div className="flex items-center gap-1.5 mb-2">
           <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={{ background: `${accentColor}15`, color: accentColor }}
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+            style={{ background: `${platformColor}15`, color: platformColor }}
+          >
+            <span>{item.emoji}</span>
+            <span>{item.platform}</span>
+          </span>
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: `${formatColor}15`, color: formatColor }}
           >
             {format}
           </span>
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(59,130,246,.1)', color: 'var(--accent)' }}
-          >
-            {day}
-          </span>
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded"
-            style={{ background: 'var(--panel-2)', color: 'var(--muted)' }}
-          >
-            {theme}
-          </span>
         </div>
+
+        {/* Title row */}
+        <h3
+          className="text-xs font-bold uppercase leading-tight mb-3"
+          style={{ color: 'var(--text)', letterSpacing: '0.02em' }}
+        >
+          {titleText}
+        </h3>
 
         {/* Divider */}
         <div className="mb-3" style={{ borderBottom: '1px solid var(--border)' }} />
