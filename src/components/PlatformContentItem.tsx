@@ -1,6 +1,10 @@
 import type { ContentItem } from '../types'
 
-const platformColors: Record<string, string> = {
+// Platform brand colors. To add a new platform:
+//   1. Add the platform name to the Platform union in src/types/index.ts
+//   2. Add a color entry below
+// The weekly calendar / ContentCard will pick it up automatically.
+export const platformColors: Record<string, string> = {
   'TikTok': '#ef4444',
   'Blog Post': '#10b981',
   'Facebook': '#3b82f6',
