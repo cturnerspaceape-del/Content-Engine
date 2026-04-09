@@ -1,8 +1,6 @@
 [build]
-builder = "nixpacks"
-buildCommand = "npm install --force && npm run build"
-noCache = true
-nixpacksConfigPath = "nixpacks.toml"
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npx serve dist -s -l $PORT"
+healthcheckPath = "/"
