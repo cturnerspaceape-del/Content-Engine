@@ -6,8 +6,8 @@ import { SingleImage, Carousel, Reel } from '../remotion/compositions'
 import type { SingleImageProps, CarouselProps, ReelProps } from '../remotion/types'
 
 // Cast components to satisfy Thumbnail/Player LooseComponentType constraint
-const ReelComponent = Reel as React.FC<Record<string, unknown>>
-const CarouselComponent = Carousel as React.FC<Record<string, unknown>>
+const ReelComponent = Reel as unknown as React.FC<Record<string, unknown>>
+const CarouselComponent = Carousel as unknown as React.FC<Record<string, unknown>>
 import { platformColors } from './PlatformContentItem'
 
 const formatColors: Record<string, string> = {
