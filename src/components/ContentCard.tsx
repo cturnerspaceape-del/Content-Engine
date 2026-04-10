@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Player, Thumbnail } from '@remotion/player'
 import type { ContentItem } from '../types'
 import { SingleImage, Carousel, Reel } from '../remotion/compositions'
@@ -151,6 +152,73 @@ function CarouselNav({ current, total, onPrev, onNext }: {
   )
 }
 
+function ReelModal({ onClose, inputProps }: { onClose: () => void; inputProps: ReelProps }) {
+  useEffect(() => {
+    const orig = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = orig }
+  }, [])
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return createPortal(
+    <div
+      className="fade-in"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.85)',
+        padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)',
+      }}
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        aria-label="Close reel preview"
+        style={{
+          position: 'absolute',
+          top: 'max(16px, env(safe-area-inset-top))',
+          right: 'max(16px, env(safe-area-inset-right))',
+          width: 44, height: 44, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.15)', border: 'none',
+          color: '#fff', fontSize: 20, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10,
+        }}
+      >
+        ✕
+      </button>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="card-enter"
+        style={{
+          width: '100%', maxWidth: 440,
+          aspectRatio: '9/16',
+          maxHeight: 'calc(100vh - 80px)',
+          borderRadius: 16, overflow: 'hidden',
+        }}
+      >
+        <Player
+          component={Reel}
+          compositionWidth={1080}
+          compositionHeight={1920}
+          durationInFrames={450}
+          fps={30}
+          style={{ width: '100%', height: '100%' }}
+          controls
+          autoPlay
+          inputProps={inputProps}
+        />
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 interface ContentCardProps {
   item: ContentItem
   index: number
@@ -167,6 +235,7 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
   const isLogged = item.logged
 
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [reelModalOpen, setReelModalOpen] = useState(false)
   const slideCount = item.generatedVisual?.slideCount || 7
 
   useEffect(() => {
@@ -297,16 +366,19 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
               />
             </div>
           ) : format === 'Reel' ? (
-            <div className="rounded-lg overflow-hidden mb-3" style={{ maxHeight: 200, position: 'relative' }}>
-              <Player
+            <div
+              className="rounded-lg overflow-hidden mb-3"
+              style={{ maxHeight: 200, position: 'relative', cursor: 'pointer' }}
+              onClick={() => setReelModalOpen(true)}
+            >
+              <Thumbnail
                 component={Reel}
                 compositionWidth={1080}
                 compositionHeight={1920}
                 durationInFrames={450}
                 fps={30}
+                frameToDisplay={90}
                 style={{ width: '100%' }}
-                controls
-                autoPlay={false}
                 inputProps={{
                   flavor: (item.generatedVisual.flavor || 'Amped Apple') as ReelProps['flavor'],
                   hook: item.generatedVisual.hook,
@@ -324,6 +396,20 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
                 borderRadius: 4, letterSpacing: '0.05em',
               }}>
                 9:16
+              </div>
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,0.15)',
+              }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.85)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                }}>
+                  <span style={{ fontSize: 16, marginLeft: 2, color: '#1a1a1a' }}>▶</span>
+                </div>
               </div>
             </div>
           ) : (
@@ -429,6 +515,21 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
           </div>
         )}
       </div>
+
+      {reelModalOpen && isGenerated && item.generatedVisual && format === 'Reel' && (
+        <ReelModal
+          onClose={() => setReelModalOpen(false)}
+          inputProps={{
+            flavor: (item.generatedVisual.flavor || 'Amped Apple') as ReelProps['flavor'],
+            hook: item.generatedVisual.hook,
+            caption: item.generatedVisual.caption,
+            hashtags: item.generatedVisual.hashtags,
+            pillar: item.generatedVisual.pillar,
+            subcategory: item.generatedVisual.subcategory,
+            layoutTemplate: item.generatedVisual.layoutTemplate || 1,
+          }}
+        />
+      )}
     </div>
   )
 }
