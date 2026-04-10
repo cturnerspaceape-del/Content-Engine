@@ -4,6 +4,10 @@ import { Player, Thumbnail } from '@remotion/player'
 import type { ContentItem } from '../types'
 import { SingleImage, Carousel, Reel } from '../remotion/compositions'
 import type { SingleImageProps, CarouselProps, ReelProps } from '../remotion/types'
+
+// Cast components to satisfy Thumbnail/Player LooseComponentType constraint
+const ReelComponent = Reel as React.FC<Record<string, unknown>>
+const CarouselComponent = Carousel as React.FC<Record<string, unknown>>
 import { platformColors } from './PlatformContentItem'
 
 const formatColors: Record<string, string> = {
@@ -203,7 +207,7 @@ function ReelModal({ onClose, inputProps }: { onClose: () => void; inputProps: R
         }}
       >
         <Player
-          component={Reel}
+          component={ReelComponent}
           compositionWidth={1080}
           compositionHeight={1920}
           durationInFrames={450}
@@ -340,7 +344,7 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
           ) : format === 'Carousel' ? (
             <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1', position: 'relative' }}>
               <Thumbnail
-                component={Carousel}
+                component={CarouselComponent}
                 compositionWidth={1080}
                 compositionHeight={1080}
                 durationInFrames={slideCount * 45}
@@ -372,7 +376,7 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
               onClick={() => setReelModalOpen(true)}
             >
               <Thumbnail
-                component={Reel}
+                component={ReelComponent}
                 compositionWidth={1080}
                 compositionHeight={1920}
                 durationInFrames={450}
