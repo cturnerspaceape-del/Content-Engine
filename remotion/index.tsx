@@ -25,7 +25,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition<CarouselProps>
         id="Carousel"
         component={Carousel}
-        durationInFrames={315}
+        durationInFrames={270}
         fps={30}
         width={1080}
         height={1080}
@@ -37,7 +37,7 @@ export const RemotionRoot: React.FC = () => {
           pillar: 'Product Centric',
           subcategory: 'Product Shots',
           layoutTemplate: 1,
-          slideCount: 7,
+          slideCount: 6,
         }}
       />
       <Composition<ReelProps>

@@ -17,6 +17,54 @@ import {
 
 const FRAMES_PER_SLIDE = 45
 
+// ─── Slide arc types ───
+
+type SlideRole = 'hook' | 'content' | 'flavor' | 'cta'
+
+export interface SlideContent {
+  role: SlideRole
+  text: string
+  secondary?: string
+}
+
+const CTA_POOL = [
+  'Follow @SpaceApe for the weird stuff',
+  'You scrolled this far. Might as well follow.',
+  '@SpaceApe — you know what to do',
+  'Follow us before we get famous',
+  "That's all. Go hit follow.",
+  'Follow @SpaceApe. We post bangers only.',
+  'Tap follow. We\'ll wait.',
+  'End of carousel. Start of obsession.',
+]
+
+export function buildSlideArc(hook: string, caption: string, flavor: string, strainType: string): SlideContent[] {
+  const seed = seedFromText(hook)
+  const sentences = caption.split(/[.!?]+/).filter(s => s.trim().length > 15)
+  const usable = sentences.slice(0, 4)
+  const arc: SlideContent[] = []
+
+  arc.push({ role: 'hook', text: hook })
+
+  if (usable.length <= 2) {
+    usable.forEach(s => arc.push({ role: 'content', text: s.trim() }))
+    arc.push({ role: 'flavor', text: flavor, secondary: strainType || 'Live Resin' })
+  } else {
+    arc.push({ role: 'content', text: usable[0].trim() })
+    arc.push({ role: 'content', text: usable[1].trim() })
+    arc.push({ role: 'flavor', text: flavor, secondary: strainType || 'Live Resin' })
+    for (let i = 2; i < usable.length; i++) {
+      arc.push({ role: 'content', text: usable[i].trim() })
+    }
+  }
+
+  if (seed % 5 === 0) {
+    arc.push({ role: 'cta', text: CTA_POOL[seed % CTA_POOL.length] })
+  }
+
+  return arc
+}
+
 // ─── Slide dots — 4 variants ───
 
 function SlideDots({ current, total, variant, color }: { current: number; total: number; variant: 'circle' | 'dash' | 'pill' | 'glow'; color: string }) {
@@ -63,35 +111,14 @@ function SlideDots({ current, total, variant, color }: { current: number; total:
 // Oswald + Inter, heavy decorations, seeded stripes, SpeechBubble CTA
 // ═══════════════════════════════════════════════════════════
 
-function SlideStack({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, frame, subcategory }: TemplateProps) {
+function SlideStack({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, frame, subcategory, slideContent }: TemplateProps) {
   const seed = seedFromText(hook)
   const mode = getVisualMode(subcategory)
   const badgeLabel = getBadgeLabel(mode)
   const mainImg = images[seededInt(seed, slideIndex + 10, 0, images.length - 1)]
   const enterScale = bouncySpring(Math.round(slideProgress * FRAMES_PER_SLIDE), 30)
 
-  // Seeded content order for middle slides
-  const middleTypes = ['benefit', 'flavor', 'detail'] as const
-  const shuffledTypes = [
-    middleTypes[seed % 3],
-    middleTypes[(seed + 1) % 3],
-    middleTypes[(seed + 2) % 3],
-  ]
-
-  function getContent(index: number) {
-    if (index === 0) return { type: 'hook' as const, text: hook }
-    if (index === totalSlides - 1) return { type: 'cta' as const, text: 'Follow @SpaceApe for more' }
-    const mid = index - 1
-    const t = shuffledTypes[mid % 3]
-    if (t === 'benefit') {
-      const sentences = caption.split(/[.!?]+/).filter(s => s.trim().length > 10)
-      return { type: 'benefit' as const, text: sentences[mid % Math.max(sentences.length, 1)]?.trim() || caption.slice(0, 80) }
-    }
-    if (t === 'flavor') return { type: 'flavor' as const, text: flavor }
-    return { type: 'detail' as const, text: theme.strainType || 'Ultra Premium • Live Resin' }
-  }
-
-  const content = getContent(slideIndex)
+  const content = slideContent
 
   // Seeded decoration positions
   const deco = {
@@ -110,12 +137,12 @@ function SlideStack({ theme, flavor, hook, caption, images, slideIndex, slidePro
       }}>
         <div style={{
           position: 'absolute', inset: 0,
-          ...(content.type === 'cta'
+          ...(content.role === 'cta'
             ? seededPolkaDotBg(seed, `${theme.primaryColor}20`, brightBg(theme.primaryColor))
             : seededStripesBg(seed + slideIndex, theme.primaryColor, theme.accentColor)),
         }} />
 
-        {content.type === 'hook' && (
+        {content.role === 'hook' && (
           <>
             <Blob x={150} y={80} size={550} color={`${theme.backgroundColor}20`} variant={seed % 3} />
             <div style={{ position: 'absolute', top: 55, left: 60, fontFamily: headingFont, fontSize: 28, fontWeight: 700, letterSpacing: '0.06em', ...outlinedTextStyle('#fff', 'rgba(0,0,0,0.3)', 2) }}>
@@ -132,7 +159,7 @@ function SlideStack({ theme, flavor, hook, caption, images, slideIndex, slidePro
           </>
         )}
 
-        {content.type === 'benefit' && (
+        {content.role === 'content' && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 70 }}>
             <div style={{ fontFamily: headingFont, fontSize: 46, fontWeight: 700, textTransform: 'uppercase', lineHeight: 1.15, textAlign: 'center', ...boldShadowStyle('#fff', 'rgba(0,0,0,0.2)', 4) }}>
               {content.text}
@@ -140,7 +167,7 @@ function SlideStack({ theme, flavor, hook, caption, images, slideIndex, slidePro
           </div>
         )}
 
-        {content.type === 'flavor' && (
+        {content.role === 'flavor' && (
           <>
             <div style={{ position: 'absolute', top: 70, left: 0, right: 0, display: 'flex', justifyContent: 'center', height: 500, alignItems: 'center' }}>
               <StickerFrame borderWidth={6} borderRadius={26} rotation={seededRange(seed, 5, -4, 4)}>
@@ -153,18 +180,7 @@ function SlideStack({ theme, flavor, hook, caption, images, slideIndex, slidePro
           </>
         )}
 
-        {content.type === 'detail' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 30 }}>
-            <StickerFrame borderWidth={5} borderRadius={24} rotation={seededRange(seed, 8, -3, 3)}>
-              <ProductImg src={images[seededInt(seed, 20, 0, images.length - 1)]} style={{ maxWidth: 420, maxHeight: 420, filter: themeShadow(theme.primaryColor, 'medium') }} />
-            </StickerFrame>
-            <div style={{ fontFamily: headingFont, fontSize: 36, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', ...boldShadowStyle('#fff', 'rgba(0,0,0,0.2)', 3) }}>
-              {content.text}
-            </div>
-          </div>
-        )}
-
-        {content.type === 'cta' && (
+        {content.role === 'cta' && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
             <div style={{ fontFamily: headingFont, fontSize: 44, fontWeight: 700, letterSpacing: '0.06em', ...outlinedTextStyle(theme.primaryColor, '#fff', 3) }}>
               SPACE APE
@@ -172,9 +188,6 @@ function SlideStack({ theme, flavor, hook, caption, images, slideIndex, slidePro
             <SpeechBubble x={280} y={480} width={520} height={100} color={theme.primaryColor} borderColor="#fff" borderWidth={4} />
             <div style={{ position: 'relative', zIndex: 1, fontFamily: headingFont, fontSize: 30, fontWeight: 700, textTransform: 'uppercase', textAlign: 'center', ...boldShadowStyle('#fff', 'rgba(0,0,0,0.15)', 3), marginTop: -70 }}>
               {content.text}
-            </div>
-            <div style={{ background: theme.primaryColor, color: '#fff', fontFamily: headingFont, fontSize: 22, fontWeight: 700, padding: '16px 48px', borderRadius: 40, textTransform: 'uppercase', border: '3px solid #fff', boxShadow: '4px 5px 0px rgba(0,0,0,0.12)', marginTop: 20 }}>
-              Follow Us
             </div>
           </div>
         )}
@@ -200,7 +213,7 @@ function SlideStack({ theme, flavor, hook, caption, images, slideIndex, slidePro
 // Space Grotesk + Inter, minimal decorations, polka/checker, editorial flow
 // ═══════════════════════════════════════════════════════════
 
-function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, subcategory }: TemplateProps) {
+function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, subcategory, slideContent }: TemplateProps) {
   const seed = seedFromText(hook)
   const mode = getVisualMode(subcategory)
   const badgeLabel = getBadgeLabel(mode)
@@ -209,20 +222,7 @@ function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slid
   const enterOpacity = interpolate(slideProgress, [0, 0.15, 1], [0, 1, 1], { extrapolateRight: 'clamp' })
   const isEven = slideIndex % 2 === 0
 
-  // Fixed editorial arc: hook → product-hero → editorial-text → flavor-feature → CTA
-  function getContent(index: number) {
-    if (index === 0) return { type: 'hook' as const, text: hook }
-    if (index === totalSlides - 1) return { type: 'cta' as const, text: 'Follow @SpaceApe for more' }
-    const phase = ((index - 1) % 3)
-    if (phase === 0) return { type: 'hero' as const, text: '' }
-    if (phase === 1) {
-      const sentences = caption.split(/[.!?]+/).filter(s => s.trim().length > 10)
-      return { type: 'editorial' as const, text: sentences[index % Math.max(sentences.length, 1)]?.trim() || caption.slice(0, 80) }
-    }
-    return { type: 'flavor' as const, text: flavor }
-  }
-
-  const content = getContent(slideIndex)
+  const content = slideContent
 
   return (
     <AbsoluteFill style={{ overflow: 'hidden', fontFamily: bodyFont }}>
@@ -241,7 +241,7 @@ function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slid
         {/* Minimal blob decorations */}
         <Blob x={isEven ? 820 : -60} y={isEven ? -40 : 780} size={280} color={`${theme.primaryColor}10`} variant={(seed + slideIndex) % 3} />
 
-        {content.type === 'hook' && (
+        {content.role === 'hook' && (
           <>
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: 680,
@@ -261,15 +261,7 @@ function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slid
           </>
         )}
 
-        {content.type === 'hero' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <StickerFrame borderWidth={7} borderRadius={30} rotation={seededRange(seed, slideIndex, -4, 4)}>
-              <ProductImg src={mainImg} style={{ maxWidth: 520, maxHeight: 520, filter: themeShadow(theme.primaryColor, 'medium') }} />
-            </StickerFrame>
-          </div>
-        )}
-
-        {content.type === 'editorial' && (
+        {content.role === 'content' && (
           <>
             <div style={{
               position: 'absolute', top: 0, [isEven ? 'left' : 'right']: 0,
@@ -292,7 +284,7 @@ function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slid
           </>
         )}
 
-        {content.type === 'flavor' && (
+        {content.role === 'flavor' && (
           <div style={{
             position: 'absolute', inset: 0,
             ...seededStripesBg(seed + 99, theme.primaryColor, theme.accentColor),
@@ -307,7 +299,7 @@ function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slid
           </div>
         )}
 
-        {content.type === 'cta' && (
+        {content.role === 'cta' && (
           <div style={{
             position: 'absolute', inset: 0,
             ...seededPolkaDotBg(seed, `${theme.primaryColor}12`, '#FAF7F2'),
@@ -316,11 +308,8 @@ function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slid
             <div style={{ fontFamily: accentFont, fontSize: 46, fontWeight: 700, letterSpacing: '0.04em', color: theme.primaryColor }}>
               SPACE APE
             </div>
-            <div style={{ fontFamily: accentFont, fontSize: 20, fontWeight: 500, color: theme.backgroundColor, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              Ultra Premium • Live Resin
-            </div>
-            <div style={{ background: theme.primaryColor, color: '#fff', fontFamily: accentFont, fontSize: 20, fontWeight: 600, padding: '14px 48px', borderRadius: 12 }}>
-              Follow Us
+            <div style={{ fontFamily: accentFont, fontSize: 26, fontWeight: 600, color: theme.backgroundColor, textTransform: 'uppercase', textAlign: 'center', padding: '0 60px' }}>
+              {content.text}
             </div>
           </div>
         )}
@@ -340,7 +329,7 @@ function MagazineSpread({ theme, flavor, hook, caption, images, slideIndex, slid
 // Permanent Marker + Inter, hatch pattern, text-dominant, minimal product
 // ═══════════════════════════════════════════════════════════
 
-function BoldTypography({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, frame, subcategory }: TemplateProps) {
+function BoldTypography({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, frame, subcategory, slideContent }: TemplateProps) {
   const seed = seedFromText(hook)
   const mode = getVisualMode(subcategory)
   const badgeLabel = getBadgeLabel(mode)
@@ -348,17 +337,7 @@ function BoldTypography({ theme, flavor, hook, caption, images, slideIndex, slid
   const enterScale = bouncySpring(Math.round(slideProgress * FRAMES_PER_SLIDE), 30)
   const isEven = slideIndex % 2 === 0
 
-  // Text-dominant: every middle slide is bold text, no product
-  function getContent(index: number) {
-    if (index === 0) return { type: 'hook' as const, text: hook }
-    if (index === totalSlides - 1) return { type: 'cta' as const, text: 'Follow @SpaceApe' }
-    const sentences = caption.split(/[.!?]+/).filter(s => s.trim().length > 10)
-    if ((index - 1) % 3 === 1) return { type: 'flavor' as const, text: flavor }
-    const si = (index - 1) % Math.max(sentences.length, 1)
-    return { type: 'quote' as const, text: sentences[si]?.trim() || caption.slice(0, 80) }
-  }
-
-  const content = getContent(slideIndex)
+  const content = slideContent
   const sparkleX = seededRange(seed, slideIndex * 5, 60, 950)
   const sparkleY = seededRange(seed, slideIndex * 5 + 1, 60, 950)
   const sparkleSize = seededRange(seed, slideIndex * 5 + 2, 30, 60)
@@ -382,7 +361,7 @@ function BoldTypography({ theme, flavor, hook, caption, images, slideIndex, slid
         {/* Few bold sparkles */}
         <Sparkle x={sparkleX} y={sparkleY} size={sparkleSize} color={isEven ? theme.primaryColor : '#fff'} rotation={seed % 45} />
 
-        {content.type === 'hook' && (
+        {content.role === 'hook' && (
           <>
             <div style={{ position: 'absolute', inset: 60, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div style={{ fontFamily: handFont, fontSize: 78, fontWeight: 400, textTransform: 'uppercase', lineHeight: 1.0, color: isEven ? theme.primaryColor : '#fff', transform: `rotate(${seededRange(seed, 0, -1.5, 1.5)}deg)` }}>
@@ -400,7 +379,7 @@ function BoldTypography({ theme, flavor, hook, caption, images, slideIndex, slid
           </>
         )}
 
-        {content.type === 'quote' && (
+        {content.role === 'content' && (
           <div style={{ position: 'absolute', inset: 50, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontFamily: handFont, fontSize: 58, fontWeight: 400, lineHeight: 1.1, color: isEven ? theme.primaryColor : '#fff', transform: `rotate(${seededRange(seed, slideIndex, -1.5, 1.5)}deg)` }}>
               "{content.text}"
@@ -408,7 +387,7 @@ function BoldTypography({ theme, flavor, hook, caption, images, slideIndex, slid
           </div>
         )}
 
-        {content.type === 'flavor' && (
+        {content.role === 'flavor' && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{
               fontFamily: handFont, fontSize: 100, fontWeight: 400, textTransform: 'uppercase',
@@ -416,19 +395,19 @@ function BoldTypography({ theme, flavor, hook, caption, images, slideIndex, slid
               color: isEven ? theme.primaryColor : '#fff',
               transform: `rotate(${seededRange(seed, 30, -2, 2)}deg)`,
             }}>
-              {flavor}
+              {content.text}
             </div>
             <Sparkle x={850} y={120} size={35} color={theme.accentColor} rotation={-15} />
           </div>
         )}
 
-        {content.type === 'cta' && (
+        {content.role === 'cta' && (
           <div style={{
             position: 'absolute', inset: 0,
             ...seededStripesBg(seed, theme.primaryColor, theme.accentColor),
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 30,
           }}>
-            <div style={{ fontFamily: handFont, fontSize: 80, fontWeight: 400, color: '#fff', textAlign: 'center', lineHeight: 1.0, padding: '0 50px', transform: 'rotate(-2deg)' }}>
+            <div style={{ fontFamily: handFont, fontSize: 60, fontWeight: 400, color: '#fff', textAlign: 'center', lineHeight: 1.0, padding: '0 50px', transform: 'rotate(-2deg)' }}>
               {content.text}
             </div>
             <div style={{ fontFamily: handFont, fontSize: 32, fontWeight: 400, color: '#ffffffBB', letterSpacing: '0.08em' }}>
@@ -452,7 +431,7 @@ function BoldTypography({ theme, flavor, hook, caption, images, slideIndex, slid
 // Oswald + Space Grotesk, gradient mesh, Sparkle + Ring only, glow effects
 // ═══════════════════════════════════════════════════════════
 
-function NeonGlow({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, subcategory }: TemplateProps) {
+function NeonGlow({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, subcategory, slideContent }: TemplateProps) {
   const seed = seedFromText(hook)
   const mode = getVisualMode(subcategory)
   const badgeLabel = getBadgeLabel(mode)
@@ -460,18 +439,7 @@ function NeonGlow({ theme, flavor, hook, caption, images, slideIndex, slideProgr
   const enterOpacity = interpolate(slideProgress, [0, 0.2, 1], [0, 1, 1], { extrapolateRight: 'clamp' })
   const enterY = interpolate(slideProgress, [0, 0.2, 1], [20, 0, 0], { extrapolateRight: 'clamp' })
 
-  // Atmospheric content: hook → product glow → flavor neon → detail → CTA
-  function getContent(index: number) {
-    if (index === 0) return { type: 'hook' as const, text: hook }
-    if (index === totalSlides - 1) return { type: 'cta' as const, text: 'Follow @SpaceApe' }
-    const phase = (index - 1) % 3
-    if (phase === 0) return { type: 'glow-product' as const, text: '' }
-    if (phase === 1) return { type: 'neon-flavor' as const, text: flavor }
-    const sentences = caption.split(/[.!?]+/).filter(s => s.trim().length > 10)
-    return { type: 'detail' as const, text: sentences[index % Math.max(sentences.length, 1)]?.trim() || caption.slice(0, 80) }
-  }
-
-  const content = getContent(slideIndex)
+  const content = slideContent
   const glowRadius = seededRange(seed, slideIndex, 40, 80)
 
   return (
@@ -497,7 +465,7 @@ function NeonGlow({ theme, flavor, hook, caption, images, slideIndex, slideProgr
         <Sparkle x={seededRange(seed, slideIndex * 7, 800, 1000)} y={seededRange(seed, slideIndex * 7 + 1, 100, 300)} size={seededRange(seed, slideIndex * 7 + 2, 20, 36)} color={theme.accentColor} rotation={seed % 45} />
         <Sparkle x={seededRange(seed, slideIndex * 7 + 3, 40, 200)} y={seededRange(seed, slideIndex * 7 + 4, 750, 950)} size={seededRange(seed, slideIndex * 7 + 5, 18, 28)} color="#fff" rotation={(seed + 20) % 45} />
 
-        {content.type === 'hook' && (
+        {content.role === 'hook' && (
           <>
             <div style={{ position: 'absolute', top: 50, left: 50, fontFamily: headingFont, fontSize: 26, fontWeight: 700, letterSpacing: '0.06em', ...outlinedTextStyle(theme.accentColor, 'rgba(0,0,0,0.4)', 2) }}>
               SPACE APE
@@ -511,21 +479,7 @@ function NeonGlow({ theme, flavor, hook, caption, images, slideIndex, slideProgr
           </>
         )}
 
-        {content.type === 'glow-product' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ProductImg src={mainImg} style={{ maxWidth: 520, maxHeight: 520, filter: themeShadow(theme.primaryColor, 'dramatic') }} />
-          </div>
-        )}
-
-        {content.type === 'neon-flavor' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60 }}>
-            <div style={{ fontFamily: headingFont, fontSize: 70, fontWeight: 700, textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.0, ...outlinedTextStyle(theme.accentColor, theme.backgroundColor, 3), textShadow: `0 0 40px ${theme.accentColor}50` }}>
-              {content.text}
-            </div>
-          </div>
-        )}
-
-        {content.type === 'detail' && (
+        {content.role === 'content' && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 70 }}>
             <div style={{ fontFamily: accentFont, fontSize: 38, fontWeight: 500, lineHeight: 1.3, textAlign: 'center', color: '#ffffffCC', textShadow: `0 0 20px ${theme.primaryColor}40` }}>
               {content.text}
@@ -533,15 +487,20 @@ function NeonGlow({ theme, flavor, hook, caption, images, slideIndex, slideProgr
           </div>
         )}
 
-        {content.type === 'cta' && (
+        {content.role === 'flavor' && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60 }}>
+            <div style={{ fontFamily: headingFont, fontSize: 70, fontWeight: 700, textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.0, ...outlinedTextStyle(theme.accentColor, theme.backgroundColor, 3), textShadow: `0 0 40px ${theme.accentColor}50` }}>
+              {content.text}
+            </div>
+          </div>
+        )}
+
+        {content.role === 'cta' && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 30 }}>
             <div style={{ fontFamily: headingFont, fontSize: 46, fontWeight: 700, letterSpacing: '0.06em', ...outlinedTextStyle(theme.accentColor, theme.backgroundColor, 3), textShadow: `0 0 25px ${theme.accentColor}40` }}>
               SPACE APE
             </div>
-            <div style={{ fontFamily: accentFont, fontSize: 16, fontWeight: 500, color: '#ffffff50', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-              Ultra Premium • Live Resin
-            </div>
-            <div style={{ border: `3px solid ${theme.accentColor}`, color: theme.accentColor, fontFamily: headingFont, fontSize: 20, fontWeight: 700, padding: '14px 44px', borderRadius: 40, textTransform: 'uppercase', boxShadow: `0 0 20px ${theme.accentColor}40, 4px 5px 0px ${theme.backgroundColor}` }}>
+            <div style={{ fontFamily: accentFont, fontSize: 22, fontWeight: 500, color: '#ffffffCC', textAlign: 'center', padding: '0 60px', textShadow: `0 0 15px ${theme.primaryColor}30` }}>
               {content.text}
             </div>
           </div>
@@ -565,16 +524,12 @@ function NeonGlow({ theme, flavor, hook, caption, images, slideIndex, slideProgr
 // Full-bleed product photos with grain + vignette. Minimal text.
 // ═══════════════════════════════════════════════════════════
 
-function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, frame, subcategory }: TemplateProps) {
+function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, frame, subcategory, slideContent }: TemplateProps) {
   const seed = seedFromText(hook)
   const mainImg = images[seededInt(seed, slideIndex + 10, 0, images.length - 1)]
-  const isHook = slideIndex === 0
-  const isCta = slideIndex === totalSlides - 1
-  const isOdd = slideIndex % 2 === 1
 
-  // Extract caption sentences for middle slides
-  const sentences = caption.split(/[.!?]+/).filter(s => s.trim().length > 10)
-  const slideSentence = sentences.length > 0 ? sentences[(slideIndex - 1) % sentences.length].trim() : caption.slice(0, 80)
+  const content = slideContent
+  const isOdd = slideIndex % 2 === 1
 
   // Fade-in entrance (photo album feel — no bounce)
   const fadeIn = interpolate(slideProgress, [0, 0.12, 1], [0, 1, 1])
@@ -584,9 +539,8 @@ function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgr
       {/* Background */}
       <div style={{ position: 'absolute', inset: 0, background: theme.backgroundColor }} />
 
-      {isHook && (
+      {content.role === 'hook' && (
         <>
-          {/* Hook slide: full-bleed product + dark gradient + hook text */}
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0,
             display: 'flex', justifyContent: 'center', alignItems: 'center', height: 1080,
@@ -605,7 +559,7 @@ function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgr
             fontFamily: headingFont, fontSize: 56, fontWeight: 700,
             color: '#fff', textTransform: 'uppercase', lineHeight: 1.05,
           }}>
-            {hook}
+            {content.text}
           </div>
           <div style={{
             position: 'absolute', top: 40, left: 50,
@@ -617,30 +571,8 @@ function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgr
         </>
       )}
 
-      {!isHook && !isCta && isOdd && (
+      {content.role === 'content' && (
         <>
-          {/* Odd middle: product fills frame, no text — just the photo */}
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%',
-            width: 700, height: 700, borderRadius: '50%',
-            background: `radial-gradient(circle, ${theme.primaryColor}20 0%, transparent 70%)`,
-            transform: 'translate(-50%, -50%)',
-          }} />
-          <div style={{
-            position: 'absolute', top: 0, left: 0, right: 0,
-            display: 'flex', justifyContent: 'center', alignItems: 'center', height: 1080,
-          }}>
-            <ProductImg src={mainImg} style={{
-              maxWidth: 850, maxHeight: 850,
-              filter: themeShadow(theme.primaryColor, 'medium'),
-            }} />
-          </div>
-        </>
-      )}
-
-      {!isHook && !isCta && !isOdd && (
-        <>
-          {/* Even middle: product + caption bar at bottom */}
           <div style={{ position: 'absolute', inset: 0, background: theme.primaryColor }} />
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 250,
@@ -662,7 +594,7 @@ function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgr
               color: '#ffffffCC', lineHeight: 1.4,
               ...clampText(3),
             }}>
-              {slideSentence}
+              {content.text}
             </div>
             <div style={{
               fontFamily: accentFont, fontSize: 14, fontWeight: 600,
@@ -674,9 +606,35 @@ function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgr
         </>
       )}
 
-      {isCta && (
+      {content.role === 'flavor' && (
         <>
-          {/* CTA slide: product + SPACE APE + follow CTA */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%',
+            width: 700, height: 700, borderRadius: '50%',
+            background: `radial-gradient(circle, ${theme.primaryColor}20 0%, transparent 70%)`,
+            transform: 'translate(-50%, -50%)',
+          }} />
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0,
+            display: 'flex', justifyContent: 'center', alignItems: 'center', height: 1080,
+          }}>
+            <ProductImg src={mainImg} style={{
+              maxWidth: 850, maxHeight: 850,
+              filter: themeShadow(theme.primaryColor, 'medium'),
+            }} />
+          </div>
+          <div style={{
+            position: 'absolute', bottom: 80, left: 0, right: 0, textAlign: 'center',
+            fontFamily: headingFont, fontSize: 48, fontWeight: 700,
+            color: '#fff', textTransform: 'uppercase',
+          }}>
+            {content.text}
+          </div>
+        </>
+      )}
+
+      {content.role === 'cta' && (
+        <>
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0,
             display: 'flex', justifyContent: 'center', alignItems: 'center', height: 700,
@@ -691,18 +649,11 @@ function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgr
             background: `linear-gradient(to top, ${theme.backgroundColor} 0%, transparent 100%)`,
           }} />
           <div style={{
-            position: 'absolute', bottom: 180, left: 0, right: 0, textAlign: 'center',
-            fontFamily: headingFont, fontSize: 40, fontWeight: 700,
-            color: theme.accentColor, letterSpacing: '0.08em',
+            position: 'absolute', bottom: 140, left: 60, right: 60, textAlign: 'center',
+            fontFamily: bodyFont, fontSize: 22, fontWeight: 600,
+            color: '#ffffffCC',
           }}>
-            SPACE APE
-          </div>
-          <div style={{
-            position: 'absolute', bottom: 110, left: 0, right: 0, textAlign: 'center',
-            fontFamily: bodyFont, fontSize: 20, fontWeight: 600,
-            color: '#ffffffAA',
-          }}>
-            Follow @SpaceApe
+            {content.text}
           </div>
         </>
       )}
@@ -721,7 +672,7 @@ function PhotoSet({ theme, flavor, hook, caption, images, slideIndex, slideProgr
 // Product on rotating solid colors with studio lighting.
 // ═══════════════════════════════════════════════════════════
 
-function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, frame, subcategory }: TemplateProps) {
+function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides, frame, subcategory, slideContent }: TemplateProps) {
   const seed = seedFromText(hook)
   const mainImg = images[seededInt(seed, slideIndex + 10, 0, images.length - 1)]
 
@@ -734,13 +685,7 @@ function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideP
   ]
   const slideBg = colorShades[slideIndex % colorShades.length]
 
-  const isHook = slideIndex === 0
-  const isCta = slideIndex === totalSlides - 1
-  const midType = (slideIndex - 1) % 3 // 0=hero, 1=flavor, 2=detail
-
-  // Extract caption sentences
-  const sentences = caption.split(/[.!?]+/).filter(s => s.trim().length > 10)
-  const slideSentence = sentences.length > 0 ? sentences[(slideIndex - 1) % sentences.length].trim() : caption.slice(0, 80)
+  const content = slideContent
 
   // Subtle spring entrance
   const enterScale = bouncySpring(Math.round(slideProgress * FRAMES_PER_SLIDE), 30)
@@ -754,9 +699,8 @@ function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideP
       {/* Studio light on all slides */}
       <GlossHighlight angle={135} opacity={0.10} coverage={45} />
 
-      {isHook && (
+      {content.role === 'hook' && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', transform: `scale(${scale})` }}>
-          {/* Hook slide: product + hook text */}
           <div style={{
             flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center',
             paddingBottom: 200,
@@ -771,7 +715,7 @@ function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideP
             fontFamily: headingFont, fontSize: 48, fontWeight: 700,
             color: '#fff', textTransform: 'uppercase', lineHeight: 1.05,
           }}>
-            {hook}
+            {content.text}
           </div>
           <div style={{
             position: 'absolute', top: 40, left: 50,
@@ -783,54 +727,8 @@ function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideP
         </div>
       )}
 
-      {!isHook && !isCta && midType === 0 && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', transform: `scale(${scale})` }}>
-          {/* Product-hero: product LARGE, tiny flavor text */}
-          <ProductImg src={mainImg} style={{
-            maxWidth: 700, maxHeight: 700,
-            filter: themeShadow(theme.primaryColor, 'medium'),
-          }} />
-          <div style={{
-            position: 'absolute', bottom: 70, left: 0, right: 0, textAlign: 'center',
-            fontFamily: accentFont, fontSize: 16, fontWeight: 600,
-            color: '#ffffffAA', textTransform: 'uppercase', letterSpacing: '0.08em',
-          }}>
-            {flavor}
-          </div>
-        </div>
-      )}
-
-      {!isHook && !isCta && midType === 1 && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', transform: `scale(${scale})` }}>
-          {/* Flavor slide: product + big flavor name */}
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 180 }}>
-            <ProductImg src={mainImg} style={{
-              maxWidth: 450, maxHeight: 450,
-              filter: themeShadow(theme.primaryColor, 'medium'),
-            }} />
-          </div>
-          <div style={{
-            position: 'absolute', bottom: 100, left: 50, right: 50, textAlign: 'center',
-            fontFamily: headingFont, fontSize: 60, fontWeight: 700,
-            color: '#fff', textTransform: 'uppercase', lineHeight: 1.0,
-          }}>
-            {flavor}
-          </div>
-          {theme.strainType && (
-            <div style={{
-              position: 'absolute', bottom: 70, left: 0, right: 0, textAlign: 'center',
-              fontFamily: accentFont, fontSize: 14, fontWeight: 600,
-              color: '#ffffffAA', textTransform: 'uppercase',
-            }}>
-              {theme.strainType}
-            </div>
-          )}
-        </div>
-      )}
-
-      {!isHook && !isCta && midType === 2 && (
+      {content.role === 'content' && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', transform: `scale(${scale})` }}>
-          {/* Detail slide: product left, text right */}
           <div style={{
             width: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center',
           }}>
@@ -848,7 +746,7 @@ function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideP
               color: '#fff', lineHeight: 1.3, marginBottom: 16,
               ...clampText(3),
             }}>
-              {slideSentence}
+              {content.text}
             </div>
             <div style={{
               fontFamily: bodyFont, fontSize: 14, fontWeight: 600,
@@ -860,9 +758,35 @@ function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideP
         </div>
       )}
 
-      {isCta && (
+      {content.role === 'flavor' && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', transform: `scale(${scale})` }}>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 180 }}>
+            <ProductImg src={mainImg} style={{
+              maxWidth: 450, maxHeight: 450,
+              filter: themeShadow(theme.primaryColor, 'medium'),
+            }} />
+          </div>
+          <div style={{
+            position: 'absolute', bottom: 100, left: 50, right: 50, textAlign: 'center',
+            fontFamily: headingFont, fontSize: 60, fontWeight: 700,
+            color: '#fff', textTransform: 'uppercase', lineHeight: 1.0,
+          }}>
+            {content.text}
+          </div>
+          {content.secondary && (
+            <div style={{
+              position: 'absolute', bottom: 70, left: 0, right: 0, textAlign: 'center',
+              fontFamily: accentFont, fontSize: 14, fontWeight: 600,
+              color: '#ffffffAA', textTransform: 'uppercase',
+            }}>
+              {content.secondary}
+            </div>
+          )}
+        </div>
+      )}
+
+      {content.role === 'cta' && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', transform: `scale(${scale})` }}>
-          {/* CTA slide */}
           <div style={{
             fontFamily: headingFont, fontSize: 48, fontWeight: 700,
             color: '#fff', letterSpacing: '0.08em', marginBottom: 20,
@@ -870,14 +794,10 @@ function StudioSlides({ theme, flavor, hook, caption, images, slideIndex, slideP
             SPACE APE
           </div>
           <div style={{
-            border: '3px solid #ffffff60', borderRadius: 8, padding: '12px 40px',
+            fontFamily: bodyFont, fontSize: 22, fontWeight: 600,
+            color: '#ffffffCC', textAlign: 'center', padding: '0 60px',
           }}>
-            <div style={{
-              fontFamily: bodyFont, fontSize: 20, fontWeight: 600,
-              color: '#ffffffCC', letterSpacing: '0.06em',
-            }}>
-              Follow Us
-            </div>
+            {content.text}
           </div>
         </div>
       )}
@@ -899,6 +819,8 @@ interface TemplateProps {
   totalSlides: number
   frame: number
   subcategory: string
+  arc: SlideContent[]
+  slideContent: SlideContent
 }
 
 // ─── Main component ───
@@ -906,11 +828,12 @@ export default function Carousel({ flavor, hook, caption, hashtags, pillar, subc
   const frame = useCurrentFrame()
   const theme = getFlavorTheme(flavor)
   const images = theme.productImages
+  const arc = buildSlideArc(hook, caption, flavor, theme.strainType || '')
 
-  const slideIndex = Math.min(Math.floor(frame / FRAMES_PER_SLIDE), slideCount - 1)
+  const slideIndex = Math.min(Math.floor(frame / FRAMES_PER_SLIDE), arc.length - 1)
   const slideProgress = (frame - slideIndex * FRAMES_PER_SLIDE) / FRAMES_PER_SLIDE
 
-  const props: TemplateProps = { theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides: slideCount, frame, subcategory }
+  const props: TemplateProps = { theme, flavor, hook, caption, images, slideIndex, slideProgress, totalSlides: arc.length, frame, subcategory, arc, slideContent: arc[slideIndex] }
 
   switch (layoutTemplate) {
     case 1: return <SlideStack {...props} />

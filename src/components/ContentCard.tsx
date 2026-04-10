@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { Player, Thumbnail } from '@remotion/player'
 import type { ContentItem } from '../types'
 import { SingleImage, Carousel, Reel } from '../remotion/compositions'
+import { buildSlideArc } from '../remotion/compositions/Carousel'
+import { getFlavorTheme } from '../remotion/flavorThemes'
 import type { SingleImageProps, CarouselProps, ReelProps } from '../remotion/types'
 
 // Cast components to satisfy Thumbnail/Player LooseComponentType constraint
@@ -240,11 +242,22 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [reelModalOpen, setReelModalOpen] = useState(false)
-  const slideCount = item.generatedVisual?.slideCount || 7
+
+  // Compute actual slide count from arc (content-driven, 3-7 slides)
+  const gv = item.generatedVisual
+  const arcLength = gv
+    ? buildSlideArc(
+        gv.hook,
+        gv.caption,
+        gv.flavor || 'Amped Apple',
+        getFlavorTheme(gv.flavor || 'Amped Apple').strainType || '',
+      ).length
+    : 7
+  const slideCount = arcLength
 
   useEffect(() => {
     setCurrentSlide(0)
-  }, [item.generatedVisual?.slideCount, item.generatedVisual?.hook])
+  }, [arcLength, gv?.hook])
 
   const titleParts = item.title.split(' — ')
   const format = titleParts[0] || item.contentType
