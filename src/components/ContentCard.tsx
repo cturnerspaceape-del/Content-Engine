@@ -1,4 +1,5 @@
-import { Player } from '@remotion/player'
+import { useState, useEffect } from 'react'
+import { Player, Thumbnail } from '@remotion/player'
 import type { ContentItem } from '../types'
 import { SingleImage, Carousel, Reel } from '../remotion/compositions'
 import type { SingleImageProps, CarouselProps, ReelProps } from '../remotion/types'
@@ -102,6 +103,54 @@ function MockVisual({ format, pillar, accentColor }: { format: string; pillar: s
   )
 }
 
+function CarouselNav({ current, total, onPrev, onNext }: {
+  current: number
+  total: number
+  onPrev: () => void
+  onNext: () => void
+}) {
+  return (
+    <>
+      <div style={{
+        position: 'absolute', top: 6, right: 6,
+        background: 'rgba(0,0,0,0.5)', color: '#fff',
+        fontSize: 9, fontWeight: 700, padding: '2px 6px',
+        borderRadius: 4, letterSpacing: '0.05em',
+      }}>
+        {current + 1} / {total}
+      </div>
+      {current > 0 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onPrev() }}
+          style={{
+            position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)',
+            width: 22, height: 22, borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none',
+            color: '#fff', fontSize: 10, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          ‹
+        </button>
+      )}
+      {current < total - 1 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onNext() }}
+          style={{
+            position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
+            width: 22, height: 22, borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none',
+            color: '#fff', fontSize: 10, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          ›
+        </button>
+      )}
+    </>
+  )
+}
+
 interface ContentCardProps {
   item: ContentItem
   index: number
@@ -116,6 +165,13 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
   const accentColor = formatColor // used by MockVisual + hashtag color
   const isGenerated = item.generated
   const isLogged = item.logged
+
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const slideCount = item.generatedVisual?.slideCount || 7
+
+  useEffect(() => {
+    setCurrentSlide(0)
+  }, [item.generatedVisual?.slideCount, item.generatedVisual?.hook])
 
   const titleParts = item.title.split(' — ')
   const format = titleParts[0] || item.contentType
@@ -213,17 +269,15 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
               />
             </div>
           ) : format === 'Carousel' ? (
-            <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1' }}>
-              <Player
+            <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1', position: 'relative' }}>
+              <Thumbnail
                 component={Carousel}
                 compositionWidth={1080}
                 compositionHeight={1080}
-                durationInFrames={(item.generatedVisual.slideCount || 7) * 45}
+                durationInFrames={slideCount * 45}
                 fps={30}
+                frameToDisplay={Math.min(currentSlide * 45 + 30, slideCount * 45 - 1)}
                 style={{ width: '100%', height: '100%' }}
-                controls
-                loop
-                autoPlay={false}
                 inputProps={{
                   flavor: (item.generatedVisual.flavor || 'Amped Apple') as CarouselProps['flavor'],
                   hook: item.generatedVisual.hook,
@@ -232,8 +286,14 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
                   pillar: item.generatedVisual.pillar,
                   subcategory: item.generatedVisual.subcategory,
                   layoutTemplate: item.generatedVisual.layoutTemplate || 1,
-                  slideCount: item.generatedVisual.slideCount || 7,
+                  slideCount: slideCount,
                 }}
+              />
+              <CarouselNav
+                current={currentSlide}
+                total={slideCount}
+                onPrev={() => setCurrentSlide(s => Math.max(0, s - 1))}
+                onNext={() => setCurrentSlide(s => Math.min(slideCount - 1, s + 1))}
               />
             </div>
           ) : format === 'Reel' ? (
