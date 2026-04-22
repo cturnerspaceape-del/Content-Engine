@@ -7,15 +7,23 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k -n vite,api -c cyan,magenta \"npm:dev:vite\" \"npm:dev:server\"",
+    "dev:vite": "vite",
+    "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "remotion:studio": "remotion studio remotion/index.tsx"
+    "remotion:studio": "remotion studio remotion/index.tsx",
+    "classify-refs": "tsx server/classifyReferences.ts",
+    "ingest-refs": "tsx server/ingestReferences.ts",
+    "derive-shots": "tsx server/deriveShotTemplates.ts"
   },
   "dependencies": {
+    "@google/genai": "^1.30.0",
     "@remotion/google-fonts": "^4.0.447",
     "@remotion/player": "^4.0.447",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "remotion": "^4.0.447",
@@ -24,9 +32,12 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@remotion/cli": "^4.0.447",
+    "@types/express": "^5.0.0",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.1.2",
+    "tsx": "^4.19.2",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.4",

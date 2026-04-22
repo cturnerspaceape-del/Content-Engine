@@ -3,6 +3,7 @@ import HomeScreen from './components/HomeScreen'
 import WeeklyCalendar from './components/WeeklyCalendar'
 import StrategyDashboard from './components/StrategyDashboard'
 import PostLog from './components/PostLog'
+import SingleImageLab from './components/SingleImageLab'
 import type { ViewState, LoggedPost } from './types'
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
               onLaunch={() => switchView('calendar')}
               onStrategy={() => switchView('strategy')}
               onPostLog={() => switchView('postlog')}
+              onSilLab={() => switchView('sil-lab')}
               loggedCount={loggedPosts.length}
             />
           </div>
@@ -61,6 +63,11 @@ export default function App() {
               posts={loggedPosts}
               onBack={() => switchView('home')}
             />
+          </div>
+        )}
+        {view === 'sil-lab' && (
+          <div className="fade-in">
+            <SingleImageLab onBack={() => switchView('home')} />
           </div>
         )}
       </div>

@@ -2,10 +2,11 @@ interface HomeScreenProps {
   onLaunch: () => void
   onStrategy: () => void
   onPostLog: () => void
+  onSilLab: () => void
   loggedCount: number
 }
 
-export default function HomeScreen({ onLaunch, onStrategy, onPostLog, loggedCount }: HomeScreenProps) {
+export default function HomeScreen({ onLaunch, onStrategy, onPostLog, onSilLab, loggedCount }: HomeScreenProps) {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
@@ -63,6 +64,21 @@ export default function HomeScreen({ onLaunch, onStrategy, onPostLog, loggedCoun
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">📊</span>
                 <span>Instagram Strategy</span>
+              </div>
+            </button>
+            <button
+              onClick={onSilLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'rgba(245,158,11,.1)',
+                border: '2px solid #f59e0b',
+                boxShadow: 'var(--shadow-md)',
+                color: '#f59e0b',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🧪</span>
+                <span>Single Image Lab</span>
               </div>
             </button>
             {loggedCount > 0 && (

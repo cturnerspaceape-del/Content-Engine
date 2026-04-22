@@ -38,7 +38,8 @@ export interface SingleImageProps {
   hashtags: string[]
   pillar: string
   subcategory: string
-  layoutTemplate: number // 1-24
+  shotTemplateId?: string // from src/data/shotTemplates.ts — server picks one if omitted
+  variationSeed?: number  // when set, bypasses cache and forces a new Gemini call
 }
 
 export interface CarouselProps {
@@ -48,7 +49,7 @@ export interface CarouselProps {
   hashtags: string[]
   pillar: string
   subcategory: string
-  layoutTemplate: number // 1-6
+  layoutTemplate: number // 1-8
   slideCount: number     // 5-10
 }
 
@@ -59,5 +60,5 @@ export interface ReelProps {
   hashtags: string[]
   pillar: string
   subcategory: string
-  layoutTemplate: number // 1-4
+  layoutTemplate: number // 1-6
 }

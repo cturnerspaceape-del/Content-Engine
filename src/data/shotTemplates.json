@@ -1,0 +1,570 @@
+[
+  {
+    "id": "monochromatic-playland",
+    "name": "Monochromatic Playland",
+    "scene": "A single vape pen product is centered on a solid colored matte surface, surrounded by various small, tonal, playful objects like stars, geometric shapes, or translucent elements.",
+    "lighting": "Soft, diffused overhead lighting creates subtle, even shadows, with a cool color temperature enhancing the monochromatic scheme.",
+    "camera": "A precise top-down flat-lay shot with a 50mm equivalent lens, ensuring everything is in sharp focus from edge to edge (deep DOF).",
+    "palette": "A dominant single color family (e.g., sky blue, soft lavender, pastel pink) forms the background and prop colors, with the product providing a subtle tonal contrast or highlight.",
+    "post": "Clean, crisp finish with vibrant but not oversaturated colors, minimal natural grain, and a commercial aesthetic.",
+    "aestheticTags": {
+      "vibe": [
+        "playful",
+        "minimal",
+        "dreamy"
+      ],
+      "palette": [
+        "monochrome",
+        "pastel"
+      ],
+      "composition": [
+        "flat-lay",
+        "centered-hero"
+      ],
+      "mood": [
+        "calm",
+        "fun"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "playful",
+        "minimal"
+      ],
+      "palette": [
+        "monochrome"
+      ],
+      "composition": [
+        "flat-lay"
+      ]
+    },
+    "pillarAffinity": [
+      "Product Centric",
+      "Brand Building"
+    ],
+    "subcategoryBoost": [
+      "New Drop Reveal",
+      "Flavor Breakdown"
+    ]
+  },
+  {
+    "id": "dynamic-botanical-bloom",
+    "name": "Dynamic Botanical Bloom",
+    "scene": "A single vape pen stands upright at the center, surrounded by a vibrant burst of fresh, dewy botanicals (e.g., cannabis leaves, specific fruit corresponding to flavor) appearing to float dynamically in mid-air around it.",
+    "lighting": "Bright, directional front lighting with a slightly warm temperature highlights textures, creating soft, naturalistic shadows that suggest movement.",
+    "camera": "A medium-close eye-level shot with a 85mm equivalent lens, isolating the product and botanicals with a shallow depth of field.",
+    "palette": "A lively and natural palette of greens, specific fruit colors, and product colors, contrasted against a clean, light background.",
+    "post": "Energetic and fresh finish with high clarity, subtle sharpening, and a premium editorial aesthetic.",
+    "aestheticTags": {
+      "vibe": [
+        "luxe",
+        "dreamy"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "centered-hero",
+        "abstract"
+      ],
+      "mood": [
+        "energetic",
+        "premium"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "luxe"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "centered-hero"
+      ]
+    },
+    "pillarAffinity": [
+      "Product Centric",
+      "Brand Building",
+      "Education"
+    ],
+    "subcategoryBoost": [
+      "Flavor Breakdown",
+      "Quality Process",
+      "New Drop Reveal"
+    ]
+  },
+  {
+    "id": "gradient-gaze",
+    "name": "Gradient Gaze",
+    "scene": "A single vape pen is perfectly centered, standing upright against a smooth, seamless background featuring a vivid, two-tone color gradient.",
+    "lighting": "Softbox lighting from the front and sides creates a subtle sheen on the product, with a neutral white balance ensuring true color representation against the vibrant backdrop.",
+    "camera": "A clean, eye-level shot using a 70mm equivalent lens, with the product sharp against the softly blending colors of the background, minimal depth of field.",
+    "palette": "A bold and modern high-contrast gradient (e.g., fuchsia to electric blue, orange to deep purple) serves as the primary palette, with the product adding a focal point.",
+    "post": "Polished, hyper-real finish with intense color saturation, no grain, and a sleek commercial aesthetic.",
+    "aestheticTags": {
+      "vibe": [
+        "minimal",
+        "luxe",
+        "surreal"
+      ],
+      "palette": [
+        "high-contrast",
+        "neon"
+      ],
+      "composition": [
+        "centered-hero",
+        "abstract"
+      ],
+      "mood": [
+        "premium",
+        "energetic"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "minimal",
+        "luxe"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "centered-hero"
+      ]
+    },
+    "pillarAffinity": [
+      "Product Centric",
+      "Brand Building"
+    ],
+    "subcategoryBoost": [
+      "New Drop Reveal",
+      "Hardware Feature"
+    ]
+  },
+  {
+    "id": "shelf-abundance",
+    "name": "Shelf Abundance",
+    "scene": "A single vape pen is prominently featured on a clean, well-lit retail shelf, surrounded by an organized display of identical or complementary product packaging, with other shelves slightly out of focus in the background.",
+    "lighting": "Even, bright ambient lighting from above illuminates the products clearly, with a slightly cool color temperature mimicking a modern retail environment.",
+    "camera": "A slightly elevated, straight-on shot with a 35mm equivalent lens, capturing the product in context, with a moderate depth of field to show surrounding products.",
+    "palette": "A diverse, often colorful palette reflecting the various product packaging, grounded by the neutral tones of the shelves themselves.",
+    "post": "Sharp, clean commercial finish with accurate colors, minimal digital noise, and an appealing, accessible grade.",
+    "aestheticTags": {
+      "vibe": [
+        "clinical",
+        "editorial"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "environmental",
+        "rule-of-thirds"
+      ],
+      "mood": [
+        "premium"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "clinical"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "environmental"
+      ]
+    },
+    "pillarAffinity": [
+      "Social Proof",
+      "Product Centric",
+      "Brand Building"
+    ],
+    "subcategoryBoost": [
+      "Retail Partner Spotlight",
+      "New Drop Reveal"
+    ]
+  },
+  {
+    "id": "curated-unboxing",
+    "name": "Curated Unboxing",
+    "scene": "A single vape pen is gently nestled within a beautifully arranged collection of premium accessories or complementary items (e.g., rolling papers, stylish lighter, branded merch) inside a high-quality box or basket.",
+    "lighting": "Soft, warm, natural light from a side window illuminates the scene, creating inviting highlights and gentle, elongated shadows.",
+    "camera": "An overhead or slightly angled close-up shot with a 100mm equivalent macro lens, focusing on textures and details with a very shallow depth of field.",
+    "palette": "An earthy and warm palette with a mix of natural textures like wood, linen, or craft paper, complemented by the product's design.",
+    "post": "Rich, textural finish with a slightly warm color grade, subtle vignette, and a luxurious editorial feel.",
+    "aestheticTags": {
+      "vibe": [
+        "luxe",
+        "editorial",
+        "dreamy"
+      ],
+      "palette": [
+        "earthy",
+        "warm"
+      ],
+      "composition": [
+        "flat-lay",
+        "macro"
+      ],
+      "mood": [
+        "premium",
+        "calm"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "luxe",
+        "editorial"
+      ],
+      "palette": [
+        "earthy"
+      ],
+      "composition": [
+        "flat-lay"
+      ]
+    },
+    "pillarAffinity": [
+      "Lifestyle",
+      "Product Centric",
+      "Brand Building"
+    ],
+    "subcategoryBoost": [
+      "New Drop Reveal",
+      "Hardware Feature",
+      "First Timer Reaction"
+    ]
+  },
+  {
+    "id": "floating-product-trio",
+    "name": "Floating Product Trio",
+    "scene": "Three identical or different flavored vape pens are arranged in a dynamic staggered pattern, appearing to float weightlessly against a soft, unfocused background.",
+    "lighting": "Bright, even studio lighting from slightly above and in front creates a uniform look, with minimal, soft cast shadows implying separation.",
+    "camera": "A mid-range, slightly low-angle shot with a 50mm equivalent lens, showcasing the three products sharply against a smoothly blurred background.",
+    "palette": "A vibrant and varied palette derived from the product packaging colors, contrasted against a soft, complementary background blur.",
+    "post": "Clean, sharp finish with excellent color fidelity, subtle reflections, and a modern commercial aesthetic.",
+    "aestheticTags": {
+      "vibe": [
+        "minimal",
+        "clinical"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "centered-hero",
+        "abstract"
+      ],
+      "mood": [
+        "premium",
+        "energetic"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "minimal"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "centered-hero"
+      ]
+    },
+    "pillarAffinity": [
+      "Product Centric",
+      "Brand Building"
+    ],
+    "subcategoryBoost": [
+      "New Drop Reveal",
+      "Flavor Breakdown",
+      "Hardware Feature"
+    ]
+  },
+  {
+    "id": "hand-held-highlight",
+    "name": "Hand-Held Highlight",
+    "scene": "A single vape pen is elegantly held between two fingers of a minimalist hand with clean, unadorned nails, presented against a clean, solid color background.",
+    "lighting": "Soft, directional lighting from the side emphasizes the product's form and the hand's contours, with a neutral color temperature.",
+    "camera": "A close-up, slightly low-angle shot using a 85mm equivalent lens, focusing sharply on the product and hand while creating a gentle background blur.",
+    "palette": "A simple, high-contrast palette where the product's color pops against the neutral skin tones and a single, complementary background color.",
+    "post": "Natural, clean finish with subtle skin retouching, crisp product details, and a modern editorial grade.",
+    "aestheticTags": {
+      "vibe": [
+        "minimal",
+        "luxe",
+        "editorial"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "centered-hero"
+      ],
+      "mood": [
+        "premium",
+        "calm"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "minimal",
+        "luxe"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "centered-hero"
+      ]
+    },
+    "pillarAffinity": [
+      "Lifestyle",
+      "Social Proof",
+      "Product Centric"
+    ],
+    "subcategoryBoost": [
+      "Hardware Feature",
+      "First Timer Reaction"
+    ]
+  },
+  {
+    "id": "botanical-texture-bed",
+    "name": "Botanical Texture Bed",
+    "scene": "A single vape pen is artfully placed on a rich bed of textural, natural elements, such as lush cannabis leaves, fragrant herbs, or smooth, organic stones.",
+    "lighting": "Soft, dappled overhead light filters through foliage (if applicable), creating gentle highlights and varied shadows, with a warm, inviting temperature.",
+    "camera": "A slightly elevated close-up shot with a 90mm macro lens, focusing intensely on the product and the intricate textures of its surroundings with a very shallow depth of field.",
+    "palette": "An earthy and natural palette of deep greens, browns, or other organic tones, highlighting the product's color against the rich backdrop.",
+    "post": "Organic, vibrant finish with enhanced texture and detail, slightly desaturated greens, and a premium, naturalistic editorial feel.",
+    "aestheticTags": {
+      "vibe": [
+        "luxe",
+        "dreamy"
+      ],
+      "palette": [
+        "earthy"
+      ],
+      "composition": [
+        "macro",
+        "environmental"
+      ],
+      "mood": [
+        "calm",
+        "premium"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "luxe"
+      ],
+      "palette": [
+        "earthy"
+      ],
+      "composition": [
+        "macro"
+      ]
+    },
+    "pillarAffinity": [
+      "Product Centric",
+      "Brand Building",
+      "Education"
+    ],
+    "subcategoryBoost": [
+      "Quality Process",
+      "Flavor Breakdown",
+      "How It's Made"
+    ]
+  },
+  {
+    "id": "geometric-grid-pattern",
+    "name": "Geometric Grid Pattern",
+    "scene": "Multiple identical or distinct vape pens are arranged in a precise, repeating grid pattern, filling the entire frame from a top-down perspective.",
+    "lighting": "Flat, even, soft box lighting from directly above ensures consistent illumination across all products, with minimal shadow and a neutral color temperature.",
+    "camera": "A perfect top-down flat-lay shot with a wide-angle 24mm equivalent lens, capturing the entire uniform arrangement with extreme sharpness and deep depth of field.",
+    "palette": "A harmonious yet vibrant palette created by the repetition of product colors, often against a contrasting or complementary solid background.",
+    "post": "Ultra-clean, graphic finish with high resolution, precise color replication, and a modern commercial aesthetic.",
+    "aestheticTags": {
+      "vibe": [
+        "minimal",
+        "clinical",
+        "editorial"
+      ],
+      "palette": [
+        "high-contrast",
+        "monochrome"
+      ],
+      "composition": [
+        "flat-lay",
+        "abstract"
+      ],
+      "mood": [
+        "premium",
+        "calm"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "minimal",
+        "clinical"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "flat-lay"
+      ]
+    },
+    "pillarAffinity": [
+      "Product Centric",
+      "Brand Building"
+    ],
+    "subcategoryBoost": [
+      "New Drop Reveal",
+      "Hardware Feature"
+    ]
+  },
+  {
+    "id": "clean-hero-spotlight",
+    "name": "Clean Hero Spotlight",
+    "scene": "A single vape pen stands perfectly upright and centered on a pristine, seamless, monochromatic background (e.g., white, light grey, or a subtle pastel).",
+    "lighting": "Soft, diffused studio lighting from slightly above and in front creates gentle highlights and subtle, clean shadows that define the product's form, with a neutral color temperature.",
+    "camera": "A straight-on, eye-level shot with a 100mm equivalent lens, ensuring the product is in sharp focus from top to bottom against a smoothly blurred background.",
+    "palette": "A minimalist palette, with the product's colors serving as the primary visual interest against a clean, uncluttered backdrop.",
+    "post": "Polished, high-key finish with impeccable sharpness, accurate color rendition, and a timeless, commercial aesthetic.",
+    "aestheticTags": {
+      "vibe": [
+        "minimal",
+        "luxe",
+        "clinical"
+      ],
+      "palette": [
+        "monochrome"
+      ],
+      "composition": [
+        "centered-hero"
+      ],
+      "mood": [
+        "premium",
+        "calm"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "minimal",
+        "luxe"
+      ],
+      "palette": [
+        "monochrome"
+      ],
+      "composition": [
+        "centered-hero"
+      ]
+    },
+    "pillarAffinity": [
+      "Product Centric",
+      "Brand Building"
+    ],
+    "subcategoryBoost": [
+      "Hardware Feature",
+      "New Drop Reveal"
+    ]
+  },
+  {
+    "id": "surreal-cloud-dream",
+    "name": "Surreal Cloud Dream",
+    "scene": "A single vape pen floats serenely amidst a dreamlike expanse of pastel-colored clouds, mist, or abstract atmospheric light patterns.",
+    "lighting": "Soft, ethereal backlighting and fill lights create a glow around the product and illuminate the mist, with a cool to neutral color temperature.",
+    "camera": "A medium-wide shot from a slightly low angle with a 35mm equivalent lens, capturing the product within its expansive, dreamy environment with a soft focus.",
+    "palette": "A dreamy, pastel, or subtly iridescent palette of blues, pinks, purples, and soft whites, allowing the product to stand out as a central element.",
+    "post": "Soft, glowing finish with diffused light, gentle color grading, subtle atmospheric haze, and a whimsical, surreal editorial aesthetic.",
+    "aestheticTags": {
+      "vibe": [
+        "dreamy",
+        "surreal",
+        "playful"
+      ],
+      "palette": [
+        "pastel",
+        "cool"
+      ],
+      "composition": [
+        "environmental",
+        "abstract"
+      ],
+      "mood": [
+        "calm",
+        "mysterious"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "dreamy",
+        "surreal"
+      ],
+      "palette": [
+        "pastel"
+      ],
+      "composition": [
+        "abstract"
+      ]
+    },
+    "pillarAffinity": [
+      "Brand Building",
+      "Lifestyle"
+    ],
+    "subcategoryBoost": [
+      "New Drop Reveal",
+      "Flavor Breakdown"
+    ]
+  },
+  {
+    "id": "dramatic-shadow-play",
+    "name": "Dramatic Shadow Play",
+    "scene": "A single vape pen stands prominently, dramatically silhouetted by strong, directional lighting that casts a long, sharp shadow across a clean, solid-colored surface.",
+    "lighting": "A single, hard light source positioned off-camera to one side creates stark contrast and a graphic, elongated shadow, with a neutral color temperature.",
+    "camera": "A slightly low-angle eye-level shot with a 70mm equivalent lens, capturing the product and its striking shadow against a smooth, uncluttered background, moderate depth of field.",
+    "palette": "A high-contrast palette often featuring a single bold background color that starkly contrasts with the product, emphasizing form and shadow.",
+    "post": "Punchy, graphic finish with deep blacks, bright highlights, minimal texture, and a high-fashion editorial aesthetic.",
+    "aestheticTags": {
+      "vibe": [
+        "luxe",
+        "editorial",
+        "minimal"
+      ],
+      "palette": [
+        "high-contrast",
+        "monochrome"
+      ],
+      "composition": [
+        "centered-hero",
+        "abstract"
+      ],
+      "mood": [
+        "premium",
+        "mysterious"
+      ]
+    },
+    "brandTags": {
+      "vibe": [
+        "luxe",
+        "minimal"
+      ],
+      "palette": [
+        "high-contrast"
+      ],
+      "composition": [
+        "centered-hero"
+      ]
+    },
+    "pillarAffinity": [
+      "Brand Building",
+      "Product Centric"
+    ],
+    "subcategoryBoost": [
+      "Hardware Feature",
+      "New Drop Reveal"
+    ]
+  }
+]

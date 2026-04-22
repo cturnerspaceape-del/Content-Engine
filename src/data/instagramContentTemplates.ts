@@ -1,5 +1,6 @@
 import type { ContentItem, InstagramFormat } from '../types'
 import { flavorNames } from '../remotion/flavorThemes'
+import { pickShotTemplate } from './shotTemplates'
 
 // ─── Space Ape voice: cool, fun, hype, "clean Charlie Sheen", Supreme energy ───
 // Hooks, captions, and hashtags picked independently for max variety
@@ -380,11 +381,17 @@ export function generateContentForPost(item: ContentItem): ContentItem {
   ].join('\n')
 
   const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
-  const layoutTemplate = format === 'Single Image'
-    ? Math.floor(Math.random() * 24) + 1   // 1-24
-    : format === 'Carousel'
-    ? Math.floor(Math.random() * 6) + 1    // 1-6
-    : Math.floor(Math.random() * 4) + 1    // 1-4 for Reel
+
+  // Single Image: pick a visual shot template (recipe) from src/data/shotTemplates.ts.
+  // Carousel/Reel: keep the legacy numeric layoutTemplate variant system.
+  const shotTemplateId = format === 'Single Image'
+    ? pickShotTemplate(pillar, subcategory).id
+    : undefined
+  const layoutTemplate = format === 'Carousel'
+    ? Math.floor(Math.random() * 8) + 1
+    : format === 'Reel'
+    ? Math.floor(Math.random() * 6) + 1
+    : undefined
   const slideCount = format === 'Carousel'
     ? Math.floor(Math.random() * 6) + 5
     : undefined
@@ -401,7 +408,8 @@ export function generateContentForPost(item: ContentItem): ContentItem {
       subcategory,
       format: format as InstagramFormat,
       flavor,
-      layoutTemplate,
+      ...(layoutTemplate !== undefined && { layoutTemplate }),
+      ...(shotTemplateId !== undefined && { shotTemplateId }),
       ...(slideCount !== undefined && { slideCount }),
     },
   }

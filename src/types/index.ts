@@ -18,7 +18,8 @@ export interface ContentItem {
     subcategory: string
     format: InstagramFormat
     flavor?: string
-    layoutTemplate?: number
+    layoutTemplate?: number // Carousel 1-8, Reel 1-6. Unused for Single Image.
+    shotTemplateId?: string // Single Image only — see src/data/shotTemplates.ts
     slideCount?: number
   }
 }
@@ -35,7 +36,7 @@ export interface DayContent {
   items: ContentItem[]
 }
 
-export type ViewState = 'home' | 'calendar' | 'strategy' | 'postlog'
+export type ViewState = 'home' | 'calendar' | 'strategy' | 'postlog' | 'sil-lab'
 
 export type InstagramFormat = 'Carousel' | 'Reel' | 'Single Image'
 

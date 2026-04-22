@@ -242,6 +242,8 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [reelModalOpen, setReelModalOpen] = useState(false)
+  // When set, forces SingleImage to bypass cache and regenerate with same brief.
+  const [variationSeed, setVariationSeed] = useState<number | undefined>(undefined)
 
   // Compute actual slide count from arc (content-driven, 3-7 slides)
   const gv = item.generatedVisual
@@ -350,7 +352,10 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
                   hashtags: item.generatedVisual.hashtags,
                   pillar: item.generatedVisual.pillar,
                   subcategory: item.generatedVisual.subcategory,
-                  layoutTemplate: item.generatedVisual.layoutTemplate || 1,
+                  ...(item.generatedVisual.shotTemplateId && {
+                    shotTemplateId: item.generatedVisual.shotTemplateId,
+                  }),
+                  ...(typeof variationSeed === 'number' && { variationSeed }),
                 }}
               />
             </div>
@@ -517,6 +522,20 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
               >
                 {isGenerated ? 'Regenerate' : 'Generate'}
               </button>
+              {isGenerated && format === 'Single Image' && (
+                <button
+                  onClick={() => setVariationSeed(Math.floor(Math.random() * 10000))}
+                  title="Same brief, new output (bypasses cache, costs ~$0.15)"
+                  className="py-2 px-3 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
+                  style={{
+                    background: 'rgba(251,146,60,.12)',
+                    border: '1px solid #fb923c',
+                    color: '#fb923c',
+                  }}
+                >
+                  🎲 Reroll
+                </button>
+              )}
             </div>
             <button
               onClick={onLogPost}

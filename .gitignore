@@ -9,9 +9,25 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-server
 package-lock.json
 dist-ssr
 *.local
+
+# Env
+.env
+.env.local
+
+# AI-generated assets (derived, not source)
+public/generated/
+
+# Reference image payloads (heavy, user-curated)
+public/references/inspo/*
+public/references/brand/*
+public/references/_review/*
+!public/references/inspo/.gitkeep
+!public/references/brand/.gitkeep
+!public/references/_review/.gitkeep
 
 # Editor directories and files
 .vscode/*
