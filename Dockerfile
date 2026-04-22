@@ -1,9 +1,9 @@
 FROM node:22-slim
 WORKDIR /app
+ENV NODE_ENV=production
 COPY package.json ./
-RUN npm install
+RUN npm install --include=dev
 COPY . .
 RUN npm run build
-RUN npm install -g serve
 EXPOSE 3000
-CMD ["sh", "-c", "serve dist -s -l tcp://0.0.0.0:${PORT:-3000}"]
+CMD ["npx", "tsx", "server/index.ts"]

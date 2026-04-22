@@ -83,9 +83,9 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
     const references: ReferenceImage[] = []
     if (productFile) references.push(await loadProductReference(productFile))
     const loadedInspo = await Promise.all(inspoKeys.map(loadReferenceByManifestKey))
-    references.push(...loadedInspo)
+    references.push(...loadedInspo.filter((r): r is ReferenceImage => r !== null))
     const loadedBrand = await Promise.all(brandKeys.map(loadReferenceByManifestKey))
-    references.push(...loadedBrand)
+    references.push(...loadedBrand.filter((r): r is ReferenceImage => r !== null))
 
     const prompt = buildPrompt({
       flavor,

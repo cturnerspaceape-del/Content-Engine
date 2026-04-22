@@ -135,8 +135,18 @@ export async function loadProductReference(filename: string): Promise<ReferenceI
 }
 
 // Manifest filenames are stored as "inspo/foo.jpg" or "brand/bar.png".
-export async function loadReferenceByManifestKey(key: string): Promise<ReferenceImage> {
+// Returns null (with a warning) when the file is missing — on Railway the reference
+// images are .gitignored, so the manifest may outlive the files on disk. A missing
+// inspo/brand ref shouldn't fail the whole generation; the product ref + prompt alone
+// still produce a valid image.
+export async function loadReferenceByManifestKey(key: string): Promise<ReferenceImage | null> {
   const abs = path.join(REFERENCES_DIR, key)
-  const bytes = await fs.readFile(abs)
-  return { mime: mimeFromFilename(key), base64: bytes.toString('base64') }
+  try {
+    const bytes = await fs.readFile(abs)
+    return { mime: mimeFromFilename(key), base64: bytes.toString('base64') }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn(`[refs] missing: ${key} (${msg})`)
+    return null
+  }
 }
