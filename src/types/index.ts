@@ -21,6 +21,8 @@ export interface ContentItem {
     layoutTemplate?: number // Carousel 1-8, Reel 1-6. Unused for Single Image.
     shotTemplateId?: string // Single Image only — see src/data/shotTemplates.ts
     slideCount?: number
+    arcId?: string // Carousel Lounge only — presence switches Carousel rendering to AI-image slides
+    carouselSeed?: number // shared anchor across all slides of one Lounge carousel
   }
 }
 
@@ -36,7 +38,7 @@ export interface DayContent {
   items: ContentItem[]
 }
 
-export type ViewState = 'home' | 'calendar' | 'strategy' | 'postlog' | 'sil-lab'
+export type ViewState = 'home' | 'calendar' | 'strategy' | 'postlog' | 'sil-lab' | 'carousel-lounge'
 
 export type InstagramFormat = 'Carousel' | 'Reel' | 'Single Image'
 

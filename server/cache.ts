@@ -2,18 +2,22 @@ import { createHash } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 
-const CACHE_DIR = path.resolve(process.cwd(), 'public', 'generated', 'single-image')
-const PUBLIC_PREFIX = '/generated/single-image'
+const GENERATED_ROOT = path.resolve(process.cwd(), 'public', 'generated')
+
+export type CacheKind = 'single-image' | 'carousel-slide'
 
 export function hashKey(input: unknown): string {
   const json = stableStringify(input)
   return createHash('sha256').update(json).digest('hex').slice(0, 16)
 }
 
-export function cachePath(hash: string): { absPath: string; publicUrl: string } {
+export function cachePath(
+  hash: string,
+  kind: CacheKind = 'single-image',
+): { absPath: string; publicUrl: string } {
   return {
-    absPath: path.join(CACHE_DIR, `${hash}.png`),
-    publicUrl: `${PUBLIC_PREFIX}/${hash}.png`,
+    absPath: path.join(GENERATED_ROOT, kind, `${hash}.png`),
+    publicUrl: `/generated/${kind}/${hash}.png`,
   }
 }
 

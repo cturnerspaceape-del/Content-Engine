@@ -1,6 +1,7 @@
 import type { ContentItem, InstagramFormat } from '../types'
 import { flavorNames } from '../remotion/flavorThemes'
 import { pickShotTemplate } from './shotTemplates'
+import { getCarouselArc, pickCarouselArc } from './carouselArcs'
 
 // ─── Space Ape voice: cool, fun, hype, "clean Charlie Sheen", Supreme energy ───
 // Hooks, captions, and hashtags picked independently for max variety
@@ -411,6 +412,50 @@ export function generateContentForPost(item: ContentItem): ContentItem {
       ...(layoutTemplate !== undefined && { layoutTemplate }),
       ...(shotTemplateId !== undefined && { shotTemplateId }),
       ...(slideCount !== undefined && { slideCount }),
+    },
+  }
+}
+
+// Carousel Lounge variant: produces an AI-image carousel (3–5 slides). The
+// presence of `arcId` on generatedVisual tells ContentCard to render with
+// CarouselLoungeVisual (per-slide Gemini calls) instead of the Remotion
+// template carousel.
+export function generateCarouselLoungePost(item: ContentItem, arcId?: string): ContentItem {
+  const titleParts = item.title.split(' — ')
+  const pillarSubcat = titleParts[1] || ''
+  const pillar = pillarSubcat.split(':')[0]?.trim() || 'Product Centric'
+  const subcategory = pillarSubcat.split(':')[1]?.trim() || ''
+
+  const hookPool = subcategoryHooks[subcategory] || hooks[pillar] || hooks['Lifestyle']
+  const captionPool = subcategoryCaptions[subcategory] || captions[pillar] || captions['Lifestyle']
+  const hashtagPool = hashtagSets[pillar] || hashtagSets['Lifestyle']
+
+  const hook = hookPool[Math.floor(Math.random() * hookPool.length)]
+  const caption = captionPool[Math.floor(Math.random() * captionPool.length)]
+  const selectedHashtags = hashtagPool[Math.floor(Math.random() * hashtagPool.length)]
+
+  const arc = (arcId && getCarouselArc(arcId)) || pickCarouselArc(pillar, subcategory)
+
+  const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
+  const carouselSeed = Math.floor(Math.random() * 100_000)
+
+  const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
+
+  return {
+    ...item,
+    description: generatedDescription,
+    generated: true,
+    generatedVisual: {
+      hook,
+      caption,
+      hashtags: selectedHashtags,
+      pillar,
+      subcategory,
+      format: 'Carousel' as InstagramFormat,
+      flavor,
+      slideCount: arc.slides.length,
+      arcId: arc.id,
+      carouselSeed,
     },
   }
 }

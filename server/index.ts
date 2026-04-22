@@ -2,6 +2,7 @@ import 'dotenv/config'
 import path from 'node:path'
 import express from 'express'
 import { generateSingleImageHandler } from './generateSingleImage'
+import { generateCarouselSlideHandler } from './generateCarouselSlide'
 
 const app = express()
 app.use(express.json({ limit: '1mb' }))
@@ -11,6 +12,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.post('/api/generate-single-image', generateSingleImageHandler)
+app.post('/api/generate-carousel-slide', generateCarouselSlideHandler)
 
 if (process.env.NODE_ENV === 'production') {
   const publicDir = path.resolve(process.cwd(), 'public')

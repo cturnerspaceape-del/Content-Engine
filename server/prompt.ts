@@ -2,6 +2,14 @@ import type { FlavorTheme } from '../src/remotion/types'
 import type { ShotTemplate } from '../src/data/shotTemplates'
 import { extractMoodWords } from '../src/data/moodWords'
 
+export interface SlideContext {
+  index: number // 1-based
+  total: number
+  role: string
+  brief: string
+  carouselSeed: number
+}
+
 export interface BuildPromptInput {
   flavor: string
   hook: string
@@ -13,6 +21,7 @@ export interface BuildPromptInput {
   inspoRefCount: number
   brandRefCount: number
   variationSeed?: number
+  slideContext?: SlideContext
 }
 
 // ─── Fixed sections ───
@@ -71,6 +80,7 @@ export function buildPrompt({
   inspoRefCount,
   brandRefCount,
   variationSeed,
+  slideContext,
 }: BuildPromptInput): string {
   const strain = theme.strainType || 'Hybrid'
   const mood = extractMoodWords(hook, caption, pillar, subcategory).join(', ')
@@ -81,6 +91,19 @@ export function buildPrompt({
   sections.push(
     `GOAL: Generate a 1080x1080 Instagram post for Space Ape executing the shot brief "${shotTemplate.name}".`,
   )
+
+  // 1b. CAROUSEL CONTEXT (only present for Carousel Lounge slides)
+  if (slideContext) {
+    sections.push(
+      [
+        `CAROUSEL CONTEXT: slide ${slideContext.index} of ${slideContext.total} in a cohesive post.`,
+        `  Role: ${slideContext.role}`,
+        `  Narrative beat: ${slideContext.brief}`,
+        `  Maintain visual consistency with the other slides — same palette, lighting mood, and production value so the set reads as one shoot.`,
+        `  Carousel anchor: ${slideContext.carouselSeed}`,
+      ].join('\n'),
+    )
+  }
 
   // 2. REFERENCE KEY (front-loaded — most important thing Nano Banana needs to know)
   sections.push(`REFERENCE IMAGES ATTACHED (in order):\n${buildReferenceKey(inspoRefCount, brandRefCount)}`)

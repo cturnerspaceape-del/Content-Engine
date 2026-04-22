@@ -11,6 +11,7 @@ import type { SingleImageProps, CarouselProps, ReelProps } from '../remotion/typ
 const ReelComponent = Reel as unknown as React.FC<Record<string, unknown>>
 const CarouselComponent = Carousel as unknown as React.FC<Record<string, unknown>>
 import { platformColors } from './PlatformContentItem'
+import CarouselLoungeVisual from './CarouselLoungeVisual'
 
 const formatColors: Record<string, string> = {
   'Carousel': '#a855f7',
@@ -360,33 +361,49 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
               />
             </div>
           ) : format === 'Carousel' ? (
-            <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1', position: 'relative' }}>
-              <Thumbnail
-                component={CarouselComponent}
-                compositionWidth={1080}
-                compositionHeight={1080}
-                durationInFrames={slideCount * 45}
-                fps={30}
-                frameToDisplay={Math.min(currentSlide * 45 + 30, slideCount * 45 - 1)}
-                style={{ width: '100%', height: '100%' }}
-                inputProps={{
-                  flavor: (item.generatedVisual.flavor || 'Amped Apple') as CarouselProps['flavor'],
-                  hook: item.generatedVisual.hook,
-                  caption: item.generatedVisual.caption,
-                  hashtags: item.generatedVisual.hashtags,
-                  pillar: item.generatedVisual.pillar,
-                  subcategory: item.generatedVisual.subcategory,
-                  layoutTemplate: item.generatedVisual.layoutTemplate || 1,
-                  slideCount: slideCount,
-                }}
-              />
-              <CarouselNav
-                current={currentSlide}
-                total={slideCount}
-                onPrev={() => setCurrentSlide(s => Math.max(0, s - 1))}
-                onNext={() => setCurrentSlide(s => Math.min(slideCount - 1, s + 1))}
-              />
-            </div>
+            item.generatedVisual.arcId ? (
+              <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1', position: 'relative' }}>
+                <CarouselLoungeVisual
+                  flavor={(item.generatedVisual.flavor || 'Amped Apple') as CarouselProps['flavor']}
+                  hook={item.generatedVisual.hook}
+                  caption={item.generatedVisual.caption}
+                  pillar={item.generatedVisual.pillar}
+                  subcategory={item.generatedVisual.subcategory}
+                  arcId={item.generatedVisual.arcId}
+                  slideCount={slideCount}
+                  carouselSeed={item.generatedVisual.carouselSeed ?? 0}
+                  {...(typeof variationSeed === 'number' ? { variationSeed } : {})}
+                />
+              </div>
+            ) : (
+              <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1', position: 'relative' }}>
+                <Thumbnail
+                  component={CarouselComponent}
+                  compositionWidth={1080}
+                  compositionHeight={1080}
+                  durationInFrames={slideCount * 45}
+                  fps={30}
+                  frameToDisplay={Math.min(currentSlide * 45 + 30, slideCount * 45 - 1)}
+                  style={{ width: '100%', height: '100%' }}
+                  inputProps={{
+                    flavor: (item.generatedVisual.flavor || 'Amped Apple') as CarouselProps['flavor'],
+                    hook: item.generatedVisual.hook,
+                    caption: item.generatedVisual.caption,
+                    hashtags: item.generatedVisual.hashtags,
+                    pillar: item.generatedVisual.pillar,
+                    subcategory: item.generatedVisual.subcategory,
+                    layoutTemplate: item.generatedVisual.layoutTemplate || 1,
+                    slideCount: slideCount,
+                  }}
+                />
+                <CarouselNav
+                  current={currentSlide}
+                  total={slideCount}
+                  onPrev={() => setCurrentSlide(s => Math.max(0, s - 1))}
+                  onNext={() => setCurrentSlide(s => Math.min(slideCount - 1, s + 1))}
+                />
+              </div>
+            )
           ) : format === 'Reel' ? (
             <div
               className="rounded-lg overflow-hidden mb-3"

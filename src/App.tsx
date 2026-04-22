@@ -4,6 +4,7 @@ import WeeklyCalendar from './components/WeeklyCalendar'
 import StrategyDashboard from './components/StrategyDashboard'
 import PostLog from './components/PostLog'
 import SingleImageLab from './components/SingleImageLab'
+import CarouselLounge from './components/CarouselLounge'
 import type { ViewState, LoggedPost } from './types'
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
               onStrategy={() => switchView('strategy')}
               onPostLog={() => switchView('postlog')}
               onSilLab={() => switchView('sil-lab')}
+              onCarouselLounge={() => switchView('carousel-lounge')}
               loggedCount={loggedPosts.length}
             />
           </div>
@@ -68,6 +70,11 @@ export default function App() {
         {view === 'sil-lab' && (
           <div className="fade-in">
             <SingleImageLab onBack={() => switchView('home')} />
+          </div>
+        )}
+        {view === 'carousel-lounge' && (
+          <div className="fade-in">
+            <CarouselLounge onBack={() => switchView('home')} />
           </div>
         )}
       </div>
