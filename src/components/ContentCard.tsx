@@ -263,7 +263,9 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
   }, [arcLength, gv?.hook])
 
   const titleParts = item.title.split(' — ')
-  const format = titleParts[0] || item.contentType
+  // Trust the generated format first (typed InstagramFormat) so lab-page title
+  // prefixes like "Carousel Lounge —" still land on the Carousel branch below.
+  const format = item.generatedVisual?.format ?? titleParts[0] ?? item.contentType
   const pillarSubcat = titleParts[1] || ''
   const pillar = pillarSubcat.split(':')[0]?.trim() || 'General'
   const subcat = pillarSubcat.split(':')[1]?.trim() || ''
@@ -362,7 +364,7 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
             </div>
           ) : format === 'Carousel' ? (
             item.generatedVisual.arcId ? (
-              <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1', position: 'relative' }}>
+              <div className="mb-3">
                 <CarouselLoungeVisual
                   flavor={(item.generatedVisual.flavor || 'Amped Apple') as CarouselProps['flavor']}
                   hook={item.generatedVisual.hook}

@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import ContentCard from './ContentCard'
 import type { ContentItem } from '../types'
 import { generateCarouselLoungePost } from '../data/instagramContentTemplates'
 import { getCarouselArc } from '../data/carouselArcs'
+import { usePersistedState } from '../utils/persistedState'
 
 interface CarouselLoungeProps {
   onBack: () => void
@@ -38,7 +38,7 @@ function decorateTitle(item: ContentItem, seedTitle: string): ContentItem {
 }
 
 export default function CarouselLounge({ onBack }: CarouselLoungeProps) {
-  const [items, setItems] = useState<ContentItem[]>(() =>
+  const [items, setItems] = usePersistedState<ContentItem[]>('sl:carouselLounge:items', () =>
     SEEDS.map((s) => makeSeed(s.title)),
   )
 

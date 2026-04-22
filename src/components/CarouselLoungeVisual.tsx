@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getFlavorTheme } from '../remotion/flavorThemes'
 import type { SpaceApeFlavor } from '../remotion/types'
+import { getCarouselArc } from '../data/carouselArcs'
 
 interface CarouselLoungeVisualProps {
   flavor: SpaceApeFlavor
@@ -72,6 +73,7 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     variationSeed,
   } = props
   const theme = getFlavorTheme(flavor)
+  const arc = getCarouselArc(arcId)
 
   const body = useMemo(
     () => ({
@@ -89,14 +91,19 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
 
   const [urls, setUrls] = useState<(string | null)[]>(() => Array(slideCount).fill(null))
   const [errors, setErrors] = useState<(string | null)[]>(() => Array(slideCount).fill(null))
+  const [rerollingIndex, setRerollingIndex] = useState<number | null>(null)
   const [current, setCurrent] = useState(0)
+  // Mount-cancel ref — shared by the initial fetch loop and any in-flight reroll,
+  // so unmount cancels both.
+  const cancelledRef = useRef(false)
 
   useEffect(() => {
-    let cancelled = false
+    cancelledRef.current = false
     setUrls(Array(slideCount).fill(null))
     setErrors(Array(slideCount).fill(null))
+    setRerollingIndex(null)
     setCurrent(0)
-    const isCancelled = () => cancelled
+    const isCancelled = () => cancelledRef.current
 
     for (let i = 0; i < slideCount; i++) {
       const slideIndex = i
@@ -119,45 +126,109 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     }
 
     return () => {
-      cancelled = true
+      cancelledRef.current = true
     }
   }, [body, slideCount])
+
+  const handleReroll = (slideIndex: number) => {
+    if (rerollingIndex !== null) return
+    const seed = Math.floor(Math.random() * 100_000)
+    setUrls((prev) => {
+      const next = prev.slice()
+      next[slideIndex] = null
+      return next
+    })
+    setErrors((prev) => {
+      const next = prev.slice()
+      next[slideIndex] = null
+      return next
+    })
+    setRerollingIndex(slideIndex)
+
+    const isCancelled = () => cancelledRef.current
+    fetchSlide({ ...body, slideIndex, variationSeed: seed }, isCancelled).then(({ url, error }) => {
+      if (isCancelled()) return
+      if (url) {
+        setUrls((prev) => {
+          const next = prev.slice()
+          next[slideIndex] = url
+          return next
+        })
+      } else if (error) {
+        setErrors((prev) => {
+          const next = prev.slice()
+          next[slideIndex] = error
+          return next
+        })
+      }
+      setRerollingIndex((prev) => (prev === slideIndex ? null : prev))
+    })
+  }
 
   const loadedCount = urls.filter((u) => u !== null).length
   const allDone = loadedCount + errors.filter((e) => e !== null).length === slideCount
 
   const currentUrl = urls[current]
   const currentError = errors[current]
+  const currentRole = arc?.slides[current]?.role ?? ''
+  const isRerollingCurrent = rerollingIndex === current
+  const showRerollButton = (currentUrl !== null || currentError !== null) && !isRerollingCurrent
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', background: theme.backgroundColor }}>
-      {currentUrl ? (
-        <img
-          src={currentUrl}
-          alt={`Slide ${current + 1} of ${slideCount}`}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      ) : (
-        <SlidePlaceholder
-          theme={theme}
-          error={currentError}
-          label={
-            currentError
-              ? 'Slide failed'
-              : allDone
-              ? 'Slide unavailable'
-              : `Generating slide ${current + 1}/${slideCount}…`
-          }
-        />
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+      {/* Main 1:1 square */}
+      <div
+        className="rounded-lg overflow-hidden"
+        style={{
+          position: 'relative',
+          width: '100%',
+          aspectRatio: '1/1',
+          background: theme.backgroundColor,
+        }}
+      >
+        {currentUrl ? (
+          <img
+            src={currentUrl}
+            alt={`Slide ${current + 1} of ${slideCount}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <SlidePlaceholder
+            theme={theme}
+            error={currentError}
+            slideNumber={current + 1}
+            slideTotal={slideCount}
+            role={currentRole}
+            status={currentError ? 'failed' : allDone ? 'unavailable' : 'generating'}
+          />
+        )}
 
-      {/* Progress ticker while slides are still being generated */}
-      {!allDone && (
+        {/* Progress ticker while slides are still being generated */}
+        {!allDone && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 8,
+              left: 8,
+              background: 'rgba(0,0,0,0.55)',
+              color: '#fff',
+              fontSize: 10,
+              fontWeight: 700,
+              padding: '3px 8px',
+              borderRadius: 6,
+              letterSpacing: '0.04em',
+            }}
+          >
+            {loadedCount}/{slideCount} ready
+          </div>
+        )}
+
+        {/* Slide index badge */}
         <div
           style={{
             position: 'absolute',
             top: 8,
-            left: 8,
+            right: 8,
             background: 'rgba(0,0,0,0.55)',
             color: '#fff',
             fontSize: 10,
@@ -167,33 +238,55 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
             letterSpacing: '0.04em',
           }}
         >
-          {loadedCount}/{slideCount}
+          {current + 1} / {slideCount}
         </div>
-      )}
 
-      {/* Slide index badge */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          background: 'rgba(0,0,0,0.55)',
-          color: '#fff',
-          fontSize: 10,
-          fontWeight: 700,
-          padding: '3px 8px',
-          borderRadius: 6,
-          letterSpacing: '0.04em',
-        }}
-      >
-        {current + 1} / {slideCount}
+        <CarouselLoungeNav
+          current={current}
+          total={slideCount}
+          onPrev={() => setCurrent((s) => Math.max(0, s - 1))}
+          onNext={() => setCurrent((s) => Math.min(slideCount - 1, s + 1))}
+        />
+
+        {/* Per-slide reroll — keeps other slides untouched; fires one fresh Gemini call */}
+        {showRerollButton && (
+          <button
+            onClick={() => handleReroll(current)}
+            disabled={rerollingIndex !== null}
+            title="Regenerate just this slide with a fresh variation (~$0.05)"
+            style={{
+              position: 'absolute',
+              bottom: 24,
+              right: 8,
+              background: 'rgba(251,146,60,0.92)',
+              color: '#1a1a1a',
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              padding: '6px 10px',
+              borderRadius: 8,
+              border: 'none',
+              cursor: rerollingIndex !== null ? 'not-allowed' : 'pointer',
+              opacity: rerollingIndex !== null ? 0.5 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            }}
+          >
+            🎲 Reroll
+          </button>
+        )}
       </div>
 
-      <CarouselLoungeNav
+      {/* Thumbnail strip — all N slides at a glance */}
+      <ThumbnailStrip
+        urls={urls}
+        errors={errors}
         current={current}
-        total={slideCount}
-        onPrev={() => setCurrent((s) => Math.max(0, s - 1))}
-        onNext={() => setCurrent((s) => Math.min(slideCount - 1, s + 1))}
+        onSelect={setCurrent}
+        theme={theme}
+        arcRoles={arc?.slides.map((s) => s.role) ?? []}
       />
     </div>
   )
@@ -202,12 +295,20 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
 function SlidePlaceholder({
   theme,
   error,
-  label,
+  slideNumber,
+  slideTotal,
+  role,
+  status,
 }: {
   theme: ReturnType<typeof getFlavorTheme>
   error: string | null
-  label: string
+  slideNumber: number
+  slideTotal: number
+  role: string
+  status: 'generating' | 'failed' | 'unavailable'
 }) {
+  const statusLabel =
+    status === 'failed' ? 'Slide failed' : status === 'unavailable' ? 'Slide unavailable' : 'Generating…'
   return (
     <div
       style={{
@@ -217,28 +318,122 @@ function SlidePlaceholder({
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column',
-        gap: 16,
+        gap: 8,
         color: theme.textColor,
         fontFamily: 'Inter, system-ui, sans-serif',
-        padding: 40,
+        padding: 24,
         textAlign: 'center',
+        position: 'relative',
       }}
     >
+      {/* Big slide position number — dominant, so the user instantly sees which slide this is */}
       <div
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: '50%',
-          background: theme.primaryColor,
-          opacity: error ? 0.3 : 0.8,
-          animation: error ? undefined : 'pulse 1.6s ease-in-out infinite',
+          fontSize: 88,
+          fontWeight: 900,
+          lineHeight: 1,
+          letterSpacing: '-0.04em',
+          color: theme.primaryColor,
+          opacity: status === 'generating' ? 0.9 : 0.45,
+          animation: status === 'generating' ? 'pulse 1.6s ease-in-out infinite' : undefined,
         }}
-      />
-      <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.04em' }}>{label}</div>
-      {error ? (
-        <div style={{ fontSize: 11, opacity: 0.75, maxWidth: 280 }}>{error}</div>
+      >
+        {slideNumber}
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', opacity: 0.7 }}>
+        OF {slideTotal}
+      </div>
+      {role ? (
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            opacity: 0.85,
+            marginTop: 4,
+            color: theme.accentColor,
+          }}
+        >
+          {role.replace(/-/g, ' ')}
+        </div>
       ) : null}
-      <style>{`@keyframes pulse { 0%,100% { transform: scale(0.9); opacity: 0.5; } 50% { transform: scale(1.05); opacity: 1; } }`}</style>
+      <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.6, marginTop: 2 }}>{statusLabel}</div>
+      {error ? (
+        <div style={{ fontSize: 10, opacity: 0.55, maxWidth: 260, marginTop: 4 }}>{error}</div>
+      ) : null}
+      <style>{`@keyframes pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }`}</style>
+    </div>
+  )
+}
+
+function ThumbnailStrip({
+  urls,
+  errors,
+  current,
+  onSelect,
+  theme,
+  arcRoles,
+}: {
+  urls: (string | null)[]
+  errors: (string | null)[]
+  current: number
+  onSelect: (idx: number) => void
+  theme: ReturnType<typeof getFlavorTheme>
+  arcRoles: string[]
+}) {
+  return (
+    <div style={{ display: 'flex', gap: 6, width: '100%' }}>
+      {urls.map((url, idx) => {
+        const isCurrent = idx === current
+        const isLoaded = url !== null
+        const err = errors[idx]
+        const role = arcRoles[idx]
+        return (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => onSelect(idx)}
+            title={role ? `${idx + 1}. ${role.replace(/-/g, ' ')}` : `Slide ${idx + 1}`}
+            style={{
+              flex: 1,
+              aspectRatio: '1/1',
+              border: isCurrent ? `2px solid ${theme.primaryColor}` : '1px solid rgba(148,163,184,0.25)',
+              borderRadius: 6,
+              padding: 0,
+              cursor: 'pointer',
+              overflow: 'hidden',
+              position: 'relative',
+              background: isLoaded ? 'transparent' : theme.backgroundColor,
+              minWidth: 0,
+            }}
+          >
+            {isLoaded ? (
+              <img
+                src={url!}
+                alt={`Slide ${idx + 1}`}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: err ? 'rgba(239,68,68,0.9)' : theme.textColor,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  opacity: err ? 0.8 : 0.9,
+                }}
+              >
+                {err ? '!' : idx + 1}
+              </div>
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }

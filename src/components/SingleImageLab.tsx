@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import ContentCard from './ContentCard'
 import type { ContentItem } from '../types'
 import { generateContentForPost } from '../data/instagramContentTemplates'
 import { getShotTemplate } from '../data/shotTemplates'
+import { usePersistedState } from '../utils/persistedState'
 
 interface SingleImageLabProps {
   onBack: () => void
@@ -36,7 +36,9 @@ function decorateTitle(item: ContentItem, seedTitle: string): ContentItem {
 }
 
 export default function SingleImageLab({ onBack }: SingleImageLabProps) {
-  const [items, setItems] = useState<ContentItem[]>(() => SEED_TITLES.map(makeSeed))
+  const [items, setItems] = usePersistedState<ContentItem[]>('sl:silLab:items', () =>
+    SEED_TITLES.map(makeSeed),
+  )
 
   const handleGenerate = (idx: number) => {
     setItems((prev) => {

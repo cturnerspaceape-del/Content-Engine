@@ -5,12 +5,13 @@ import StrategyDashboard from './components/StrategyDashboard'
 import PostLog from './components/PostLog'
 import SingleImageLab from './components/SingleImageLab'
 import CarouselLounge from './components/CarouselLounge'
+import { usePersistedState } from './utils/persistedState'
 import type { ViewState, LoggedPost } from './types'
 
 export default function App() {
-  const [view, setView] = useState<ViewState>('home')
+  const [view, setView] = usePersistedState<ViewState>('sl:view', 'home')
   const [animating, setAnimating] = useState(false)
-  const [loggedPosts, setLoggedPosts] = useState<LoggedPost[]>([])
+  const [loggedPosts, setLoggedPosts] = usePersistedState<LoggedPost[]>('sl:loggedPosts', [])
 
   const switchView = (target: ViewState) => {
     setAnimating(true)
