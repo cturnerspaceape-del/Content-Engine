@@ -37,38 +37,59 @@ function decorateTitle(item: ContentItem, seedTitle: string): ContentItem {
   return { ...item, title: `${seedTitle}  ·  🎞️ ${name}` }
 }
 
-export default function CarouselLounge({ onBack }: CarouselLoungeProps) {
-  const [items, setItems] = usePersistedState<ContentItem[]>('sl:carouselLounge:items', () =>
-    SEEDS.map((s) => makeSeed(s.title)),
-  )
+function findSeedIdx(title: string): number {
+  const idx = SEEDS.findIndex((s) => title.startsWith(s.title))
+  return idx >= 0 ? idx : 0
+}
 
-  const handleGenerate = (idx: number) => {
-    setItems((prev) => {
-      const next = [...prev]
-      const generated = generateCarouselLoungePost(next[idx], SEEDS[idx].arcId)
-      next[idx] = decorateTitle(generated, SEEDS[idx].title)
-      return next
+function pickDifferentSeedIdx(current: number): number {
+  if (SEEDS.length <= 1) return 0
+  let next = Math.floor(Math.random() * SEEDS.length)
+  while (next === current) next = Math.floor(Math.random() * SEEDS.length)
+  return next
+}
+
+export default function CarouselLounge({ onBack }: CarouselLoungeProps) {
+  // Persisted shape migrated from ContentItem[] (legacy 6-card grid) to a
+  // single ContentItem. Array form gets coerced to its first element.
+  const [raw, setRaw] = usePersistedState<ContentItem | ContentItem[]>(
+    'sl:carouselLounge:items',
+    () => makeSeed(SEEDS[0].title),
+  )
+  const item: ContentItem = Array.isArray(raw)
+    ? raw[0] ?? makeSeed(SEEDS[0].title)
+    : raw
+
+  const setItem = (updater: (prev: ContentItem) => ContentItem) => {
+    setRaw((prev) => {
+      const current: ContentItem = Array.isArray(prev)
+        ? prev[0] ?? makeSeed(SEEDS[0].title)
+        : prev
+      return updater(current)
     })
   }
 
-  const handleShuffle = (idx: number) => {
-    setItems((prev) => {
-      const next = [...prev]
-      next[idx] = makeSeed(SEEDS[idx].title)
-      return next
+  const handleGenerate = () => {
+    setItem((cur) => {
+      const seedIdx = findSeedIdx(cur.title)
+      const seed = SEEDS[seedIdx]
+      return decorateTitle(generateCarouselLoungePost(cur, seed.arcId), seed.title)
+    })
+  }
+
+  const handleShuffle = () => {
+    setItem((cur) => {
+      const nextIdx = pickDifferentSeedIdx(findSeedIdx(cur.title))
+      return makeSeed(SEEDS[nextIdx].title)
     })
   }
 
   const handleVisualResult = (
-    idx: number,
     patch: Partial<NonNullable<ContentItem['generatedVisual']>>,
   ) => {
-    setItems((prev) => {
-      const next = [...prev]
-      const cur = next[idx]
-      if (!cur.generatedVisual) return prev
-      next[idx] = { ...cur, generatedVisual: { ...cur.generatedVisual, ...patch } }
-      return next
+    setItem((cur) => {
+      if (!cur.generatedVisual) return cur
+      return { ...cur, generatedVisual: { ...cur.generatedVisual, ...patch } }
     })
   }
 
@@ -105,21 +126,17 @@ export default function CarouselLounge({ onBack }: CarouselLoungeProps) {
           </div>
         </div>
 
-        <div
-          className="grid gap-6"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
-        >
-          {items.map((item, idx) => (
+        <div className="flex justify-center">
+          <div style={{ width: '100%', maxWidth: 480 }}>
             <ContentCard
-              key={idx}
               item={item}
-              index={idx}
-              onShuffle={() => handleShuffle(idx)}
-              onGenerate={() => handleGenerate(idx)}
+              index={0}
+              onShuffle={handleShuffle}
+              onGenerate={handleGenerate}
               onLogPost={() => {}}
-              onVisualResult={(patch) => handleVisualResult(idx, patch)}
+              onVisualResult={handleVisualResult}
             />
-          ))}
+          </div>
         </div>
       </div>
     </div>

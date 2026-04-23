@@ -35,38 +35,62 @@ function decorateTitle(item: ContentItem, seedTitle: string): ContentItem {
   return { ...item, title: `${seedTitle}  ·  🎬 ${name}` }
 }
 
-export default function SingleImageLab({ onBack }: SingleImageLabProps) {
-  const [items, setItems] = usePersistedState<ContentItem[]>('sl:silLab:items', () =>
-    SEED_TITLES.map(makeSeed),
-  )
+function findSeedIdx(title: string): number {
+  const idx = SEED_TITLES.findIndex((t) => title.startsWith(t))
+  return idx >= 0 ? idx : 0
+}
 
-  const handleGenerate = (idx: number) => {
-    setItems((prev) => {
-      const next = [...prev]
-      const generated = generateContentForPost(next[idx])
-      next[idx] = decorateTitle(generated, SEED_TITLES[idx])
-      return next
+function pickDifferentSeedIdx(current: number): number {
+  if (SEED_TITLES.length <= 1) return 0
+  let next = Math.floor(Math.random() * SEED_TITLES.length)
+  while (next === current) next = Math.floor(Math.random() * SEED_TITLES.length)
+  return next
+}
+
+export default function SingleImageLab({ onBack }: SingleImageLabProps) {
+  // Persisted shape migrated from ContentItem[] (legacy 6-card grid) to a
+  // single ContentItem. If localStorage still holds the array form, take
+  // the first element — no data loss for the currently-focused card.
+  const [raw, setRaw] = usePersistedState<ContentItem | ContentItem[]>(
+    'sl:silLab:items',
+    () => makeSeed(SEED_TITLES[0]),
+  )
+  const item: ContentItem = Array.isArray(raw)
+    ? raw[0] ?? makeSeed(SEED_TITLES[0])
+    : raw
+
+  const setItem = (updater: (prev: ContentItem) => ContentItem) => {
+    setRaw((prev) => {
+      const current: ContentItem = Array.isArray(prev)
+        ? prev[0] ?? makeSeed(SEED_TITLES[0])
+        : prev
+      return updater(current)
     })
   }
 
-  const handleShuffle = (idx: number) => {
-    setItems((prev) => {
-      const next = [...prev]
-      next[idx] = makeSeed(SEED_TITLES[idx])
-      return next
+  const handleGenerate = () => {
+    setItem((cur) => {
+      const seedIdx = findSeedIdx(cur.title)
+      const generated = generateContentForPost(cur)
+      return decorateTitle(generated, SEED_TITLES[seedIdx])
+    })
+  }
+
+  const handleShuffle = () => {
+    // Cycle to a different pillar — discards any generated state on the card,
+    // which is the user's intent when shuffling (pick a new brief).
+    setItem((cur) => {
+      const nextIdx = pickDifferentSeedIdx(findSeedIdx(cur.title))
+      return makeSeed(SEED_TITLES[nextIdx])
     })
   }
 
   const handleVisualResult = (
-    idx: number,
     patch: Partial<NonNullable<ContentItem['generatedVisual']>>,
   ) => {
-    setItems((prev) => {
-      const next = [...prev]
-      const cur = next[idx]
-      if (!cur.generatedVisual) return prev
-      next[idx] = { ...cur, generatedVisual: { ...cur.generatedVisual, ...patch } }
-      return next
+    setItem((cur) => {
+      if (!cur.generatedVisual) return cur
+      return { ...cur, generatedVisual: { ...cur.generatedVisual, ...patch } }
     })
   }
 
@@ -103,21 +127,17 @@ export default function SingleImageLab({ onBack }: SingleImageLabProps) {
           </div>
         </div>
 
-        <div
-          className="grid gap-6"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
-        >
-          {items.map((item, idx) => (
+        <div className="flex justify-center">
+          <div style={{ width: '100%', maxWidth: 480 }}>
             <ContentCard
-              key={idx}
               item={item}
-              index={idx}
-              onShuffle={() => handleShuffle(idx)}
-              onGenerate={() => handleGenerate(idx)}
+              index={0}
+              onShuffle={handleShuffle}
+              onGenerate={handleGenerate}
               onLogPost={() => {}}
-              onVisualResult={(patch) => handleVisualResult(idx, patch)}
+              onVisualResult={handleVisualResult}
             />
-          ))}
+          </div>
         </div>
       </div>
     </div>
