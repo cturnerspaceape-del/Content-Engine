@@ -31,8 +31,16 @@ interface SlideResponse {
   slideRole?: string
 }
 
-const MAX_ATTEMPTS = 2
+const MAX_ATTEMPTS = 3
 const RETRY_REGEX = /\b(503|429|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand)\b/i
+const CREDITS_REGEX = /prepayment credits|RESOURCE_EXHAUSTED.*credit|billing/i
+
+function mapError(raw: string): string {
+  if (CREDITS_REGEX.test(raw)) {
+    return 'Gemini prepayment credits exhausted — top up at ai.studio/projects, then retry.'
+  }
+  return raw
+}
 
 async function fetchSlide(
   body: Record<string, unknown>,
@@ -53,17 +61,23 @@ async function fetchSlide(
         return { url: (data as SlideResponse).url, error: null }
       }
       lastErr = 'error' in data ? data.error : `HTTP ${r.status}`
+      // Don't retry a credits-exhausted 429 — it'll just keep failing until
+      // the user tops up. Surface the friendly message immediately.
+      const creditsGone = CREDITS_REGEX.test(lastErr)
+      if (creditsGone) return { url: null, error: mapError(lastErr) }
       const transient = r.status >= 500 || r.status === 429 || RETRY_REGEX.test(lastErr)
       if (!transient || attempt === MAX_ATTEMPTS) {
-        return { url: null, error: lastErr }
+        return { url: null, error: mapError(lastErr) }
       }
     } catch (err) {
       lastErr = err instanceof Error ? err.message : String(err)
-      if (attempt === MAX_ATTEMPTS) return { url: null, error: lastErr }
+      if (attempt === MAX_ATTEMPTS) return { url: null, error: mapError(lastErr) }
     }
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // Exponential backoff so queued slides have room to breathe under load.
+    const backoff = 1000 * Math.pow(2, attempt - 1)
+    await new Promise((resolve) => setTimeout(resolve, backoff))
   }
-  return { url: null, error: lastErr }
+  return { url: null, error: mapError(lastErr) }
 }
 
 export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
@@ -115,7 +129,9 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     })
     return arr
   })
-  const [rerollingIndex, setRerollingIndex] = useState<number | null>(null)
+  // Set of slide indices currently rerolling. Multiple rerolls can be in
+  // flight simultaneously — the server semaphore handles fairness.
+  const [rerollingIndices, setRerollingIndices] = useState<Set<number>>(() => new Set())
   const [current, setCurrent] = useState(0)
   // Mount-cancel ref — shared by the initial fetch loop and any in-flight reroll,
   // so unmount cancels both.
@@ -140,7 +156,7 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     })
     setUrls(seededUrls)
     setErrors(seededErrors)
-    setRerollingIndex(null)
+    setRerollingIndices(new Set())
     setCurrent(0)
     const isCancelled = () => cancelledRef.current
 
@@ -186,7 +202,9 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
   }, [body, slideCount])
 
   const handleReroll = (slideIndex: number) => {
-    if (rerollingIndex !== null) return
+    // Idempotent per slide: don't double-fire for the same index, but allow
+    // other slides to reroll in parallel.
+    if (rerollingIndices.has(slideIndex)) return
     const seed = Math.floor(Math.random() * 100_000)
     // Clear persisted + local state for this slot so the UI shows "regenerating".
     onSlideResultRef.current(slideIndex, null, null, seed)
@@ -200,7 +218,11 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
       next[slideIndex] = null
       return next
     })
-    setRerollingIndex(slideIndex)
+    setRerollingIndices((prev) => {
+      const next = new Set(prev)
+      next.add(slideIndex)
+      return next
+    })
 
     const isCancelled = () => cancelledRef.current
     fetchSlide({ ...body, slideIndex, variationSeed: seed }, isCancelled).then(({ url, error }) => {
@@ -220,7 +242,12 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
         })
         onSlideResultRef.current(slideIndex, null, error, seed)
       }
-      setRerollingIndex((prev) => (prev === slideIndex ? null : prev))
+      setRerollingIndices((prev) => {
+        if (!prev.has(slideIndex)) return prev
+        const next = new Set(prev)
+        next.delete(slideIndex)
+        return next
+      })
     })
   }
 
@@ -230,7 +257,7 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
   const currentUrl = urls[current]
   const currentError = errors[current]
   const currentRole = arc?.slides[current]?.role ?? ''
-  const isRerollingCurrent = rerollingIndex === current
+  const isRerollingCurrent = rerollingIndices.has(current)
   const showRerollButton = (currentUrl !== null || currentError !== null) && !isRerollingCurrent
 
   return (
@@ -311,7 +338,6 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
         {showRerollButton && (
           <button
             onClick={() => handleReroll(current)}
-            disabled={rerollingIndex !== null}
             title="Regenerate just this slide with a fresh variation (~$0.05)"
             style={{
               position: 'absolute',
@@ -325,8 +351,7 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
               padding: '6px 10px',
               borderRadius: 8,
               border: 'none',
-              cursor: rerollingIndex !== null ? 'not-allowed' : 'pointer',
-              opacity: rerollingIndex !== null ? 0.5 : 1,
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: 6,
@@ -344,6 +369,8 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
         errors={errors}
         current={current}
         onSelect={setCurrent}
+        onReroll={handleReroll}
+        rerollingIndices={rerollingIndices}
         theme={theme}
         arcRoles={arc?.slides.map((s) => s.role) ?? []}
       />
@@ -431,6 +458,8 @@ function ThumbnailStrip({
   errors,
   current,
   onSelect,
+  onReroll,
+  rerollingIndices,
   theme,
   arcRoles,
 }: {
@@ -438,6 +467,8 @@ function ThumbnailStrip({
   errors: (string | null)[]
   current: number
   onSelect: (idx: number) => void
+  onReroll: (idx: number) => void
+  rerollingIndices: Set<number>
   theme: ReturnType<typeof getFlavorTheme>
   arcRoles: string[]
 }) {
@@ -448,11 +479,22 @@ function ThumbnailStrip({
         const isLoaded = url !== null
         const err = errors[idx]
         const role = arcRoles[idx]
+        const isRerolling = rerollingIndices.has(idx)
+        // Reroll icon only makes sense once the slot is settled (has a url or
+        // a persisted error) and isn't mid-reroll already.
+        const showRerollIcon = (isLoaded || err !== null) && !isRerolling
         return (
-          <button
+          <div
             key={idx}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => onSelect(idx)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onSelect(idx)
+              }
+            }}
             title={role ? `${idx + 1}. ${role.replace(/-/g, ' ')}` : `Slide ${idx + 1}`}
             style={{
               flex: 1,
@@ -487,10 +529,39 @@ function ThumbnailStrip({
                   opacity: err ? 0.8 : 0.9,
                 }}
               >
-                {err ? '!' : idx + 1}
+                {isRerolling ? '…' : err ? '!' : idx + 1}
               </div>
             )}
-          </button>
+            {showRerollIcon && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onReroll(idx)
+                }}
+                title={`Reroll slide ${idx + 1} (~$0.05)`}
+                aria-label={`Reroll slide ${idx + 1}`}
+                style={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 2,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 4,
+                  background: 'rgba(251,146,60,0.92)',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  fontSize: 10,
+                  lineHeight: '20px',
+                  textAlign: 'center',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                }}
+              >
+                🎲
+              </button>
+            )}
+          </div>
         )
       })}
     </div>

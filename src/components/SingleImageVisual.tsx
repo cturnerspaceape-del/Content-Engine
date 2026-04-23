@@ -33,6 +33,14 @@ interface GenerateResponse {
 
 const MAX_ATTEMPTS = 2
 const RETRY_REGEX = /\b(503|429|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand)\b/i
+const CREDITS_REGEX = /prepayment credits|RESOURCE_EXHAUSTED.*credit|billing/i
+
+function mapError(raw: string): string {
+  if (CREDITS_REGEX.test(raw)) {
+    return 'Gemini prepayment credits exhausted — top up at ai.studio/projects, then retry.'
+  }
+  return raw
+}
 
 export default function SingleImageVisual(props: SingleImageVisualProps) {
   const {
@@ -111,10 +119,18 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
             return
           }
           const msg = 'error' in data ? data.error : `HTTP ${r.status}`
+          // Don't retry on credits-exhausted — it'll fail identically until top-up.
+          if (CREDITS_REGEX.test(msg)) {
+            const friendly = mapError(msg)
+            setLocalError(friendly)
+            onResultRef.current(null, friendly)
+            return
+          }
           const transient = r.status >= 500 || r.status === 429 || RETRY_REGEX.test(msg)
           if (!transient || attempt === MAX_ATTEMPTS) {
-            setLocalError(msg)
-            onResultRef.current(null, msg)
+            const friendly = mapError(msg)
+            setLocalError(friendly)
+            onResultRef.current(null, friendly)
             return
           }
         } catch (err) {

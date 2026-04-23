@@ -21,7 +21,9 @@ function sleep(ms: number): Promise<void> {
 
 // Cap concurrent Gemini image calls so burst clicks don't trigger rate-limit cascades.
 // Acquire before the retry loop; release in the outer finally so retries hold the slot.
-const MAX_CONCURRENT = Number(process.env.GEMINI_IMAGE_CONCURRENCY ?? '2')
+// Default 4: a 7-slide carousel now completes in ~2 waves instead of 4, without
+// meaningfully increasing 429 risk (Nano Banana Pro tolerates 4/user concurrency).
+const MAX_CONCURRENT = Number(process.env.GEMINI_IMAGE_CONCURRENCY ?? '4')
 let inFlight = 0
 const waiters: Array<() => void> = []
 

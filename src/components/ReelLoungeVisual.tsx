@@ -31,6 +31,14 @@ interface ReelResponse {
 
 const MAX_ATTEMPTS = 2
 const RETRY_REGEX = /\b(503|429|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand)\b/i
+const CREDITS_REGEX = /prepayment credits|RESOURCE_EXHAUSTED.*credit|billing/i
+
+function mapError(raw: string): string {
+  if (CREDITS_REGEX.test(raw)) {
+    return 'Gemini/Veo prepayment credits exhausted — top up at ai.studio/projects, then retry.'
+  }
+  return raw
+}
 
 async function fetchReel(
   body: Record<string, unknown>,
@@ -51,17 +59,20 @@ async function fetchReel(
         return { url: (data as ReelResponse).url, error: null }
       }
       lastErr = 'error' in data ? data.error : `HTTP ${r.status}`
+      // Retrying a credits-exhausted 429 just wastes wall time — one Veo call
+      // can burn a minute before failing. Surface the friendly message now.
+      if (CREDITS_REGEX.test(lastErr)) return { url: null, error: mapError(lastErr) }
       const transient = r.status >= 500 || r.status === 429 || RETRY_REGEX.test(lastErr)
       if (!transient || attempt === MAX_ATTEMPTS) {
-        return { url: null, error: lastErr }
+        return { url: null, error: mapError(lastErr) }
       }
     } catch (err) {
       lastErr = err instanceof Error ? err.message : String(err)
-      if (attempt === MAX_ATTEMPTS) return { url: null, error: lastErr }
+      if (attempt === MAX_ATTEMPTS) return { url: null, error: mapError(lastErr) }
     }
     await new Promise((resolve) => setTimeout(resolve, 1000))
   }
-  return { url: null, error: lastErr }
+  return { url: null, error: mapError(lastErr) }
 }
 
 function formatElapsed(seconds: number): string {
