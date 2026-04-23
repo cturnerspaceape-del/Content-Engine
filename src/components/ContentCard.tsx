@@ -4,6 +4,7 @@ import { Player, Thumbnail } from '@remotion/player'
 import type { ContentItem } from '../types'
 import { Carousel, Reel } from '../remotion/compositions'
 import { buildSlideArc } from '../remotion/compositions/Carousel'
+import { getCarouselArc } from '../data/carouselArcs'
 import { getFlavorTheme } from '../remotion/flavorThemes'
 import type { CarouselProps, ReelProps } from '../remotion/types'
 
@@ -256,16 +257,23 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
     if (onVisualResult) onVisualResult(patch)
   }
 
-  // Compute actual slide count from arc (content-driven, 3-7 slides)
+  // Resolve slide count. When the item was made by Carousel Lounge it carries
+  // arcId — the authoritative slide count lives in carouselArcs.ts (the server
+  // rejects slideIndex >= arc.slides.length with a 400, so the client MUST
+  // match). For the legacy non-Lounge path, fall back to the content-driven
+  // buildSlideArc helper.
   const gv = item.generatedVisual
-  const arcLength = gv
-    ? buildSlideArc(
-        gv.hook,
-        gv.caption,
-        gv.flavor || 'Amped Apple',
-        getFlavorTheme(gv.flavor || 'Amped Apple').strainType || '',
-      ).length
-    : 7
+  const loungeArc = gv?.arcId ? getCarouselArc(gv.arcId) : undefined
+  const arcLength = loungeArc
+    ? loungeArc.slides.length
+    : gv
+      ? buildSlideArc(
+          gv.hook,
+          gv.caption,
+          gv.flavor || 'Amped Apple',
+          getFlavorTheme(gv.flavor || 'Amped Apple').strainType || '',
+        ).length
+      : 7
   const slideCount = arcLength
 
   useEffect(() => {
