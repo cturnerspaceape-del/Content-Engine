@@ -1,51 +1,51 @@
 import ContentCard from './ContentCard'
 import type { ContentItem } from '../types'
-import { generateCarouselLoungePost } from '../data/instagramContentTemplates'
-import { getCarouselArc } from '../data/carouselArcs'
+import { generateReelLoungePost } from '../data/instagramContentTemplates'
+import { estimateReelCost, getReelArc } from '../data/reelArcs'
 import { usePersistedState } from '../utils/persistedState'
 
-interface CarouselLoungeProps {
+interface ReelLoungeProps {
   onBack: () => void
 }
 
-// Each seed title maps to a specific arc + pillar. Pillar in the title feeds
-// into the hook/caption pools (see generateCarouselLoungePost title parsing).
+// Seed titles mirror the six reel arcs in src/data/reelArcs.ts. Pillar in the
+// title drives the hook/caption pools, same parsing pattern as SingleImageLab.
 const SEEDS: Array<{ arcId: string; title: string }> = [
-  { arcId: 'drop-story', title: 'Carousel Lounge — Product Centric: New Drop Reveal' },
-  { arcId: 'flavor-breakdown', title: 'Carousel Lounge — Education: Flavor Breakdown' },
-  { arcId: 'day-in-the-life', title: 'Carousel Lounge — Lifestyle: Cultural Moment' },
-  { arcId: 'before-after', title: 'Carousel Lounge — Entertainment: Hot Take' },
-  { arcId: 'product-features', title: 'Carousel Lounge — Product Centric: Feature Tour' },
-  { arcId: 'strain-mood-board', title: 'Carousel Lounge — Brand Building: Founder Story' },
+  { arcId: 'drop-teaser', title: 'Reel Lounge — Product Centric: New Drop Reveal' },
+  { arcId: 'flavor-cinemagraph', title: 'Reel Lounge — Product Centric: Flavor Moment' },
+  { arcId: 'day-in-the-life', title: 'Reel Lounge — Lifestyle: Cultural Moment' },
+  { arcId: 'cultural-cutaway', title: 'Reel Lounge — Entertainment: Hot Take' },
+  { arcId: 'unbox-reveal', title: 'Reel Lounge — Product Centric: Unbox Reveal' },
+  { arcId: 'strain-mood', title: 'Reel Lounge — Brand Building: Founder Story' },
 ]
 
 function makeSeed(title: string): ContentItem {
   return {
     platform: 'Instagram',
-    emoji: '🎠',
+    emoji: '🎬',
     title,
-    description: 'Click Generate to build this Carousel Lounge post.',
+    description: 'Click Generate to build this Reel Lounge post.',
     contentType: 'Post',
     generated: false,
   }
 }
 
 function decorateTitle(item: ContentItem, seedTitle: string): ContentItem {
-  const arcId = item.generatedVisual?.arcId
-  const name = arcId ? getCarouselArc(arcId)?.name : undefined
+  const arcId = item.generatedVisual?.reelArcId
+  const name = arcId ? getReelArc(arcId)?.name : undefined
   if (!name) return item
   return { ...item, title: `${seedTitle}  ·  🎞️ ${name}` }
 }
 
-export default function CarouselLounge({ onBack }: CarouselLoungeProps) {
-  const [items, setItems] = usePersistedState<ContentItem[]>('sl:carouselLounge:items', () =>
+export default function ReelLounge({ onBack }: ReelLoungeProps) {
+  const [items, setItems] = usePersistedState<ContentItem[]>('sl:reelLounge:items', () =>
     SEEDS.map((s) => makeSeed(s.title)),
   )
 
   const handleGenerate = (idx: number) => {
     setItems((prev) => {
       const next = [...prev]
-      const generated = generateCarouselLoungePost(next[idx], SEEDS[idx].arcId)
+      const generated = generateReelLoungePost(next[idx], SEEDS[idx].arcId)
       next[idx] = decorateTitle(generated, SEEDS[idx].title)
       return next
     })
@@ -91,16 +91,16 @@ export default function CarouselLounge({ onBack }: CarouselLoungeProps) {
             <h1
               className="text-2xl font-bold"
               style={{
-                background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                background: 'linear-gradient(135deg, #ec4899, #be185d)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
               }}
             >
-              🎠 Carousel Lounge
+              🎬 Reel Lounge
             </h1>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              Narrative 3–5 slide AI carousels. One Gemini call per slide; shared seed + refs keep the set cohesive.
+              5–12s AI Reels via Veo 3 Fast. ~{estimateReelCost(8)} per 8-second clip. Each Generate fires one Veo job.
             </p>
           </div>
         </div>

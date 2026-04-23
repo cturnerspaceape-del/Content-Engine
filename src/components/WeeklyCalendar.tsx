@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { generateWeeklyInstagramContent, generateRandomPost } from '../data/instagramContentGenerator'
 import { generateContentForPost } from '../data/instagramContentTemplates'
-import type { DayContent, DayOfWeek, LoggedPost } from '../types'
+import type { ContentItem, DayContent, DayOfWeek, LoggedPost } from '../types'
 import ContentCard from './ContentCard'
 
 interface WeeklyCalendarProps {
@@ -72,6 +72,22 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
   const handleShuffleAll = useCallback(() => {
     setContent(generateWeeklyInstagramContent())
   }, [])
+
+  const handleVisualResult = useCallback(
+    (dayIdx: number, itemIdx: number, patch: Partial<NonNullable<ContentItem['generatedVisual']>>) => {
+      setContent((prev) =>
+        prev.map((day, di) => {
+          if (di !== dayIdx) return day
+          const newItems = [...day.items]
+          const cur = newItems[itemIdx]
+          if (!cur.generatedVisual) return day
+          newItems[itemIdx] = { ...cur, generatedVisual: { ...cur.generatedVisual, ...patch } }
+          return { ...day, items: newItems }
+        }),
+      )
+    },
+    [],
+  )
 
   const scrollToDay = useCallback((day: DayOfWeek | 'all') => {
     if (day === 'all') {
@@ -249,6 +265,7 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
                             onShuffle={() => handleShuffle(dayIdx, itemIdx)}
                             onGenerate={() => handleGenerate(dayIdx, itemIdx)}
                             onLogPost={() => handleLogPost(dayIdx, itemIdx, day.day)}
+                            onVisualResult={(patch) => handleVisualResult(dayIdx, itemIdx, patch)}
                           />
                         )
                       })}

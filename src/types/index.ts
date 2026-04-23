@@ -23,6 +23,22 @@ export interface ContentItem {
     slideCount?: number
     arcId?: string // Carousel Lounge only — presence switches Carousel rendering to AI-image slides
     carouselSeed?: number // shared anchor across all slides of one Lounge carousel
+    reelArcId?: string // Reel Lounge only — presence switches Reel rendering to AI-video
+    reelSeed?: number // Veo seed for reel determinism + Reroll diversity
+    durationSeconds?: number // Reel Lounge only — per-arc clip length
+    // Persisted generation results. Presence of a URL or error is terminal —
+    // the visual component will not re-fetch on mount once either is set.
+    // A Reroll click clears the URL + error (and bumps the *VariationSeed) so
+    // exactly one fresh fetch fires.
+    imageUrl?: string
+    imageError?: string
+    imageVariationSeed?: number
+    slideUrls?: (string | null)[]
+    slideErrors?: (string | null)[]
+    slideVariationSeeds?: (number | undefined)[]
+    reelUrl?: string
+    reelError?: string
+    reelVariationSeed?: number
   }
 }
 
@@ -38,7 +54,14 @@ export interface DayContent {
   items: ContentItem[]
 }
 
-export type ViewState = 'home' | 'calendar' | 'strategy' | 'postlog' | 'sil-lab' | 'carousel-lounge'
+export type ViewState =
+  | 'home'
+  | 'calendar'
+  | 'strategy'
+  | 'postlog'
+  | 'sil-lab'
+  | 'carousel-lounge'
+  | 'reel-lounge'
 
 export type InstagramFormat = 'Carousel' | 'Reel' | 'Single Image'
 

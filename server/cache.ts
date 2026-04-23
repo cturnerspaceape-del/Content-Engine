@@ -4,7 +4,13 @@ import path from 'node:path'
 
 const GENERATED_ROOT = path.resolve(process.cwd(), 'public', 'generated')
 
-export type CacheKind = 'single-image' | 'carousel-slide'
+export type CacheKind = 'single-image' | 'carousel-slide' | 'reel'
+
+const EXT: Record<CacheKind, string> = {
+  'single-image': 'png',
+  'carousel-slide': 'png',
+  reel: 'mp4',
+}
 
 export function hashKey(input: unknown): string {
   const json = stableStringify(input)
@@ -15,9 +21,10 @@ export function cachePath(
   hash: string,
   kind: CacheKind = 'single-image',
 ): { absPath: string; publicUrl: string } {
+  const ext = EXT[kind]
   return {
-    absPath: path.join(GENERATED_ROOT, kind, `${hash}.png`),
-    publicUrl: `/generated/${kind}/${hash}.png`,
+    absPath: path.join(GENERATED_ROOT, kind, `${hash}.${ext}`),
+    publicUrl: `/generated/${kind}/${hash}.${ext}`,
   }
 }
 
@@ -31,6 +38,14 @@ export async function exists(absPath: string): Promise<boolean> {
 }
 
 export async function writePng(absPath: string, data: Buffer): Promise<void> {
+  await writeBytes(absPath, data)
+}
+
+export async function writeMp4(absPath: string, data: Buffer): Promise<void> {
+  await writeBytes(absPath, data)
+}
+
+async function writeBytes(absPath: string, data: Buffer): Promise<void> {
   await fs.mkdir(path.dirname(absPath), { recursive: true })
   const tmp = `${absPath}.tmp`
   await fs.writeFile(tmp, data)

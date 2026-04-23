@@ -57,6 +57,19 @@ export default function SingleImageLab({ onBack }: SingleImageLabProps) {
     })
   }
 
+  const handleVisualResult = (
+    idx: number,
+    patch: Partial<NonNullable<ContentItem['generatedVisual']>>,
+  ) => {
+    setItems((prev) => {
+      const next = [...prev]
+      const cur = next[idx]
+      if (!cur.generatedVisual) return prev
+      next[idx] = { ...cur, generatedVisual: { ...cur.generatedVisual, ...patch } }
+      return next
+    })
+  }
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
       <div className="max-w-6xl mx-auto">
@@ -102,6 +115,7 @@ export default function SingleImageLab({ onBack }: SingleImageLabProps) {
               onShuffle={() => handleShuffle(idx)}
               onGenerate={() => handleGenerate(idx)}
               onLogPost={() => {}}
+              onVisualResult={(patch) => handleVisualResult(idx, patch)}
             />
           ))}
         </div>

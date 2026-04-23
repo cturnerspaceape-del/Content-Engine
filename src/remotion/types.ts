@@ -40,6 +40,7 @@ export interface SingleImageProps {
   subcategory: string
   shotTemplateId?: string // from src/data/shotTemplates.ts — server picks one if omitted
   variationSeed?: number  // when set, bypasses cache and forces a new Gemini call
+  imageUrl?: string       // pre-fetched result; if absent, composition renders a placeholder
 }
 
 export interface CarouselProps {

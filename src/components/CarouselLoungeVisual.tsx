@@ -13,6 +13,12 @@ interface CarouselLoungeVisualProps {
   slideCount: number
   carouselSeed: number
   variationSeed?: number
+  // Persisted per-slide results. A slot that has either a URL or an error set
+  // will NOT be auto-fetched on mount — the guard is the whole cost-safety story.
+  slideUrls?: (string | null)[]
+  slideErrors?: (string | null)[]
+  slideVariationSeeds?: (number | undefined)[]
+  onSlideResult: (index: number, url: string | null, error: string | null, variationSeed?: number) => void
 }
 
 interface SlideResponse {
@@ -71,6 +77,10 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     slideCount,
     carouselSeed,
     variationSeed,
+    slideUrls,
+    slideErrors,
+    slideVariationSeeds,
+    onSlideResult,
   } = props
   const theme = getFlavorTheme(flavor)
   const arc = getCarouselArc(arcId)
@@ -89,25 +99,64 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     [flavor, hook, caption, pillar, subcategory, arcId, carouselSeed, variationSeed],
   )
 
-  const [urls, setUrls] = useState<(string | null)[]>(() => Array(slideCount).fill(null))
-  const [errors, setErrors] = useState<(string | null)[]>(() => Array(slideCount).fill(null))
+  // Seed local state from persisted results so a refresh/remount re-renders
+  // instantly without any network.
+  const [urls, setUrls] = useState<(string | null)[]>(() => {
+    const arr = Array<string | null>(slideCount).fill(null)
+    slideUrls?.forEach((u, i) => {
+      if (i < slideCount && u) arr[i] = u
+    })
+    return arr
+  })
+  const [errors, setErrors] = useState<(string | null)[]>(() => {
+    const arr = Array<string | null>(slideCount).fill(null)
+    slideErrors?.forEach((e, i) => {
+      if (i < slideCount && e) arr[i] = e
+    })
+    return arr
+  })
   const [rerollingIndex, setRerollingIndex] = useState<number | null>(null)
   const [current, setCurrent] = useState(0)
   // Mount-cancel ref — shared by the initial fetch loop and any in-flight reroll,
   // so unmount cancels both.
   const cancelledRef = useRef(false)
 
+  // Keep callback in a ref so the fetch effect doesn't re-fire on parent re-renders.
+  const onSlideResultRef = useRef(onSlideResult)
+  useEffect(() => {
+    onSlideResultRef.current = onSlideResult
+  }, [onSlideResult])
+
   useEffect(() => {
     cancelledRef.current = false
-    setUrls(Array(slideCount).fill(null))
-    setErrors(Array(slideCount).fill(null))
+    // Seed state from persisted values.
+    const seededUrls: (string | null)[] = Array(slideCount).fill(null)
+    const seededErrors: (string | null)[] = Array(slideCount).fill(null)
+    slideUrls?.forEach((u, i) => {
+      if (i < slideCount && u) seededUrls[i] = u
+    })
+    slideErrors?.forEach((e, i) => {
+      if (i < slideCount && e) seededErrors[i] = e
+    })
+    setUrls(seededUrls)
+    setErrors(seededErrors)
     setRerollingIndex(null)
     setCurrent(0)
     const isCancelled = () => cancelledRef.current
 
     for (let i = 0; i < slideCount; i++) {
       const slideIndex = i
-      fetchSlide({ ...body, slideIndex }, isCancelled).then(({ url, error }) => {
+      // GUARD: skip any slot that already has a persisted URL or error.
+      // Only unresolved slots fire a fetch. This is the cost-safety invariant.
+      if (seededUrls[slideIndex] || seededErrors[slideIndex]) continue
+
+      const slotSeed = slideVariationSeeds?.[slideIndex]
+      const fetchBody = {
+        ...body,
+        slideIndex,
+        ...(typeof slotSeed === 'number' ? { variationSeed: slotSeed } : {}),
+      }
+      fetchSlide(fetchBody, isCancelled).then(({ url, error }) => {
         if (isCancelled()) return
         if (url) {
           setUrls((prev) => {
@@ -115,12 +164,14 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
             next[slideIndex] = url
             return next
           })
+          onSlideResultRef.current(slideIndex, url, null, slotSeed)
         } else if (error) {
           setErrors((prev) => {
             const next = prev.slice()
             next[slideIndex] = error
             return next
           })
+          onSlideResultRef.current(slideIndex, null, error, slotSeed)
         }
       })
     }
@@ -128,11 +179,17 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     return () => {
       cancelledRef.current = true
     }
+    // slideUrls / slideErrors / slideVariationSeeds intentionally NOT in deps —
+    // we only re-read them when the underlying brief (body) or slideCount changes.
+    // Otherwise a parent-triggered persist would re-trigger this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [body, slideCount])
 
   const handleReroll = (slideIndex: number) => {
     if (rerollingIndex !== null) return
     const seed = Math.floor(Math.random() * 100_000)
+    // Clear persisted + local state for this slot so the UI shows "regenerating".
+    onSlideResultRef.current(slideIndex, null, null, seed)
     setUrls((prev) => {
       const next = prev.slice()
       next[slideIndex] = null
@@ -154,12 +211,14 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
           next[slideIndex] = url
           return next
         })
+        onSlideResultRef.current(slideIndex, url, null, seed)
       } else if (error) {
         setErrors((prev) => {
           const next = prev.slice()
           next[slideIndex] = error
           return next
         })
+        onSlideResultRef.current(slideIndex, null, error, seed)
       }
       setRerollingIndex((prev) => (prev === slideIndex ? null : prev))
     })

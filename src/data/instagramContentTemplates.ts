@@ -2,6 +2,7 @@ import type { ContentItem, InstagramFormat } from '../types'
 import { flavorNames } from '../remotion/flavorThemes'
 import { pickShotTemplate } from './shotTemplates'
 import { getCarouselArc, pickCarouselArc } from './carouselArcs'
+import { getReelArc, pickReelArc } from './reelArcs'
 
 // ─── Space Ape voice: cool, fun, hype, "clean Charlie Sheen", Supreme energy ───
 // Hooks, captions, and hashtags picked independently for max variety
@@ -456,6 +457,49 @@ export function generateCarouselLoungePost(item: ContentItem, arcId?: string): C
       slideCount: arc.slides.length,
       arcId: arc.id,
       carouselSeed,
+    },
+  }
+}
+
+// Reel Lounge variant: produces an AI-video Reel via Veo. Presence of
+// generatedVisual.reelArcId switches ContentCard's Reel rendering to
+// ReelLoungeVisual instead of the Remotion template.
+export function generateReelLoungePost(item: ContentItem, reelArcId?: string): ContentItem {
+  const titleParts = item.title.split(' — ')
+  const pillarSubcat = titleParts[1] || ''
+  const pillar = pillarSubcat.split(':')[0]?.trim() || 'Lifestyle'
+  const subcategory = pillarSubcat.split(':')[1]?.trim() || ''
+
+  const hookPool = subcategoryHooks[subcategory] || hooks[pillar] || hooks['Lifestyle']
+  const captionPool = subcategoryCaptions[subcategory] || captions[pillar] || captions['Lifestyle']
+  const hashtagPool = hashtagSets[pillar] || hashtagSets['Lifestyle']
+
+  const hook = hookPool[Math.floor(Math.random() * hookPool.length)]
+  const caption = captionPool[Math.floor(Math.random() * captionPool.length)]
+  const selectedHashtags = hashtagPool[Math.floor(Math.random() * hashtagPool.length)]
+
+  const arc = (reelArcId && getReelArc(reelArcId)) || pickReelArc(pillar)
+
+  const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
+  const reelSeed = Math.floor(Math.random() * 100_000)
+
+  const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
+
+  return {
+    ...item,
+    description: generatedDescription,
+    generated: true,
+    generatedVisual: {
+      hook,
+      caption,
+      hashtags: selectedHashtags,
+      pillar,
+      subcategory,
+      format: 'Reel' as InstagramFormat,
+      flavor,
+      reelArcId: arc.id,
+      reelSeed,
+      durationSeconds: arc.durationSeconds,
     },
   }
 }

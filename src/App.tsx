@@ -5,6 +5,7 @@ import StrategyDashboard from './components/StrategyDashboard'
 import PostLog from './components/PostLog'
 import SingleImageLab from './components/SingleImageLab'
 import CarouselLounge from './components/CarouselLounge'
+import ReelLounge from './components/ReelLounge'
 import { usePersistedState } from './utils/persistedState'
 import type { ViewState, LoggedPost } from './types'
 
@@ -36,11 +37,10 @@ export default function App() {
         {view === 'home' && (
           <div className="fade-in">
             <HomeScreen
-              onLaunch={() => switchView('calendar')}
-              onStrategy={() => switchView('strategy')}
               onPostLog={() => switchView('postlog')}
               onSilLab={() => switchView('sil-lab')}
               onCarouselLounge={() => switchView('carousel-lounge')}
+              onReelLounge={() => switchView('reel-lounge')}
               loggedCount={loggedPosts.length}
             />
           </div>
@@ -76,6 +76,11 @@ export default function App() {
         {view === 'carousel-lounge' && (
           <div className="fade-in">
             <CarouselLounge onBack={() => switchView('home')} />
+          </div>
+        )}
+        {view === 'reel-lounge' && (
+          <div className="fade-in">
+            <ReelLounge onBack={() => switchView('home')} />
           </div>
         )}
       </div>

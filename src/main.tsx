@@ -1,10 +1,7 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// StrictMode intentionally NOT used: it double-fires every useEffect in dev,
+// which is a cost footgun for any effect that makes a billable API call.
+createRoot(document.getElementById('root')!).render(<App />)

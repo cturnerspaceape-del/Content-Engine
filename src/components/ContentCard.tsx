@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Player, Thumbnail } from '@remotion/player'
 import type { ContentItem } from '../types'
-import { SingleImage, Carousel, Reel } from '../remotion/compositions'
+import { Carousel, Reel } from '../remotion/compositions'
 import { buildSlideArc } from '../remotion/compositions/Carousel'
 import { getFlavorTheme } from '../remotion/flavorThemes'
-import type { SingleImageProps, CarouselProps, ReelProps } from '../remotion/types'
+import type { CarouselProps, ReelProps } from '../remotion/types'
 
 // Cast components to satisfy Thumbnail/Player LooseComponentType constraint
 const ReelComponent = Reel as unknown as React.FC<Record<string, unknown>>
 const CarouselComponent = Carousel as unknown as React.FC<Record<string, unknown>>
 import { platformColors } from './PlatformContentItem'
+import SingleImageVisual from './SingleImageVisual'
 import CarouselLoungeVisual from './CarouselLoungeVisual'
+import ReelLoungeVisual from './ReelLoungeVisual'
 
 const formatColors: Record<string, string> = {
   'Carousel': '#a855f7',
@@ -226,15 +228,21 @@ function ReelModal({ onClose, inputProps }: { onClose: () => void; inputProps: R
   )
 }
 
+type VisualPatch = Partial<NonNullable<ContentItem['generatedVisual']>>
+
 interface ContentCardProps {
   item: ContentItem
   index: number
   onShuffle: () => void
   onGenerate: () => void
   onLogPost: () => void
+  // Called by the visual wrapper with fields to merge into the item's
+  // generatedVisual. Lab pages wire this to their setItems so results persist
+  // to localStorage — which is what makes refresh/remount free (no auto-refetch).
+  onVisualResult?: (patch: VisualPatch) => void
 }
 
-export default function ContentCard({ item, index, onShuffle, onGenerate, onLogPost }: ContentCardProps) {
+export default function ContentCard({ item, index, onShuffle, onGenerate, onLogPost, onVisualResult }: ContentCardProps) {
   const formatColor = formatColors[item.contentType] || '#a855f7'
   const platformColor = platformColors[item.platform] || formatColor
   const accentColor = formatColor // used by MockVisual + hashtag color
@@ -243,8 +251,10 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [reelModalOpen, setReelModalOpen] = useState(false)
-  // When set, forces SingleImage to bypass cache and regenerate with same brief.
-  const [variationSeed, setVariationSeed] = useState<number | undefined>(undefined)
+
+  const applyPatch = (patch: VisualPatch) => {
+    if (onVisualResult) onVisualResult(patch)
+  }
 
   // Compute actual slide count from arc (content-driven, 3-7 slides)
   const gv = item.generatedVisual
@@ -341,24 +351,24 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
         {isGenerated && item.generatedVisual ? (
           format === 'Single Image' ? (
             <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1' }}>
-              <Player
-                component={SingleImage}
-                compositionWidth={1080}
-                compositionHeight={1080}
-                durationInFrames={1}
-                fps={30}
-                style={{ width: '100%', height: '100%' }}
-                inputProps={{
-                  flavor: (item.generatedVisual.flavor || 'Amped Apple') as SingleImageProps['flavor'],
-                  hook: item.generatedVisual.hook,
-                  caption: item.generatedVisual.caption,
-                  hashtags: item.generatedVisual.hashtags,
-                  pillar: item.generatedVisual.pillar,
-                  subcategory: item.generatedVisual.subcategory,
-                  ...(item.generatedVisual.shotTemplateId && {
-                    shotTemplateId: item.generatedVisual.shotTemplateId,
-                  }),
-                  ...(typeof variationSeed === 'number' && { variationSeed }),
+              <SingleImageVisual
+                flavor={(item.generatedVisual.flavor || 'Amped Apple') as React.ComponentProps<typeof SingleImageVisual>['flavor']}
+                hook={item.generatedVisual.hook}
+                caption={item.generatedVisual.caption}
+                hashtags={item.generatedVisual.hashtags}
+                pillar={item.generatedVisual.pillar}
+                subcategory={item.generatedVisual.subcategory}
+                {...(item.generatedVisual.shotTemplateId ? { shotTemplateId: item.generatedVisual.shotTemplateId } : {})}
+                {...(typeof item.generatedVisual.imageVariationSeed === 'number'
+                  ? { variationSeed: item.generatedVisual.imageVariationSeed }
+                  : {})}
+                {...(item.generatedVisual.imageUrl ? { imageUrl: item.generatedVisual.imageUrl } : {})}
+                {...(item.generatedVisual.imageError ? { imageError: item.generatedVisual.imageError } : {})}
+                onResult={(url, error) => {
+                  applyPatch({
+                    imageUrl: url ?? undefined,
+                    imageError: error ?? undefined,
+                  })
                 }}
               />
             </div>
@@ -374,7 +384,27 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
                   arcId={item.generatedVisual.arcId}
                   slideCount={slideCount}
                   carouselSeed={item.generatedVisual.carouselSeed ?? 0}
-                  {...(typeof variationSeed === 'number' ? { variationSeed } : {})}
+                  {...(item.generatedVisual.slideUrls ? { slideUrls: item.generatedVisual.slideUrls } : {})}
+                  {...(item.generatedVisual.slideErrors ? { slideErrors: item.generatedVisual.slideErrors } : {})}
+                  {...(item.generatedVisual.slideVariationSeeds
+                    ? { slideVariationSeeds: item.generatedVisual.slideVariationSeeds }
+                    : {})}
+                  onSlideResult={(i, url, error, vseed) => {
+                    const prevUrls = item.generatedVisual?.slideUrls ?? Array(slideCount).fill(null)
+                    const prevErrors = item.generatedVisual?.slideErrors ?? Array(slideCount).fill(null)
+                    const prevSeeds = item.generatedVisual?.slideVariationSeeds ?? Array(slideCount).fill(undefined)
+                    const nextUrls = prevUrls.slice()
+                    const nextErrors = prevErrors.slice()
+                    const nextSeeds = prevSeeds.slice()
+                    nextUrls[i] = url
+                    nextErrors[i] = error
+                    nextSeeds[i] = vseed
+                    applyPatch({
+                      slideUrls: nextUrls,
+                      slideErrors: nextErrors,
+                      slideVariationSeeds: nextSeeds,
+                    })
+                  }}
                 />
               </div>
             ) : (
@@ -407,6 +437,30 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
               </div>
             )
           ) : format === 'Reel' ? (
+            item.generatedVisual.reelArcId ? (
+              <ReelLoungeVisual
+                flavor={(item.generatedVisual.flavor || 'Amped Apple') as ReelProps['flavor']}
+                hook={item.generatedVisual.hook}
+                caption={item.generatedVisual.caption}
+                pillar={item.generatedVisual.pillar}
+                subcategory={item.generatedVisual.subcategory}
+                reelArcId={item.generatedVisual.reelArcId}
+                reelSeed={item.generatedVisual.reelSeed ?? 0}
+                durationSeconds={item.generatedVisual.durationSeconds ?? 8}
+                {...(typeof item.generatedVisual.reelVariationSeed === 'number'
+                  ? { variationSeed: item.generatedVisual.reelVariationSeed }
+                  : {})}
+                {...(item.generatedVisual.reelUrl ? { url: item.generatedVisual.reelUrl } : {})}
+                {...(item.generatedVisual.reelError ? { error: item.generatedVisual.reelError } : {})}
+                onResult={(url, error, vseed) => {
+                  applyPatch({
+                    reelUrl: url ?? undefined,
+                    reelError: error ?? undefined,
+                    reelVariationSeed: typeof vseed === 'number' ? vseed : undefined,
+                  })
+                }}
+              />
+            ) : (
             <div
               className="rounded-lg overflow-hidden mb-3"
               style={{ maxHeight: 200, position: 'relative', cursor: 'pointer' }}
@@ -453,6 +507,7 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
                 </div>
               </div>
             </div>
+            )
           ) : (
             <MockVisual format={format} pillar={pillar} accentColor={accentColor} />
           )
@@ -543,7 +598,13 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
               </button>
               {isGenerated && format === 'Single Image' && (
                 <button
-                  onClick={() => setVariationSeed(Math.floor(Math.random() * 10000))}
+                  onClick={() =>
+                    applyPatch({
+                      imageUrl: undefined,
+                      imageError: undefined,
+                      imageVariationSeed: Math.floor(Math.random() * 100_000),
+                    })
+                  }
                   title="Same brief, new output (bypasses cache, costs ~$0.15)"
                   className="py-2 px-3 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
                   style={{

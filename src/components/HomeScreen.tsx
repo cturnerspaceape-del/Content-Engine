@@ -1,13 +1,12 @@
 interface HomeScreenProps {
-  onLaunch: () => void
-  onStrategy: () => void
   onPostLog: () => void
   onSilLab: () => void
   onCarouselLounge: () => void
+  onReelLounge: () => void
   loggedCount: number
 }
 
-export default function HomeScreen({ onLaunch, onStrategy, onPostLog, onSilLab, onCarouselLounge, loggedCount }: HomeScreenProps) {
+export default function HomeScreen({ onPostLog, onSilLab, onCarouselLounge, onReelLounge, loggedCount }: HomeScreenProps) {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
@@ -37,37 +36,6 @@ export default function HomeScreen({ onLaunch, onStrategy, onPostLog, onSilLab, 
           {/* Launch Button */}
           <div className="space-y-4">
             <button
-              onClick={onLaunch}
-              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
-              style={{
-                background: 'rgba(59,130,246,.1)',
-                border: '2px solid #3b82f6',
-                boxShadow: 'var(--shadow-md)',
-                color: '#3b82f6',
-              }}
-            >
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-3xl">📅</span>
-                <span>Launch Weekly Content</span>
-              </div>
-            </button>
-
-            <button
-              onClick={onStrategy}
-              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
-              style={{
-                background: 'rgba(168,85,247,.1)',
-                border: '2px solid #a855f7',
-                boxShadow: 'var(--shadow-md)',
-                color: '#a855f7',
-              }}
-            >
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-3xl">📊</span>
-                <span>Instagram Strategy</span>
-              </div>
-            </button>
-            <button
               onClick={onSilLab}
               className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
               style={{
@@ -95,6 +63,21 @@ export default function HomeScreen({ onLaunch, onStrategy, onPostLog, onSilLab, 
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">🎠</span>
                 <span>Carousel Lounge</span>
+              </div>
+            </button>
+            <button
+              onClick={onReelLounge}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'rgba(236,72,153,.1)',
+                border: '2px solid #ec4899',
+                boxShadow: 'var(--shadow-md)',
+                color: '#ec4899',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🎬</span>
+                <span>Reel Lounge</span>
               </div>
             </button>
             {loggedCount > 0 && (
