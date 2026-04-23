@@ -81,6 +81,48 @@ export const CAROUSEL_ARCS: CarouselArc[] = [
       { role: 'product-hero', brief: 'the product arrives, sitting cleanly at the center of the mood board universe.' },
     ],
   },
+  {
+    id: 'campaign-teaser',
+    name: 'Campaign Teaser',
+    pillarAffinity: ['Product Centric', 'Brand Building'],
+    slides: [
+      { role: 'teaser-shadow', brief: 'product as silhouette or in heavy shadow — teasing the shape without giving it away; negative space, moody key light.' },
+      { role: 'hero-reveal', brief: 'product steps into full light — clean hero on a seamless backdrop, confident pop-editorial energy.' },
+      { role: 'macro-surface', brief: 'extreme close-up on the wrap material or printed label texture; specular highlights, editorial stillness.' },
+      { role: 'lifestyle-scene', brief: 'product in a tactile human moment — held, placed on a surface, beside a drink; candid, warm, lived-in.' },
+      { role: 'color-study', brief: 'an abstract palette shot that rhymes with the wrap — painted paper, fabric folds, or liquid in the flavor hues.' },
+      { role: 'final-anchor', brief: 'a final wide hero with the product dead-center, palette fully alive, designed to feel like the campaign\'s lock-up frame.' },
+    ],
+  },
+  {
+    id: 'day-to-night',
+    name: 'Day to Night',
+    pillarAffinity: ['Lifestyle', 'Brand Building'],
+    slides: [
+      { role: 'dawn', brief: 'empty dawn scene — curtains, a bed edge, a quiet counter — product not yet visible; desaturated, cool blue hour.' },
+      { role: 'morning-ritual', brief: 'product enters the morning — beside coffee, a notebook, morning light cutting across a table.' },
+      { role: 'midday', brief: 'bright commercial moment — product in direct noon light on a clean surface; crisp shadows, high saturation.' },
+      { role: 'golden-hour', brief: 'product bathed in warm late-afternoon light — amber tones, cinematic, lived-in room or rooftop.' },
+      { role: 'neon-moment', brief: 'product against neon or city-window reflection at early night — electric accent color, editorial mood.' },
+      { role: 'intimate-close', brief: 'tight tabletop close-up — candlelight, glassware, product nestled in; intimate, tactile.' },
+      { role: 'signoff', brief: 'wide aspirational final scene — product in the palm of the night, palette fully alive, feels like the closing frame of a short film.' },
+    ],
+  },
+  {
+    id: 'full-story-arc',
+    name: 'Full Story Arc',
+    pillarAffinity: ['Brand Building', 'Product Centric'],
+    slides: [
+      { role: 'opener-environment', brief: 'scene-setting shot without the product — a room, a window, a surface; clean composition that implies something is about to happen.' },
+      { role: 'hero-entry', brief: 'product introduced into the scene — clean hero crop, the first moment the viewer sees it clearly.' },
+      { role: 'feature-spotlight-1', brief: 'macro on the mouthpiece or top detail of the device; clean geometry and specular highlights.' },
+      { role: 'feature-spotlight-2', brief: 'macro on the body / label / colorway; confident editorial crop.' },
+      { role: 'material-detail', brief: 'extreme close-up on wrap texture, printed ink, or finish; tactile and premium.' },
+      { role: 'in-context', brief: 'product placed in a real-world lifestyle context — hand, pocket, countertop, bar top; candid energy.' },
+      { role: 'transformation-scene', brief: 'a wider scene that implies the moment the product unlocks — a party, a quiet room going warm, a friend laughing; atmospheric, suggestive.' },
+      { role: 'signoff-hero', brief: 'closing hero — product centered, palette fully resolved, feels like the final frame and the brand lock-up in one.' },
+    ],
+  },
 ]
 
 const BY_ID = new Map(CAROUSEL_ARCS.map((arc) => [arc.id, arc]))

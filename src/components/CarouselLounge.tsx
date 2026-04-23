@@ -17,6 +17,9 @@ const SEEDS: Array<{ arcId: string; title: string }> = [
   { arcId: 'before-after', title: 'Carousel Lounge — Entertainment: Hot Take' },
   { arcId: 'product-features', title: 'Carousel Lounge — Product Centric: Feature Tour' },
   { arcId: 'strain-mood-board', title: 'Carousel Lounge — Brand Building: Founder Story' },
+  { arcId: 'campaign-teaser', title: 'Carousel Lounge — Product Centric: Campaign Teaser' },
+  { arcId: 'day-to-night', title: 'Carousel Lounge — Lifestyle: Day to Night' },
+  { arcId: 'full-story-arc', title: 'Carousel Lounge — Brand Building: Full Story' },
 ]
 
 function makeSeed(title: string): ContentItem {
