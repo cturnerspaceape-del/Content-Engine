@@ -9,6 +9,24 @@ export interface PostConfirmOptions {
 
 export interface PostConfirmEdits {
   caption?: string
+  hashtags?: string[]
+}
+
+// Parses a space / comma / newline separated hashtag string into a normalized
+// array. Drops empty tokens, strips leading # so storage stays consistent with
+// how the generator writes hashtags.
+export function parseHashtagInput(raw: string): string[] {
+  return raw
+    .split(/[\s,]+/)
+    .map((t) => t.trim().replace(/^#+/, ''))
+    .filter((t) => t.length > 0)
+}
+
+export function formatHashtagsForInput(tags: string[] | undefined): string {
+  return (tags ?? [])
+    .filter((t) => typeof t === 'string' && t.length > 0)
+    .map((t) => (t.startsWith('#') ? t : `#${t}`))
+    .join(' ')
 }
 
 interface PostConfirmModalProps {
@@ -64,8 +82,13 @@ export default function PostConfirmModal({
   )
   const [alsoFacebook, setAlsoFacebook] = useState<boolean>(readAlsoFacebookPreference())
   const originalCaption = item.generatedVisual?.caption ?? ''
+  const originalHashtags = item.generatedVisual?.hashtags ?? []
   const [isEditingCaption, setIsEditingCaption] = useState(false)
   const [editedCaption, setEditedCaption] = useState<string>(originalCaption)
+  const [editedHashtagInput, setEditedHashtagInput] = useState<string>(
+    formatHashtagsForInput(originalHashtags),
+  )
+  const editedHashtags = parseHashtagInput(editedHashtagInput)
 
   useEffect(() => {
     if (usernameCache === undefined) {
@@ -135,7 +158,7 @@ export default function PostConfirmModal({
 
   const previewCaption = buildCaption({
     caption: editedCaption,
-    hashtags: v?.hashtags,
+    hashtags: editedHashtags,
   })
 
   const formatChipText =
@@ -150,6 +173,10 @@ export default function PostConfirmModal({
   const captionEditable =
     destination === 'feed' && (format === 'Single Image' || format === 'Carousel') && v?.caption != null
   const captionDirty = editedCaption !== originalCaption
+  const hashtagsDirty =
+    editedHashtags.length !== originalHashtags.length
+    || editedHashtags.some((t, i) => t !== originalHashtags[i])
+  const editsDirty = captionDirty || hashtagsDirty
   const captionOverLimit = editedCaption.length > MAX_CAPTION_LENGTH
 
   const handleToggleFacebook = (next: boolean) => {
@@ -315,7 +342,7 @@ export default function PostConfirmModal({
                 style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
               >
                 Caption preview
-                {captionDirty && (
+                {editsDirty && (
                   <span
                     className="text-[9px] font-bold normal-case px-1.5 py-0.5 rounded-full"
                     style={{ background: 'rgba(59,130,246,.15)', color: 'var(--accent)', letterSpacing: 0 }}
@@ -354,39 +381,44 @@ export default function PostConfirmModal({
                     fontFamily: 'inherit',
                   }}
                 />
-                {(v?.hashtags?.length ?? 0) > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {(v?.hashtags ?? [])
-                      .filter((t) => typeof t === 'string' && t.length > 0)
-                      .map((t) => (t.startsWith('#') ? t : `#${t}`))
-                      .map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                          title="Hashtags are auto-appended and can't be edited here"
-                          style={{
-                            background: 'var(--panel-2)',
-                            color: 'var(--muted)',
-                            border: '1px solid var(--border)',
-                          }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                  </div>
-                )}
-                <div className="flex items-center justify-between mt-1.5">
+                <div className="mt-2.5">
+                  <p
+                    className="text-[10px] font-bold uppercase mb-1"
+                    style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
+                  >
+                    Hashtags
+                  </p>
+                  <input
+                    type="text"
+                    value={editedHashtagInput}
+                    onChange={(e) => setEditedHashtagInput(e.target.value)}
+                    placeholder="#spaceape #liveresin #premium"
+                    className="w-full rounded-lg p-2 text-[11px]"
+                    style={{
+                      background: 'var(--panel-2)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text)',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                  <p className="text-[9px] mt-1" style={{ color: 'var(--muted)' }}>
+                    Separated by spaces. {editedHashtags.length} tag{editedHashtags.length === 1 ? '' : 's'}
+                    {editedHashtags.length > 30 && ' — IG caps at 30'}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between mt-3">
                   <span
                     className="text-[10px]"
                     style={{ color: captionOverLimit ? '#ef4444' : 'var(--muted)' }}
                   >
-                    {editedCaption.length} / {MAX_CAPTION_LENGTH}
+                    Caption: {editedCaption.length} / {MAX_CAPTION_LENGTH}
                     {captionOverLimit && ' — will be truncated'}
                   </span>
                   <div className="flex gap-1.5">
                     <button
                       onClick={() => {
                         setEditedCaption(originalCaption)
+                        setEditedHashtagInput(formatHashtagsForInput(originalHashtags))
                         setIsEditingCaption(false)
                       }}
                       className="text-[10px] font-bold px-2 py-1 rounded-md"
@@ -451,7 +483,12 @@ export default function PostConfirmModal({
               onConfirm(
                 destination,
                 { alsoFacebook },
-                captionDirty ? { caption: editedCaption } : undefined,
+                editsDirty
+                  ? {
+                      ...(captionDirty ? { caption: editedCaption } : {}),
+                      ...(hashtagsDirty ? { hashtags: editedHashtags } : {}),
+                    }
+                  : undefined,
               )
             }
             className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105"

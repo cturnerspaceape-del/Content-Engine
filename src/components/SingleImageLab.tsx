@@ -98,12 +98,20 @@ export default function SingleImageLab({ onBack }: SingleImageLabProps) {
   const handlePost = async (
     destination: PostDestination,
     opts: { alsoFacebook: boolean },
-    captionOverride?: string,
+    edits?: { caption?: string; hashtags?: string[] },
   ) => {
-    const itemToPost =
-      captionOverride != null && item.generatedVisual
-        ? { ...item, generatedVisual: { ...item.generatedVisual, caption: captionOverride } }
-        : item
+    const hasEdit =
+      (edits?.caption != null || edits?.hashtags != null) && Boolean(item.generatedVisual)
+    const itemToPost = hasEdit
+      ? {
+          ...item,
+          generatedVisual: {
+            ...item.generatedVisual!,
+            ...(edits?.caption != null ? { caption: edits.caption } : {}),
+            ...(edits?.hashtags != null ? { hashtags: edits.hashtags } : {}),
+          },
+        }
+      : item
     const result = await postItemToSocials(itemToPost, destination, opts)
     setItem((cur) => ({
       ...cur,
@@ -111,8 +119,14 @@ export default function SingleImageLab({ onBack }: SingleImageLabProps) {
       postedToFacebook: result.facebook,
       facebookError: result.facebookError,
       postError: undefined,
-      ...(captionOverride != null && cur.generatedVisual
-        ? { generatedVisual: { ...cur.generatedVisual, caption: captionOverride } }
+      ...(hasEdit && cur.generatedVisual
+        ? {
+            generatedVisual: {
+              ...cur.generatedVisual,
+              ...(edits?.caption != null ? { caption: edits.caption } : {}),
+              ...(edits?.hashtags != null ? { hashtags: edits.hashtags } : {}),
+            },
+          }
         : {}),
     }))
     return { facebookError: result.facebookError }

@@ -7,7 +7,11 @@ import { buildSlideArc } from '../remotion/compositions/Carousel'
 import { getCarouselArc } from '../data/carouselArcs'
 import { getFlavorTheme } from '../remotion/flavorThemes'
 import type { CarouselProps, ReelProps } from '../remotion/types'
-import PostConfirmModal, { type PostConfirmOptions } from './PostConfirmModal'
+import PostConfirmModal, {
+  formatHashtagsForInput,
+  parseHashtagInput,
+  type PostConfirmOptions,
+} from './PostConfirmModal'
 import { MAX_CAPTION_LENGTH } from '../lib/instagramCaption'
 
 // Cast components to satisfy Thumbnail/Player LooseComponentType constraint
@@ -247,7 +251,7 @@ interface ContentCardProps {
   onPost?: (
     destination: PostDestination,
     opts: { alsoFacebook: boolean },
-    captionOverride?: string,
+    edits?: { caption?: string; hashtags?: string[] },
   ) => Promise<{ facebookError?: string }>
   // Controls which destinations the confirm modal exposes. Each lab owns the
   // policy (Carousel Lounge: feed-only; Single Image / Reel: feed+story).
@@ -280,9 +284,14 @@ export default function ContentCard({
   const [postState, setPostState] = useState<'idle' | 'confirming' | 'posting' | 'error'>('idle')
   const [postErrorMessage, setPostErrorMessage] = useState<string | null>(item.postError ?? null)
   const [facebookWarning, setFacebookWarning] = useState<string | null>(item.facebookError ?? null)
-  const [cardEditState, setCardEditState] = useState<{ open: boolean; draft: string }>({
+  const [cardEditState, setCardEditState] = useState<{
+    open: boolean
+    captionDraft: string
+    hashtagInputDraft: string
+  }>({
     open: false,
-    draft: '',
+    captionDraft: '',
+    hashtagInputDraft: '',
   })
   const isPosted = Boolean(item.postedToInstagram)
   const isCrossPostedFacebook = Boolean(item.postedToFacebook)
@@ -305,14 +314,14 @@ export default function ContentCard({
   const handleConfirmPost = async (
     destination: PostDestination,
     opts: PostConfirmOptions,
-    captionOverride?: string,
+    edits?: { caption?: string; hashtags?: string[] },
   ) => {
     if (!onPost) return
     setPostState('posting')
     setPostErrorMessage(null)
     setFacebookWarning(null)
     try {
-      const result = await onPost(destination, { alsoFacebook: opts.alsoFacebook }, captionOverride)
+      const result = await onPost(destination, { alsoFacebook: opts.alsoFacebook }, edits)
       if (result?.facebookError) setFacebookWarning(result.facebookError)
       setPostState('idle')
     } catch (err) {
@@ -420,39 +429,12 @@ export default function ContentCard({
         </div>
 
         {/* Title row */}
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <h3
-            className="text-xs font-bold uppercase leading-tight flex-1"
-            style={{ color: 'var(--text)', letterSpacing: '0.02em' }}
-          >
-            {titleText}
-          </h3>
-          {isGenerated
-            && !isPosted
-            && !isLogged
-            && item.generatedVisual?.caption != null
-            && (format === 'Single Image' || format === 'Carousel') && (
-              <button
-                onClick={() =>
-                  setCardEditState({
-                    open: true,
-                    draft: item.generatedVisual?.caption ?? '',
-                  })
-                }
-                title="Edit caption"
-                aria-label="Edit caption"
-                className="flex-shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-md transition-all hover:scale-105"
-                style={{
-                  background: 'var(--panel-2)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--border)',
-                  lineHeight: 1.2,
-                }}
-              >
-                ✎ Edit
-              </button>
-            )}
-        </div>
+        <h3
+          className="text-xs font-bold uppercase leading-tight mb-3"
+          style={{ color: 'var(--text)', letterSpacing: '0.02em' }}
+        >
+          {titleText}
+        </h3>
 
         {/* Divider */}
         <div className="mb-3" style={{ borderBottom: '1px solid var(--border)' }} />
@@ -626,7 +608,34 @@ export default function ContentCard({
         ) : null}
 
         {/* Content area — checklist or generated copy */}
-        <div className="flex-1 mb-3">
+        <div className="flex-1 mb-3 relative">
+          {isGenerated
+            && !isPosted
+            && !isLogged
+            && item.generatedVisual?.caption != null
+            && (format === 'Single Image' || format === 'Carousel') && (
+              <button
+                onClick={() =>
+                  setCardEditState({
+                    open: true,
+                    captionDraft: item.generatedVisual?.caption ?? '',
+                    hashtagInputDraft: formatHashtagsForInput(item.generatedVisual?.hashtags),
+                  })
+                }
+                title="Edit caption & hashtags"
+                aria-label="Edit caption and hashtags"
+                className="absolute -top-1 right-0 text-[10px] font-bold px-2 py-0.5 rounded-md transition-all hover:scale-105"
+                style={{
+                  background: 'var(--panel-2)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--border)',
+                  lineHeight: 1.2,
+                  zIndex: 1,
+                }}
+              >
+                ✎ Edit
+              </button>
+            )}
           {isGenerated ? (
             // Generated content sourced from generatedVisual so caption edits
             // reflect immediately. Ungenerated / legacy items fall back to the
@@ -829,20 +838,30 @@ export default function ContentCard({
           onCancel={() => setPostState('idle')}
           onConfirm={(destination, opts, edits) => {
             setPostState('idle')
-            void handleConfirmPost(destination, opts, edits?.caption)
+            void handleConfirmPost(destination, opts, edits)
           }}
         />
       )}
 
       {cardEditState.open && item.generatedVisual && (
         <CaptionEditDialog
-          draft={cardEditState.draft}
-          hashtags={item.generatedVisual.hashtags ?? []}
-          onChange={(draft) => setCardEditState((prev) => ({ ...prev, draft }))}
-          onCancel={() => setCardEditState({ open: false, draft: '' })}
+          captionDraft={cardEditState.captionDraft}
+          hashtagInputDraft={cardEditState.hashtagInputDraft}
+          onCaptionChange={(captionDraft) =>
+            setCardEditState((prev) => ({ ...prev, captionDraft }))
+          }
+          onHashtagsChange={(hashtagInputDraft) =>
+            setCardEditState((prev) => ({ ...prev, hashtagInputDraft }))
+          }
+          onCancel={() =>
+            setCardEditState({ open: false, captionDraft: '', hashtagInputDraft: '' })
+          }
           onSave={() => {
-            applyPatch({ caption: cardEditState.draft })
-            setCardEditState({ open: false, draft: '' })
+            applyPatch({
+              caption: cardEditState.captionDraft,
+              hashtags: parseHashtagInput(cardEditState.hashtagInputDraft),
+            })
+            setCardEditState({ open: false, captionDraft: '', hashtagInputDraft: '' })
           }}
         />
       )}
@@ -851,15 +870,17 @@ export default function ContentCard({
 }
 
 function CaptionEditDialog({
-  draft,
-  hashtags,
-  onChange,
+  captionDraft,
+  hashtagInputDraft,
+  onCaptionChange,
+  onHashtagsChange,
   onCancel,
   onSave,
 }: {
-  draft: string
-  hashtags: string[]
-  onChange: (v: string) => void
+  captionDraft: string
+  hashtagInputDraft: string
+  onCaptionChange: (v: string) => void
+  onHashtagsChange: (v: string) => void
   onCancel: () => void
   onSave: () => void
 }) {
@@ -879,10 +900,9 @@ function CaptionEditDialog({
     return () => window.removeEventListener('keydown', handleKey)
   }, [onCancel])
 
-  const overLimit = draft.length > MAX_CAPTION_LENGTH
-  const normalizedTags = hashtags
-    .filter((t) => typeof t === 'string' && t.length > 0)
-    .map((t) => (t.startsWith('#') ? t : `#${t}`))
+  const overLimit = captionDraft.length > MAX_CAPTION_LENGTH
+  const parsedTags = parseHashtagInput(hashtagInputDraft)
+  const overTagLimit = parsedTags.length > 30
 
   return createPortal(
     <div
@@ -917,21 +937,24 @@ function CaptionEditDialog({
       >
         <h2
           id="caption-edit-title"
-          className="text-lg font-bold mb-1"
+          className="text-lg font-bold mb-4"
           style={{ color: 'var(--text)' }}
         >
-          Edit caption
+          Edit caption & hashtags
         </h2>
-        <p className="text-xs mb-4" style={{ color: 'var(--muted)' }}>
-          Hashtags are auto-appended when posting and aren't editable here.
-        </p>
 
+        <p
+          className="text-[10px] font-bold uppercase mb-1"
+          style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
+        >
+          Caption
+        </p>
         <textarea
-          value={draft}
-          onChange={(e) => onChange(e.target.value)}
-          rows={7}
+          value={captionDraft}
+          onChange={(e) => onCaptionChange(e.target.value)}
+          rows={6}
           autoFocus
-          className="w-full rounded-lg p-3 text-[12px] leading-snug mb-1.5"
+          className="w-full rounded-lg p-3 text-[12px] leading-snug mb-1"
           style={{
             background: 'var(--panel-2)',
             border: '1px solid var(--border)',
@@ -941,38 +964,39 @@ function CaptionEditDialog({
           }}
         />
         <div
-          className="text-[10px] mb-3"
+          className="text-[10px] mb-4"
           style={{ color: overLimit ? '#ef4444' : 'var(--muted)' }}
         >
-          {draft.length} / {MAX_CAPTION_LENGTH}
+          {captionDraft.length} / {MAX_CAPTION_LENGTH}
           {overLimit && ' — will be truncated when posted'}
         </div>
 
-        {normalizedTags.length > 0 && (
-          <div className="mb-4">
-            <p
-              className="text-[11px] font-bold uppercase mb-1.5"
-              style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
-            >
-              Hashtags (read-only)
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {normalizedTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                  style={{
-                    background: 'var(--panel-2)',
-                    color: 'var(--muted)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <p
+          className="text-[10px] font-bold uppercase mb-1"
+          style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
+        >
+          Hashtags
+        </p>
+        <input
+          type="text"
+          value={hashtagInputDraft}
+          onChange={(e) => onHashtagsChange(e.target.value)}
+          placeholder="#spaceape #liveresin #premium"
+          className="w-full rounded-lg p-2.5 text-[12px] mb-1"
+          style={{
+            background: 'var(--panel-2)',
+            border: '1px solid var(--border)',
+            color: 'var(--text)',
+            fontFamily: 'inherit',
+          }}
+        />
+        <div
+          className="text-[10px] mb-4"
+          style={{ color: overTagLimit ? '#ef4444' : 'var(--muted)' }}
+        >
+          Separated by spaces. {parsedTags.length} tag{parsedTags.length === 1 ? '' : 's'}
+          {overTagLimit && ' — IG caps at 30; extras will be dropped'}
+        </div>
 
         <div className="flex gap-2">
           <button

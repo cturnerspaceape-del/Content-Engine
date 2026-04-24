@@ -84,13 +84,21 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
       day: string,
       destination: PostDestination,
       opts: { alsoFacebook: boolean },
-      captionOverride?: string,
+      edits?: { caption?: string; hashtags?: string[] },
     ) => {
       const current = content[dayIdx].items[itemIdx]
-      const itemToPost =
-        captionOverride != null && current.generatedVisual
-          ? { ...current, generatedVisual: { ...current.generatedVisual, caption: captionOverride } }
-          : current
+      const hasEdit =
+        (edits?.caption != null || edits?.hashtags != null) && Boolean(current.generatedVisual)
+      const itemToPost = hasEdit
+        ? {
+            ...current,
+            generatedVisual: {
+              ...current.generatedVisual!,
+              ...(edits?.caption != null ? { caption: edits.caption } : {}),
+              ...(edits?.hashtags != null ? { hashtags: edits.hashtags } : {}),
+            },
+          }
+        : current
       const result = await postItemToSocials(itemToPost, destination, opts)
       // Also log it so it shows up in the Post Log view — posting to IG is a
       // superset of logging ("logged" = it's done, "postedToInstagram" = it's
@@ -116,8 +124,14 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
             postedToFacebook: result.facebook,
             facebookError: result.facebookError,
             postError: undefined,
-            ...(captionOverride != null && existing.generatedVisual
-              ? { generatedVisual: { ...existing.generatedVisual, caption: captionOverride } }
+            ...(hasEdit && existing.generatedVisual
+              ? {
+                  generatedVisual: {
+                    ...existing.generatedVisual,
+                    ...(edits?.caption != null ? { caption: edits.caption } : {}),
+                    ...(edits?.hashtags != null ? { hashtags: edits.hashtags } : {}),
+                  },
+                }
               : {}),
           }
           return { ...d, items: newItems }
@@ -324,7 +338,7 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
                             onShuffle={() => handleShuffle(dayIdx, itemIdx)}
                             onGenerate={() => handleGenerate(dayIdx, itemIdx)}
                             onLogPost={() => handleLogPost(dayIdx, itemIdx, day.day)}
-                            onPost={(destination, opts, captionOverride) => handlePost(dayIdx, itemIdx, day.day, destination, opts, captionOverride)}
+                            onPost={(destination, opts, edits) => handlePost(dayIdx, itemIdx, day.day, destination, opts, edits)}
                             allowedDestinations={allowedDestinationsFor(item)}
                             onVisualResult={(patch) => handleVisualResult(dayIdx, itemIdx, patch)}
                           />
