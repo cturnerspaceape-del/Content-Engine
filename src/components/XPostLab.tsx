@@ -95,11 +95,9 @@ export default function XPostLab({ onBack }: XPostLabProps) {
 
   const recommendation = useMemo(() => pickRecommendation(), [])
 
-  // Heal stale persisted state from when this lab had a Reel tab.
+  // Auto-select the recommendation on every mount/reload.
   useEffect(() => {
-    if (activeType !== 'text' && activeType !== 'image') {
-      setActiveType(recommendation)
-    }
+    setActiveType(recommendation)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -154,10 +152,10 @@ export default function XPostLab({ onBack }: XPostLabProps) {
 
   const tabs: Array<{ id: XLabFormat; label: string }> = [
     { id: 'text', label: 'Text' },
-    { id: 'image', label: 'Image' },
+    { id: 'image', label: 'Image and Text' },
   ]
 
-  const recLabel = recommendation === 'text' ? 'Text' : 'Image'
+  const recLabel = recommendation === 'text' ? 'Text' : 'Image and Text'
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
