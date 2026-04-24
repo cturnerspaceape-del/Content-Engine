@@ -83,6 +83,7 @@ export type ViewState =
   | 'sil-lab'
   | 'carousel-lounge'
   | 'reel-lounge'
+  | 'x-post-lab'
 
 export type InstagramFormat = 'Carousel' | 'Reel' | 'Single Image'
 

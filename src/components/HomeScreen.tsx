@@ -3,10 +3,18 @@ interface HomeScreenProps {
   onSilLab: () => void
   onCarouselLounge: () => void
   onReelLounge: () => void
+  onXPostLab: () => void
   loggedCount: number
 }
 
-export default function HomeScreen({ onPostLog, onSilLab, onCarouselLounge, onReelLounge, loggedCount }: HomeScreenProps) {
+export default function HomeScreen({
+  onPostLog,
+  onSilLab,
+  onCarouselLounge,
+  onReelLounge,
+  onXPostLab,
+  loggedCount,
+}: HomeScreenProps) {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
@@ -75,6 +83,21 @@ export default function HomeScreen({ onPostLog, onSilLab, onCarouselLounge, onRe
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">🎬</span>
                 <span>Reel Lounge</span>
+              </div>
+            </button>
+            <button
+              onClick={onXPostLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'rgba(29,155,240,.1)',
+                border: '2px solid #1d9bf0',
+                boxShadow: 'var(--shadow-md)',
+                color: '#1d9bf0',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">𝕏</span>
+                <span>X Post Lab</span>
               </div>
             </button>
             {loggedCount > 0 && (
