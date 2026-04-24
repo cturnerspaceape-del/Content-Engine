@@ -354,6 +354,27 @@ export default function PostConfirmModal({
                     fontFamily: 'inherit',
                   }}
                 />
+                {(v?.hashtags?.length ?? 0) > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {(v?.hashtags ?? [])
+                      .filter((t) => typeof t === 'string' && t.length > 0)
+                      .map((t) => (t.startsWith('#') ? t : `#${t}`))
+                      .map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                          title="Hashtags are auto-appended and can't be edited here"
+                          style={{
+                            background: 'var(--panel-2)',
+                            color: 'var(--muted)',
+                            border: '1px solid var(--border)',
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                  </div>
+                )}
                 <div className="flex items-center justify-between mt-1.5">
                   <span
                     className="text-[10px]"

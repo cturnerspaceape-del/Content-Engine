@@ -8,6 +8,7 @@ import { getCarouselArc } from '../data/carouselArcs'
 import { getFlavorTheme } from '../remotion/flavorThemes'
 import type { CarouselProps, ReelProps } from '../remotion/types'
 import PostConfirmModal, { type PostConfirmOptions } from './PostConfirmModal'
+import { MAX_CAPTION_LENGTH } from '../lib/instagramCaption'
 
 // Cast components to satisfy Thumbnail/Player LooseComponentType constraint
 const ReelComponent = Reel as unknown as React.FC<Record<string, unknown>>
@@ -279,6 +280,10 @@ export default function ContentCard({
   const [postState, setPostState] = useState<'idle' | 'confirming' | 'posting' | 'error'>('idle')
   const [postErrorMessage, setPostErrorMessage] = useState<string | null>(item.postError ?? null)
   const [facebookWarning, setFacebookWarning] = useState<string | null>(item.facebookError ?? null)
+  const [cardEditState, setCardEditState] = useState<{ open: boolean; draft: string }>({
+    open: false,
+    draft: '',
+  })
   const isPosted = Boolean(item.postedToInstagram)
   const isCrossPostedFacebook = Boolean(item.postedToFacebook)
 
@@ -415,12 +420,39 @@ export default function ContentCard({
         </div>
 
         {/* Title row */}
-        <h3
-          className="text-xs font-bold uppercase leading-tight mb-3"
-          style={{ color: 'var(--text)', letterSpacing: '0.02em' }}
-        >
-          {titleText}
-        </h3>
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <h3
+            className="text-xs font-bold uppercase leading-tight flex-1"
+            style={{ color: 'var(--text)', letterSpacing: '0.02em' }}
+          >
+            {titleText}
+          </h3>
+          {isGenerated
+            && !isPosted
+            && !isLogged
+            && item.generatedVisual?.caption != null
+            && (format === 'Single Image' || format === 'Carousel') && (
+              <button
+                onClick={() =>
+                  setCardEditState({
+                    open: true,
+                    draft: item.generatedVisual?.caption ?? '',
+                  })
+                }
+                title="Edit caption"
+                aria-label="Edit caption"
+                className="flex-shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-md transition-all hover:scale-105"
+                style={{
+                  background: 'var(--panel-2)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--border)',
+                  lineHeight: 1.2,
+                }}
+              >
+                ✎ Edit
+              </button>
+            )}
+        </div>
 
         {/* Divider */}
         <div className="mb-3" style={{ borderBottom: '1px solid var(--border)' }} />
@@ -596,25 +628,42 @@ export default function ContentCard({
         {/* Content area — checklist or generated copy */}
         <div className="flex-1 mb-3">
           {isGenerated ? (
-            // Generated content: show as flowing copy
-            descLines.map((line, i) => {
-              // First line = hook (bold), hashtags line, or body
-              const isHook = i === 0
-              const isHashtags = line.startsWith('#')
-              return (
+            // Generated content sourced from generatedVisual so caption edits
+            // reflect immediately. Ungenerated / legacy items fall back to the
+            // static description split.
+            (() => {
+              const gv = item.generatedVisual
+              const generatedLines: Array<{ text: string; kind: 'hook' | 'body' | 'hashtags' }> = []
+              if (gv) {
+                if (gv.hook) generatedLines.push({ text: gv.hook, kind: 'hook' })
+                if (gv.caption) generatedLines.push({ text: gv.caption, kind: 'body' })
+                const tags = (gv.hashtags ?? []).filter((t) => typeof t === 'string' && t.length > 0)
+                if (tags.length > 0) {
+                  const tagLine = tags.map((t) => (t.startsWith('#') ? t : `#${t}`)).join(' ')
+                  generatedLines.push({ text: tagLine, kind: 'hashtags' })
+                }
+              }
+              const lines = generatedLines.length > 0
+                ? generatedLines
+                : descLines.map((text, i) => ({
+                    text,
+                    kind:
+                      i === 0 ? ('hook' as const) : text.startsWith('#') ? ('hashtags' as const) : ('body' as const),
+                  }))
+              return lines.map((row, i) => (
                 <p
                   key={i}
-                  className={`${isHashtags ? 'text-[10px]' : 'text-[11px]'} leading-snug ${i < descLines.length - 1 ? 'mb-1.5' : ''}`}
+                  className={`${row.kind === 'hashtags' ? 'text-[10px]' : 'text-[11px]'} leading-snug ${i < lines.length - 1 ? 'mb-1.5' : ''}`}
                   style={{
-                    color: isHashtags ? accentColor : 'var(--text)',
-                    fontWeight: isHook ? 700 : 400,
-                    fontStyle: isHook ? 'italic' : 'normal',
+                    color: row.kind === 'hashtags' ? 'var(--muted)' : 'var(--text)',
+                    fontWeight: row.kind === 'hook' ? 700 : 400,
+                    fontStyle: row.kind === 'hook' ? 'italic' : 'normal',
                   }}
                 >
-                  {isHook ? `"${line}"` : line}
+                  {row.kind === 'hook' ? `"${row.text}"` : row.text}
                 </p>
-              )
-            })
+              ))
+            })()
           ) : (
             // Checklist instructions
             descLines.map((line, i) => (
@@ -784,6 +833,173 @@ export default function ContentCard({
           }}
         />
       )}
+
+      {cardEditState.open && item.generatedVisual && (
+        <CaptionEditDialog
+          draft={cardEditState.draft}
+          hashtags={item.generatedVisual.hashtags ?? []}
+          onChange={(draft) => setCardEditState((prev) => ({ ...prev, draft }))}
+          onCancel={() => setCardEditState({ open: false, draft: '' })}
+          onSave={() => {
+            applyPatch({ caption: cardEditState.draft })
+            setCardEditState({ open: false, draft: '' })
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function CaptionEditDialog({
+  draft,
+  hashtags,
+  onChange,
+  onCancel,
+  onSave,
+}: {
+  draft: string
+  hashtags: string[]
+  onChange: (v: string) => void
+  onCancel: () => void
+  onSave: () => void
+}) {
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onCancel])
+
+  const overLimit = draft.length > MAX_CAPTION_LENGTH
+  const normalizedTags = hashtags
+    .filter((t) => typeof t === 'string' && t.length > 0)
+    .map((t) => (t.startsWith('#') ? t : `#${t}`))
+
+  return createPortal(
+    <div
+      className="fade-in"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10_000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.7)',
+        padding: 16,
+      }}
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="caption-edit-title"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="card-enter glass-panel"
+        style={{
+          width: '100%',
+          maxWidth: 440,
+          maxHeight: 'calc(100vh - 32px)',
+          overflowY: 'auto',
+          borderRadius: 16,
+          padding: 20,
+          background: 'var(--panel)',
+        }}
+      >
+        <h2
+          id="caption-edit-title"
+          className="text-lg font-bold mb-1"
+          style={{ color: 'var(--text)' }}
+        >
+          Edit caption
+        </h2>
+        <p className="text-xs mb-4" style={{ color: 'var(--muted)' }}>
+          Hashtags are auto-appended when posting and aren't editable here.
+        </p>
+
+        <textarea
+          value={draft}
+          onChange={(e) => onChange(e.target.value)}
+          rows={7}
+          autoFocus
+          className="w-full rounded-lg p-3 text-[12px] leading-snug mb-1.5"
+          style={{
+            background: 'var(--panel-2)',
+            border: '1px solid var(--border)',
+            color: 'var(--text)',
+            resize: 'vertical',
+            fontFamily: 'inherit',
+          }}
+        />
+        <div
+          className="text-[10px] mb-3"
+          style={{ color: overLimit ? '#ef4444' : 'var(--muted)' }}
+        >
+          {draft.length} / {MAX_CAPTION_LENGTH}
+          {overLimit && ' — will be truncated when posted'}
+        </div>
+
+        {normalizedTags.length > 0 && (
+          <div className="mb-4">
+            <p
+              className="text-[11px] font-bold uppercase mb-1.5"
+              style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
+            >
+              Hashtags (read-only)
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {normalizedTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{
+                    background: 'var(--panel-2)',
+                    color: 'var(--muted)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all"
+            style={{
+              background: 'var(--panel-2)',
+              color: 'var(--text)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSave}
+            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105"
+            style={{
+              background: 'var(--accent)',
+              color: '#fff',
+              border: '1px solid var(--accent)',
+            }}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   )
 }
