@@ -8,6 +8,7 @@ import CarouselLounge from './components/CarouselLounge'
 import ReelLounge from './components/ReelLounge'
 import XPostLab from './components/XPostLab'
 import ShortsLab from './components/ShortsLab'
+import EmailLab from './components/EmailLab'
 import { usePersistedState } from './utils/persistedState'
 import type { ViewState, LoggedPost } from './types'
 
@@ -45,6 +46,7 @@ export default function App() {
               onReelLounge={() => switchView('reel-lounge')}
               onXPostLab={() => switchView('x-post-lab')}
               onShortsLab={() => switchView('shorts-lab')}
+              onEmailLab={() => switchView('email-lab')}
               loggedCount={loggedPosts.length}
             />
           </div>
@@ -95,6 +97,11 @@ export default function App() {
         {view === 'shorts-lab' && (
           <div className="fade-in">
             <ShortsLab onBack={() => switchView('home')} />
+          </div>
+        )}
+        {view === 'email-lab' && (
+          <div className="fade-in">
+            <EmailLab onBack={() => switchView('home')} />
           </div>
         )}
       </div>
