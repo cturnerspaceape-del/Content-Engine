@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Player, Thumbnail } from '@remotion/player'
-import type { ContentItem } from '../types'
+import type { ContentItem, PostDestination } from '../types'
 import { Carousel, Reel } from '../remotion/compositions'
 import { buildSlideArc } from '../remotion/compositions/Carousel'
 import { getCarouselArc } from '../data/carouselArcs'
 import { getFlavorTheme } from '../remotion/flavorThemes'
 import type { CarouselProps, ReelProps } from '../remotion/types'
+import PostConfirmModal, { type PostConfirmOptions } from './PostConfirmModal'
 
 // Cast components to satisfy Thumbnail/Player LooseComponentType constraint
 const ReelComponent = Reel as unknown as React.FC<Record<string, unknown>>
@@ -237,13 +238,35 @@ interface ContentCardProps {
   onShuffle: () => void
   onGenerate: () => void
   onLogPost: () => void
+  // Fires the real Instagram publish flow (and optional FB cross-post). If
+  // omitted, the "Post to Instagram" button falls back to onLogPost
+  // (local-only log). Resolves to undefined when IG succeeds; resolves to a
+  // string when the IG post succeeded but the optional FB cross-post failed,
+  // so the card can show a non-blocking warning.
+  onPost?: (
+    destination: PostDestination,
+    opts: { alsoFacebook: boolean },
+  ) => Promise<{ facebookError?: string }>
+  // Controls which destinations the confirm modal exposes. Each lab owns the
+  // policy (Carousel Lounge: feed-only; Single Image / Reel: feed+story).
+  // Defaults to ['feed'] so components that don't opt in never surprise the user.
+  allowedDestinations?: PostDestination[]
   // Called by the visual wrapper with fields to merge into the item's
   // generatedVisual. Lab pages wire this to their setItems so results persist
   // to localStorage — which is what makes refresh/remount free (no auto-refetch).
   onVisualResult?: (patch: VisualPatch) => void
 }
 
-export default function ContentCard({ item, index, onShuffle, onGenerate, onLogPost, onVisualResult }: ContentCardProps) {
+export default function ContentCard({
+  item,
+  index,
+  onShuffle,
+  onGenerate,
+  onLogPost,
+  onPost,
+  allowedDestinations = ['feed'],
+  onVisualResult,
+}: ContentCardProps) {
   const formatColor = formatColors[item.contentType] || '#a855f7'
   const platformColor = platformColors[item.platform] || formatColor
   const accentColor = formatColor // used by MockVisual + hashtag color
@@ -252,6 +275,45 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [reelModalOpen, setReelModalOpen] = useState(false)
+  const [postState, setPostState] = useState<'idle' | 'confirming' | 'posting' | 'error'>('idle')
+  const [postErrorMessage, setPostErrorMessage] = useState<string | null>(item.postError ?? null)
+  const [facebookWarning, setFacebookWarning] = useState<string | null>(item.facebookError ?? null)
+  const isPosted = Boolean(item.postedToInstagram)
+  const isCrossPostedFacebook = Boolean(item.postedToFacebook)
+
+  const canPost = Boolean(onPost) && isGenerated && !isPosted
+  // A post is only runnable if the needed asset URL(s) exist — we can't ship
+  // a reel whose Veo job hasn't finished yet, etc.
+  const hasPostableAsset = (() => {
+    const gv = item.generatedVisual
+    if (!gv) return false
+    if (gv.format === 'Single Image') return Boolean(gv.imageUrl)
+    if (gv.format === 'Reel') return Boolean(gv.reelUrl)
+    if (gv.format === 'Carousel') {
+      const good = (gv.slideUrls ?? []).filter((u): u is string => typeof u === 'string' && u.length > 0)
+      return good.length >= 2
+    }
+    return false
+  })()
+
+  const handleConfirmPost = async (
+    destination: PostDestination,
+    opts: PostConfirmOptions,
+  ) => {
+    if (!onPost) return
+    setPostState('posting')
+    setPostErrorMessage(null)
+    setFacebookWarning(null)
+    try {
+      const result = await onPost(destination, { alsoFacebook: opts.alsoFacebook })
+      if (result?.facebookError) setFacebookWarning(result.facebookError)
+      setPostState('idle')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      setPostErrorMessage(msg)
+      setPostState('error')
+    }
+  }
 
   const applyPatch = (patch: VisualPatch) => {
     if (onVisualResult) onVisualResult(patch)
@@ -304,26 +366,32 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
       style={{
         width: '100%',
         animationDelay: `${index * 0.04}s`,
-        opacity: isLogged ? 0.5 : 1,
+        opacity: isLogged || isPosted ? 0.5 : 1,
       }}
     >
       {/* Top color bar — now reflects the platform */}
       <div
         style={{
           height: 4,
-          background: isLogged ? '#10b981' : platformColor,
+          background: isLogged || isPosted ? '#10b981' : platformColor,
           borderRadius: '16px 16px 0 0',
         }}
       />
 
       <div className="p-4 flex flex-col flex-1">
-        {/* Logged overlay badge */}
-        {isLogged && (
+        {/* Posted overlay badge */}
+        {(isLogged || isPosted) && (
           <div
             className="text-center text-xs font-bold py-1.5 -mx-4 -mt-4 mb-3"
             style={{ background: 'rgba(16,185,129,.1)', color: '#10b981' }}
           >
-            Posted ✓
+            {isPosted
+              ? item.postedToInstagram?.destination === 'story'
+                ? 'Posted to Story ✓'
+                : isCrossPostedFacebook
+                  ? 'Posted to Instagram + Facebook ✓'
+                  : 'Posted to Instagram ✓'
+              : 'Posted ✓'}
           </div>
         )}
 
@@ -564,12 +632,12 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
         </div>
 
         {/* Action buttons */}
-        {isLogged ? (
+        {isLogged || isPosted ? (
           <div
             className="text-center py-2 rounded-xl text-xs font-bold"
             style={{ background: 'rgba(16,185,129,.08)', color: '#10b981' }}
           >
-            Logged ✓
+            {isPosted ? 'Posted ✓' : 'Logged ✓'}
           </div>
         ) : (
           <div className="flex flex-col gap-2 mt-auto">
@@ -625,17 +693,65 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
                 </button>
               )}
             </div>
+            {/* Primary action: Post to Instagram (falls back to Log Post if no onPost wired). */}
             <button
-              onClick={onLogPost}
-              className="w-full py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
-              style={{
-                background: 'rgba(59,130,246,.1)',
-                border: '1px solid var(--accent)',
-                color: 'var(--accent)',
+              onClick={() => {
+                if (!canPost || !hasPostableAsset) return
+                setPostState('confirming')
               }}
+              disabled={!canPost || !hasPostableAsset || postState === 'posting'}
+              title={
+                !isGenerated
+                  ? 'Generate the content first'
+                  : !hasPostableAsset
+                  ? 'Waiting for the visual to finish generating'
+                  : postState === 'error'
+                  ? postErrorMessage ?? 'Post failed — click to retry'
+                  : undefined
+              }
+              className="w-full py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              style={
+                postState === 'error'
+                  ? {
+                      background: 'rgba(239,68,68,.1)',
+                      border: '1px solid #ef4444',
+                      color: '#ef4444',
+                    }
+                  : {
+                      background: 'rgba(59,130,246,.1)',
+                      border: '1px solid var(--accent)',
+                      color: 'var(--accent)',
+                    }
+              }
             >
-              Log Post
+              {postState === 'posting'
+                ? 'Posting…'
+                : postState === 'error'
+                ? 'Retry Post'
+                : onPost
+                ? 'Post to Instagram'
+                : 'Log Post'}
             </button>
+            {postState === 'error' && postErrorMessage && (
+              <p className="text-[10px] px-1" style={{ color: '#ef4444' }}>
+                {postErrorMessage}
+              </p>
+            )}
+            {postState !== 'error' && facebookWarning && (
+              <p className="text-[10px] px-1" style={{ color: '#fb923c' }}>
+                IG posted ✓ · Facebook cross-post failed: {facebookWarning}
+              </p>
+            )}
+            {/* Escape hatch: record without actually publishing (useful pre-setup). */}
+            {onPost && (
+              <button
+                onClick={onLogPost}
+                className="text-[10px] underline-offset-2 hover:underline self-center"
+                style={{ color: 'var(--muted)', background: 'transparent', border: 'none' }}
+              >
+                Just log it (don't post)
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -651,6 +767,18 @@ export default function ContentCard({ item, index, onShuffle, onGenerate, onLogP
             pillar: item.generatedVisual.pillar,
             subcategory: item.generatedVisual.subcategory,
             layoutTemplate: item.generatedVisual.layoutTemplate || 1,
+          }}
+        />
+      )}
+
+      {postState === 'confirming' && item.generatedVisual && (
+        <PostConfirmModal
+          item={item}
+          allowedDestinations={allowedDestinations}
+          onCancel={() => setPostState('idle')}
+          onConfirm={(destination, opts) => {
+            setPostState('idle')
+            void handleConfirmPost(destination, opts)
           }}
         />
       )}

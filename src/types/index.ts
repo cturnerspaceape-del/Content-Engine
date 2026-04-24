@@ -2,6 +2,21 @@ export type Platform = 'TikTok' | 'Blog Post' | 'Facebook' | 'Instagram' | 'X' |
 
 export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
 
+export type PostDestination = 'feed' | 'story'
+
+export interface PostedToInstagram {
+  mediaId: string
+  permalink?: string
+  destination: PostDestination
+  postedAt: string
+}
+
+export interface PostedToFacebook {
+  postId: string
+  permalink?: string
+  postedAt: string
+}
+
 export interface ContentItem {
   platform: Platform
   emoji: string
@@ -10,6 +25,12 @@ export interface ContentItem {
   contentType: string
   generated?: boolean
   logged?: boolean
+  postedToInstagram?: PostedToInstagram
+  postedToFacebook?: PostedToFacebook
+  // IG is primary; if the optional cross-post to FB fails we surface it here
+  // without blocking IG success. Cleared on retry.
+  facebookError?: string
+  postError?: string
   generatedVisual?: {
     hook: string
     caption: string

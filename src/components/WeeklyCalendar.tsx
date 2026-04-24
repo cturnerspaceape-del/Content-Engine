@@ -1,8 +1,16 @@
 import { useState, useCallback } from 'react'
 import { generateWeeklyInstagramContent, generateRandomPost } from '../data/instagramContentGenerator'
 import { generateContentForPost } from '../data/instagramContentTemplates'
-import type { ContentItem, DayContent, DayOfWeek, LoggedPost } from '../types'
+import type { ContentItem, DayContent, DayOfWeek, LoggedPost, PostDestination } from '../types'
 import ContentCard from './ContentCard'
+import { postItemToSocials } from '../lib/postToInstagram'
+
+// Carousels can't be Stories (Graph API limitation). Everything else can.
+function allowedDestinationsFor(item: ContentItem): PostDestination[] {
+  const format = item.generatedVisual?.format
+  if (format === 'Carousel') return ['feed']
+  return ['feed', 'story']
+}
 
 interface WeeklyCalendarProps {
   onBack: () => void
@@ -68,6 +76,48 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
       })
     )
   }, [content, onLogPost])
+
+  const handlePost = useCallback(
+    async (
+      dayIdx: number,
+      itemIdx: number,
+      day: string,
+      destination: PostDestination,
+      opts: { alsoFacebook: boolean },
+    ) => {
+      const current = content[dayIdx].items[itemIdx]
+      const result = await postItemToSocials(current, destination, opts)
+      // Also log it so it shows up in the Post Log view — posting to IG is a
+      // superset of logging ("logged" = it's done, "postedToInstagram" = it's
+      // live on IG).
+      onLogPost({
+        ...current,
+        day,
+        logged: true,
+        loggedAt: new Date().toISOString(),
+        postedToInstagram: result.instagram,
+        postedToFacebook: result.facebook,
+        facebookError: result.facebookError,
+      })
+      setContent((prev) =>
+        prev.map((d, di) => {
+          if (di !== dayIdx) return d
+          const newItems = [...d.items]
+          newItems[itemIdx] = {
+            ...newItems[itemIdx],
+            logged: true,
+            postedToInstagram: result.instagram,
+            postedToFacebook: result.facebook,
+            facebookError: result.facebookError,
+            postError: undefined,
+          }
+          return { ...d, items: newItems }
+        }),
+      )
+      return { facebookError: result.facebookError }
+    },
+    [content, onLogPost],
+  )
 
   const handleShuffleAll = useCallback(() => {
     setContent(generateWeeklyInstagramContent())
@@ -265,6 +315,8 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
                             onShuffle={() => handleShuffle(dayIdx, itemIdx)}
                             onGenerate={() => handleGenerate(dayIdx, itemIdx)}
                             onLogPost={() => handleLogPost(dayIdx, itemIdx, day.day)}
+                            onPost={(destination, opts) => handlePost(dayIdx, itemIdx, day.day, destination, opts)}
+                            allowedDestinations={allowedDestinationsFor(item)}
                             onVisualResult={(patch) => handleVisualResult(dayIdx, itemIdx, patch)}
                           />
                         )

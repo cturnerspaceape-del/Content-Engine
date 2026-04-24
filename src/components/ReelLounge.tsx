@@ -1,8 +1,9 @@
 import ContentCard from './ContentCard'
-import type { ContentItem } from '../types'
+import type { ContentItem, PostDestination } from '../types'
 import { generateReelLoungePost } from '../data/instagramContentTemplates'
 import { estimateReelCost, getReelArc } from '../data/reelArcs'
 import { usePersistedState } from '../utils/persistedState'
+import { postItemToSocials } from '../lib/postToInstagram'
 
 interface ReelLoungeProps {
   onBack: () => void
@@ -94,6 +95,21 @@ export default function ReelLounge({ onBack }: ReelLoungeProps) {
     })
   }
 
+  const handlePost = async (
+    destination: PostDestination,
+    opts: { alsoFacebook: boolean },
+  ) => {
+    const result = await postItemToSocials(item, destination, opts)
+    setItem((cur) => ({
+      ...cur,
+      postedToInstagram: result.instagram,
+      postedToFacebook: result.facebook,
+      facebookError: result.facebookError,
+      postError: undefined,
+    }))
+    return { facebookError: result.facebookError }
+  }
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
       <div className="max-w-6xl mx-auto">
@@ -135,6 +151,8 @@ export default function ReelLounge({ onBack }: ReelLoungeProps) {
               onShuffle={handleShuffle}
               onGenerate={handleGenerate}
               onLogPost={() => {}}
+              onPost={handlePost}
+              allowedDestinations={['feed', 'story']}
               onVisualResult={handleVisualResult}
             />
           </div>

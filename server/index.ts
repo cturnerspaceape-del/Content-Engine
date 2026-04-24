@@ -4,6 +4,8 @@ import express from 'express'
 import { generateSingleImageHandler } from './generateSingleImage'
 import { generateCarouselSlideHandler } from './generateCarouselSlide'
 import { generateReelHandler } from './generateReel'
+import { publishToInstagramHandler, getInstagramAccountHandler } from './instagramHandler'
+import { publishToFacebookHandler, getFacebookAccountHandler } from './facebookHandler'
 
 const app = express()
 app.use(express.json({ limit: '1mb' }))
@@ -28,6 +30,13 @@ if (process.env.DISABLE_GENERATION === '1') {
   app.post('/api/generate-carousel-slide', generateCarouselSlideHandler)
   app.post('/api/generate-reel', generateReelHandler)
 }
+
+// Instagram publishing — always enabled (the kill-switch covers cost-accruing
+// generation; publishing an already-made asset is free).
+app.post('/api/instagram/publish', publishToInstagramHandler)
+app.get('/api/instagram/account', getInstagramAccountHandler)
+app.post('/api/facebook/publish', publishToFacebookHandler)
+app.get('/api/facebook/account', getFacebookAccountHandler)
 
 if (process.env.NODE_ENV === 'production') {
   const publicDir = path.resolve(process.cwd(), 'public')
