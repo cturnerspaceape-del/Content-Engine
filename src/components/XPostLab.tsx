@@ -1,8 +1,8 @@
+import { useEffect, useMemo } from 'react'
 import type { ContentItem } from '../types'
 import XPostCard, { type XFormat } from './XPostCard'
 import { X_TEXT_SEEDS, generateXTextPost } from '../data/xPostTemplates'
-import { generateContentForPost, generateReelLoungePost } from '../data/instagramContentTemplates'
-import { getReelArc } from '../data/reelArcs'
+import { generateContentForPost } from '../data/instagramContentTemplates'
 import { getShotTemplate } from '../data/shotTemplates'
 import { usePersistedState } from '../utils/persistedState'
 
@@ -10,7 +10,9 @@ interface XPostLabProps {
   onBack: () => void
 }
 
-// Seeds reused from Single Image Lab for the Image tab, and from Reel Lounge for the Reel tab.
+type XLabFormat = 'text' | 'image'
+
+// Seeds reused from Single Image Lab for the Image tab.
 const IMAGE_SEEDS = [
   'Single Image — Lifestyle: Cultural Moment',
   'Single Image — Product Centric: New Drop Reveal',
@@ -18,15 +20,6 @@ const IMAGE_SEEDS = [
   'Single Image — Entertainment: Hot Take',
   'Single Image — Brand Building: Founder Story',
   'Single Image — Social Proof: First Timer Reaction',
-]
-
-const REEL_SEEDS: Array<{ arcId: string; title: string }> = [
-  { arcId: 'drop-teaser', title: 'Reel Lounge — Product Centric: New Drop Reveal' },
-  { arcId: 'flavor-cinemagraph', title: 'Reel Lounge — Product Centric: Flavor Moment' },
-  { arcId: 'day-in-the-life', title: 'Reel Lounge — Lifestyle: Cultural Moment' },
-  { arcId: 'cultural-cutaway', title: 'Reel Lounge — Entertainment: Hot Take' },
-  { arcId: 'unbox-reveal', title: 'Reel Lounge — Product Centric: Unbox Reveal' },
-  { arcId: 'strain-mood', title: 'Reel Lounge — Brand Building: Founder Story' },
 ]
 
 const TWEET_CHAR_LIMIT = 280
@@ -48,17 +41,6 @@ function makeImageSeed(title: string): ContentItem {
     emoji: '📷',
     title,
     description: 'Click Generate to build this X image post.',
-    contentType: 'Post',
-    generated: false,
-  }
-}
-
-function makeReelSeed(title: string): ContentItem {
-  return {
-    platform: 'X',
-    emoji: '🎬',
-    title,
-    description: 'Click Generate to build this X reel post.',
     contentType: 'Post',
     generated: false,
   }
@@ -94,11 +76,9 @@ function decorateImageTitle(item: ContentItem, seedTitle: string): ContentItem {
   return { ...item, title: `${seedTitle}  ·  🎬 ${name}` }
 }
 
-function decorateReelTitle(item: ContentItem, seedTitle: string): ContentItem {
-  const arcId = item.generatedVisual?.reelArcId
-  const name = arcId ? getReelArc(arcId)?.name : undefined
-  if (!name) return item
-  return { ...item, title: `${seedTitle}  ·  🎞️ ${name}` }
+// Weighted recommendation: 70% Text, 30% Image. Re-rolled on every mount/reload.
+function pickRecommendation(): XLabFormat {
+  return Math.random() < 0.7 ? 'text' : 'image'
 }
 
 export default function XPostLab({ onBack }: XPostLabProps) {
@@ -112,10 +92,16 @@ export default function XPostLab({ onBack }: XPostLabProps) {
     'sl:xPostLab:image',
     () => makeImageSeed(IMAGE_SEEDS[0]),
   )
-  const [reelItem, setReelItem] = usePersistedState<ContentItem>(
-    'sl:xPostLab:reel',
-    () => makeReelSeed(REEL_SEEDS[0].title),
-  )
+
+  const recommendation = useMemo(() => pickRecommendation(), [])
+
+  // Heal stale persisted state from when this lab had a Reel tab.
+  useEffect(() => {
+    if (activeType !== 'text' && activeType !== 'image') {
+      setActiveType(recommendation)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleGenerate = () => {
     if (activeType === 'text') {
@@ -124,7 +110,6 @@ export default function XPostLab({ onBack }: XPostLabProps) {
       setImageItem((cur) => {
         const seedIdx = findIdxFromTitle(IMAGE_SEEDS, cur.title)
         const generated = generateContentForPost(cur)
-        // Truncate caption so it fits a tweet. Don't mutate the original pool.
         const gv = generated.generatedVisual
         const trimmed: ContentItem = {
           ...generated,
@@ -132,19 +117,6 @@ export default function XPostLab({ onBack }: XPostLabProps) {
           ...(gv ? { generatedVisual: { ...gv, caption: truncateTo(gv.caption, TWEET_CHAR_LIMIT) } } : {}),
         }
         return decorateImageTitle(trimmed, IMAGE_SEEDS[seedIdx])
-      })
-    } else {
-      setReelItem((cur) => {
-        const seedIdx = findIdxFromTitle(REEL_SEEDS, cur.title)
-        const seed = REEL_SEEDS[seedIdx]
-        const generated = generateReelLoungePost(cur, seed.arcId)
-        const gv = generated.generatedVisual
-        const trimmed: ContentItem = {
-          ...generated,
-          platform: 'X',
-          ...(gv ? { generatedVisual: { ...gv, caption: truncateTo(gv.caption, TWEET_CHAR_LIMIT) } } : {}),
-        }
-        return decorateReelTitle(trimmed, seed.title)
       })
     }
   }
@@ -159,11 +131,6 @@ export default function XPostLab({ onBack }: XPostLabProps) {
       setImageItem((cur) => {
         const nextIdx = pickDifferentIdx(IMAGE_SEEDS, findIdxFromTitle(IMAGE_SEEDS, cur.title))
         return makeImageSeed(IMAGE_SEEDS[nextIdx])
-      })
-    } else {
-      setReelItem((cur) => {
-        const nextIdx = pickDifferentIdx(REEL_SEEDS, findIdxFromTitle(REEL_SEEDS, cur.title))
-        return makeReelSeed(REEL_SEEDS[nextIdx].title)
       })
     }
   }
@@ -180,23 +147,17 @@ export default function XPostLab({ onBack }: XPostLabProps) {
       return { ...cur, generatedVisual: { ...cur.generatedVisual, ...patch } }
     })
   }
-  const applyReelPatch = (patch: Partial<NonNullable<ContentItem['generatedVisual']>>) => {
-    setReelItem((cur) => {
-      if (!cur.generatedVisual) return cur
-      return { ...cur, generatedVisual: { ...cur.generatedVisual, ...patch } }
-    })
-  }
 
-  const activeItem =
-    activeType === 'text' ? textItem : activeType === 'image' ? imageItem : reelItem
-  const activeOnResult =
-    activeType === 'text' ? applyTextPatch : activeType === 'image' ? applyImagePatch : applyReelPatch
+  const effectiveType: XLabFormat = activeType === 'image' ? 'image' : 'text'
+  const activeItem = effectiveType === 'text' ? textItem : imageItem
+  const activeOnResult = effectiveType === 'text' ? applyTextPatch : applyImagePatch
 
-  const tabs: Array<{ id: XFormat; label: string }> = [
+  const tabs: Array<{ id: XLabFormat; label: string }> = [
     { id: 'text', label: 'Text' },
     { id: 'image', label: 'Image' },
-    { id: 'reel', label: 'Reel' },
   ]
+
+  const recLabel = recommendation === 'text' ? 'Text' : 'Image'
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
@@ -225,17 +186,19 @@ export default function XPostLab({ onBack }: XPostLabProps) {
               backgroundClip: 'text',
             }}
           >
-            𝕏 X Post Lab
+            𝕏 X Post / Threads Post
           </h1>
         </div>
 
         <p className="text-center text-xs mb-4" style={{ color: 'var(--muted)' }}>
-          Brands post ~60% text · 30% image · 10% reel — pick your format
+          Text-first on X &amp; Threads · today's recommendation:{' '}
+          <span style={{ color: '#1d9bf0', fontWeight: 700 }}>{recLabel}</span>
         </p>
 
         <div className="flex justify-center mb-6 gap-2">
           {tabs.map((tab) => {
             const active = activeType === tab.id
+            const recommended = recommendation === tab.id
             return (
               <button
                 key={tab.id}
@@ -245,9 +208,27 @@ export default function XPostLab({ onBack }: XPostLabProps) {
                   background: active ? 'rgba(29,155,240,.15)' : 'var(--panel-2)',
                   color: active ? '#1d9bf0' : 'var(--muted)',
                   border: `1px solid ${active ? '#1d9bf0' : 'var(--border)'}`,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                {recommended && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: '2px 6px',
+                      borderRadius: 999,
+                      background: 'rgba(29,155,240,.18)',
+                      color: '#1d9bf0',
+                      border: '1px solid rgba(29,155,240,.4)',
+                    }}
+                  >
+                    ✨ Recommended
+                  </span>
+                )}
               </button>
             )
           })}
@@ -256,9 +237,9 @@ export default function XPostLab({ onBack }: XPostLabProps) {
         <div className="flex justify-center">
           <div style={{ width: '100%', maxWidth: 480 }}>
             <XPostCard
-              key={activeType}
+              key={effectiveType}
               item={activeItem}
-              format={activeType}
+              format={effectiveType}
               onShuffle={handleShuffle}
               onGenerate={handleGenerate}
               onVisualResult={activeOnResult}

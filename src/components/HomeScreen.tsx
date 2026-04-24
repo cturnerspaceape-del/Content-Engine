@@ -99,7 +99,7 @@ export default function HomeScreen({
             >
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">𝕏</span>
-                <span>X Post Lab</span>
+                <span>X / Threads Post Lab</span>
               </div>
             </button>
             <button
