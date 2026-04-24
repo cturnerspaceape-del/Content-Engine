@@ -28,9 +28,6 @@ export default function HomeScreen({ onPostLog, onSilLab, onCarouselLounge, onRe
             >
               SPACELAUNCHER
             </h1>
-            <p className="text-lg" style={{ color: 'var(--muted)' }}>
-              Plan your weekly content across every platform
-            </p>
           </div>
 
           {/* Launch Button */}
@@ -99,13 +96,6 @@ export default function HomeScreen({ onPostLog, onSilLab, onCarouselLounge, onRe
             )}
           </div>
 
-          {/* Subtle footer hint */}
-          <p
-            className="text-center text-xs mt-6"
-            style={{ color: 'var(--muted)' }}
-          >
-            Generate a full week of content suggestions across 6 platforms
-          </p>
         </div>
       </div>
     </div>

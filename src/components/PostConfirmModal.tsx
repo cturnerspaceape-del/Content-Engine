@@ -336,21 +336,15 @@ export default function PostConfirmModal({
           </div>
         ) : (
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <p
-                className="text-[11px] font-bold uppercase flex items-center gap-1.5"
-                style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
-              >
-                Caption preview
-                {editsDirty && (
-                  <span
-                    className="text-[9px] font-bold normal-case px-1.5 py-0.5 rounded-full"
-                    style={{ background: 'rgba(59,130,246,.15)', color: 'var(--accent)', letterSpacing: 0 }}
-                  >
-                    edited
-                  </span>
-                )}
-              </p>
+            <div className="flex items-center justify-end mb-1.5 gap-1.5" style={{ minHeight: 22 }}>
+              {editsDirty && (
+                <span
+                  className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ background: 'rgba(59,130,246,.15)', color: 'var(--accent)' }}
+                >
+                  edited
+                </span>
+              )}
               {captionEditable && !isEditingCaption && (
                 <button
                   onClick={() => setIsEditingCaption(true)}
@@ -381,31 +375,23 @@ export default function PostConfirmModal({
                     fontFamily: 'inherit',
                   }}
                 />
-                <div className="mt-2.5">
-                  <p
-                    className="text-[10px] font-bold uppercase mb-1"
-                    style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
-                  >
-                    Hashtags
-                  </p>
-                  <input
-                    type="text"
-                    value={editedHashtagInput}
-                    onChange={(e) => setEditedHashtagInput(e.target.value)}
-                    placeholder="#spaceape #liveresin #premium"
-                    className="w-full rounded-lg p-2 text-[11px]"
-                    style={{
-                      background: 'var(--panel-2)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text)',
-                      fontFamily: 'inherit',
-                    }}
-                  />
-                  <p className="text-[9px] mt-1" style={{ color: 'var(--muted)' }}>
-                    Separated by spaces. {editedHashtags.length} tag{editedHashtags.length === 1 ? '' : 's'}
-                    {editedHashtags.length > 30 && ' — IG caps at 30'}
-                  </p>
-                </div>
+                <input
+                  type="text"
+                  value={editedHashtagInput}
+                  onChange={(e) => setEditedHashtagInput(e.target.value)}
+                  placeholder="#spaceape #liveresin #premium"
+                  className="w-full rounded-lg p-2 text-[11px] mt-2"
+                  style={{
+                    background: 'var(--panel-2)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    fontFamily: 'inherit',
+                  }}
+                />
+                <p className="text-[9px] mt-1" style={{ color: 'var(--muted)' }}>
+                  {editedHashtags.length} tag{editedHashtags.length === 1 ? '' : 's'}
+                  {editedHashtags.length > 30 && ' — IG caps at 30'}
+                </p>
                 <div className="flex items-center justify-between mt-3">
                   <span
                     className="text-[10px]"

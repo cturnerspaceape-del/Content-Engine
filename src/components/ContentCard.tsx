@@ -802,16 +802,6 @@ export default function ContentCard({
                 IG posted ✓ · Facebook cross-post failed: {facebookWarning}
               </p>
             )}
-            {/* Escape hatch: record without actually publishing (useful pre-setup). */}
-            {onPost && (
-              <button
-                onClick={onLogPost}
-                className="text-[10px] underline-offset-2 hover:underline self-center"
-                style={{ color: 'var(--muted)', background: 'transparent', border: 'none' }}
-              >
-                Just log it (don't post)
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -943,12 +933,6 @@ function CaptionEditDialog({
           Edit caption & hashtags
         </h2>
 
-        <p
-          className="text-[10px] font-bold uppercase mb-1"
-          style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
-        >
-          Caption
-        </p>
         <textarea
           value={captionDraft}
           onChange={(e) => onCaptionChange(e.target.value)}
@@ -971,12 +955,6 @@ function CaptionEditDialog({
           {overLimit && ' — will be truncated when posted'}
         </div>
 
-        <p
-          className="text-[10px] font-bold uppercase mb-1"
-          style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
-        >
-          Hashtags
-        </p>
         <input
           type="text"
           value={hashtagInputDraft}

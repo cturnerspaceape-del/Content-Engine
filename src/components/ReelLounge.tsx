@@ -1,7 +1,7 @@
 import ContentCard from './ContentCard'
 import type { ContentItem, PostDestination } from '../types'
 import { generateReelLoungePost } from '../data/instagramContentTemplates'
-import { estimateReelCost, getReelArc } from '../data/reelArcs'
+import { getReelArc } from '../data/reelArcs'
 import { usePersistedState } from '../utils/persistedState'
 import { postItemToSocials } from '../lib/postToInstagram'
 
@@ -118,11 +118,14 @@ export default function ReelLounge({ onBack }: ReelLoungeProps) {
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6" style={{ position: 'relative', textAlign: 'center' }}>
           <button
             onClick={onBack}
             className="text-sm font-semibold px-4 py-2 rounded-lg"
             style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
               background: 'rgba(148,163,184,.1)',
               color: 'var(--text)',
               border: '1px solid var(--border)',
@@ -130,22 +133,17 @@ export default function ReelLounge({ onBack }: ReelLoungeProps) {
           >
             ← Back
           </button>
-          <div className="text-right">
-            <h1
-              className="text-2xl font-bold"
-              style={{
-                background: 'linear-gradient(135deg, #ec4899, #be185d)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              🎬 Reel Lounge
-            </h1>
-            <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              5–12s AI Reels via Veo 3 Fast. ~{estimateReelCost(8)} per 8-second clip. Each Generate fires one Veo job.
-            </p>
-          </div>
+          <h1
+            className="text-2xl font-bold"
+            style={{
+              background: 'linear-gradient(135deg, #ec4899, #be185d)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            🎬 Reel Lounge
+          </h1>
         </div>
 
         <div className="flex justify-center">
