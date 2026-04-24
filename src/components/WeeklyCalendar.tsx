@@ -84,14 +84,19 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
       day: string,
       destination: PostDestination,
       opts: { alsoFacebook: boolean },
+      captionOverride?: string,
     ) => {
       const current = content[dayIdx].items[itemIdx]
-      const result = await postItemToSocials(current, destination, opts)
+      const itemToPost =
+        captionOverride != null && current.generatedVisual
+          ? { ...current, generatedVisual: { ...current.generatedVisual, caption: captionOverride } }
+          : current
+      const result = await postItemToSocials(itemToPost, destination, opts)
       // Also log it so it shows up in the Post Log view — posting to IG is a
       // superset of logging ("logged" = it's done, "postedToInstagram" = it's
       // live on IG).
       onLogPost({
-        ...current,
+        ...itemToPost,
         day,
         logged: true,
         loggedAt: new Date().toISOString(),
@@ -103,13 +108,17 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
         prev.map((d, di) => {
           if (di !== dayIdx) return d
           const newItems = [...d.items]
+          const existing = newItems[itemIdx]
           newItems[itemIdx] = {
-            ...newItems[itemIdx],
+            ...existing,
             logged: true,
             postedToInstagram: result.instagram,
             postedToFacebook: result.facebook,
             facebookError: result.facebookError,
             postError: undefined,
+            ...(captionOverride != null && existing.generatedVisual
+              ? { generatedVisual: { ...existing.generatedVisual, caption: captionOverride } }
+              : {}),
           }
           return { ...d, items: newItems }
         }),
@@ -315,7 +324,7 @@ export default function WeeklyCalendar({ onBack, onLogPost, onViewLog, loggedCou
                             onShuffle={() => handleShuffle(dayIdx, itemIdx)}
                             onGenerate={() => handleGenerate(dayIdx, itemIdx)}
                             onLogPost={() => handleLogPost(dayIdx, itemIdx, day.day)}
-                            onPost={(destination, opts) => handlePost(dayIdx, itemIdx, day.day, destination, opts)}
+                            onPost={(destination, opts, captionOverride) => handlePost(dayIdx, itemIdx, day.day, destination, opts, captionOverride)}
                             allowedDestinations={allowedDestinationsFor(item)}
                             onVisualResult={(patch) => handleVisualResult(dayIdx, itemIdx, patch)}
                           />

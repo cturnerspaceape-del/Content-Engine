@@ -246,6 +246,7 @@ interface ContentCardProps {
   onPost?: (
     destination: PostDestination,
     opts: { alsoFacebook: boolean },
+    captionOverride?: string,
   ) => Promise<{ facebookError?: string }>
   // Controls which destinations the confirm modal exposes. Each lab owns the
   // policy (Carousel Lounge: feed-only; Single Image / Reel: feed+story).
@@ -299,13 +300,14 @@ export default function ContentCard({
   const handleConfirmPost = async (
     destination: PostDestination,
     opts: PostConfirmOptions,
+    captionOverride?: string,
   ) => {
     if (!onPost) return
     setPostState('posting')
     setPostErrorMessage(null)
     setFacebookWarning(null)
     try {
-      const result = await onPost(destination, { alsoFacebook: opts.alsoFacebook })
+      const result = await onPost(destination, { alsoFacebook: opts.alsoFacebook }, captionOverride)
       if (result?.facebookError) setFacebookWarning(result.facebookError)
       setPostState('idle')
     } catch (err) {
@@ -776,9 +778,9 @@ export default function ContentCard({
           item={item}
           allowedDestinations={allowedDestinations}
           onCancel={() => setPostState('idle')}
-          onConfirm={(destination, opts) => {
+          onConfirm={(destination, opts, edits) => {
             setPostState('idle')
-            void handleConfirmPost(destination, opts)
+            void handleConfirmPost(destination, opts, edits?.caption)
           }}
         />
       )}

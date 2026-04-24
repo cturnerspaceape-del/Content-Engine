@@ -98,14 +98,22 @@ export default function SingleImageLab({ onBack }: SingleImageLabProps) {
   const handlePost = async (
     destination: PostDestination,
     opts: { alsoFacebook: boolean },
+    captionOverride?: string,
   ) => {
-    const result = await postItemToSocials(item, destination, opts)
+    const itemToPost =
+      captionOverride != null && item.generatedVisual
+        ? { ...item, generatedVisual: { ...item.generatedVisual, caption: captionOverride } }
+        : item
+    const result = await postItemToSocials(itemToPost, destination, opts)
     setItem((cur) => ({
       ...cur,
       postedToInstagram: result.instagram,
       postedToFacebook: result.facebook,
       facebookError: result.facebookError,
       postError: undefined,
+      ...(captionOverride != null && cur.generatedVisual
+        ? { generatedVisual: { ...cur.generatedVisual, caption: captionOverride } }
+        : {}),
     }))
     return { facebookError: result.facebookError }
   }

@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ContentItem, PostDestination } from '../types'
-import { buildCaption } from '../lib/instagramCaption'
+import { MAX_CAPTION_LENGTH, buildCaption } from '../lib/instagramCaption'
 
 export interface PostConfirmOptions {
   alsoFacebook: boolean
+}
+
+export interface PostConfirmEdits {
+  caption?: string
 }
 
 interface PostConfirmModalProps {
   item: ContentItem
   allowedDestinations: PostDestination[]
   onCancel: () => void
-  onConfirm: (destination: PostDestination, opts: PostConfirmOptions) => void
+  onConfirm: (
+    destination: PostDestination,
+    opts: PostConfirmOptions,
+    edits?: PostConfirmEdits,
+  ) => void
 }
 
 // Cached across modal mounts — first open triggers the fetch, subsequent
@@ -55,6 +63,9 @@ export default function PostConfirmModal({
     pageNameCache === undefined ? null : pageNameCache,
   )
   const [alsoFacebook, setAlsoFacebook] = useState<boolean>(readAlsoFacebookPreference())
+  const originalCaption = item.generatedVisual?.caption ?? ''
+  const [isEditingCaption, setIsEditingCaption] = useState(false)
+  const [editedCaption, setEditedCaption] = useState<string>(originalCaption)
 
   useEffect(() => {
     if (usernameCache === undefined) {
@@ -123,7 +134,7 @@ export default function PostConfirmModal({
   const isVideo = Boolean(v?.reelUrl) && !v?.imageUrl && (!v?.slideUrls || v.slideUrls.filter(Boolean).length === 0)
 
   const previewCaption = buildCaption({
-    caption: v?.caption ?? '',
+    caption: editedCaption,
     hashtags: v?.hashtags,
   })
 
@@ -136,6 +147,10 @@ export default function PostConfirmModal({
   const showFeedOption = feedAllowed
   const showToggle = showStoryOption && showFeedOption
   const showFacebookCheckbox = destination === 'feed'
+  const captionEditable =
+    destination === 'feed' && (format === 'Single Image' || format === 'Carousel') && v?.caption != null
+  const captionDirty = editedCaption !== originalCaption
+  const captionOverLimit = editedCaption.length > MAX_CAPTION_LENGTH
 
   const handleToggleFacebook = (next: boolean) => {
     setAlsoFacebook(next)
@@ -294,21 +309,102 @@ export default function PostConfirmModal({
           </div>
         ) : (
           <div className="mb-4">
-            <p className="text-[11px] font-bold uppercase mb-1.5" style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}>
-              Caption preview
-            </p>
-            <div
-              className="rounded-lg p-3 text-[11px] leading-snug whitespace-pre-wrap"
-              style={{
-                background: 'var(--panel-2)',
-                border: '1px solid var(--border)',
-                color: 'var(--text)',
-                maxHeight: 180,
-                overflowY: 'auto',
-              }}
-            >
-              {previewCaption || <span style={{ color: 'var(--muted)' }}>(no caption)</span>}
+            <div className="flex items-center justify-between mb-1.5">
+              <p
+                className="text-[11px] font-bold uppercase flex items-center gap-1.5"
+                style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
+              >
+                Caption preview
+                {captionDirty && (
+                  <span
+                    className="text-[9px] font-bold normal-case px-1.5 py-0.5 rounded-full"
+                    style={{ background: 'rgba(59,130,246,.15)', color: 'var(--accent)', letterSpacing: 0 }}
+                  >
+                    edited
+                  </span>
+                )}
+              </p>
+              {captionEditable && !isEditingCaption && (
+                <button
+                  onClick={() => setIsEditingCaption(true)}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                  style={{
+                    background: 'var(--panel-2)',
+                    color: 'var(--accent)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  ✎ Edit
+                </button>
+              )}
             </div>
+            {isEditingCaption ? (
+              <>
+                <textarea
+                  value={editedCaption}
+                  onChange={(e) => setEditedCaption(e.target.value)}
+                  rows={6}
+                  autoFocus
+                  className="w-full rounded-lg p-3 text-[11px] leading-snug"
+                  style={{
+                    background: 'var(--panel-2)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                  }}
+                />
+                <div className="flex items-center justify-between mt-1.5">
+                  <span
+                    className="text-[10px]"
+                    style={{ color: captionOverLimit ? '#ef4444' : 'var(--muted)' }}
+                  >
+                    {editedCaption.length} / {MAX_CAPTION_LENGTH}
+                    {captionOverLimit && ' — will be truncated'}
+                  </span>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => {
+                        setEditedCaption(originalCaption)
+                        setIsEditingCaption(false)
+                      }}
+                      className="text-[10px] font-bold px-2 py-1 rounded-md"
+                      style={{
+                        background: 'var(--panel-2)',
+                        color: 'var(--muted)',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      Revert
+                    </button>
+                    <button
+                      onClick={() => setIsEditingCaption(false)}
+                      className="text-[10px] font-bold px-2 py-1 rounded-md"
+                      style={{
+                        background: 'var(--accent)',
+                        color: '#fff',
+                        border: '1px solid var(--accent)',
+                      }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div
+                className="rounded-lg p-3 text-[11px] leading-snug whitespace-pre-wrap"
+                style={{
+                  background: 'var(--panel-2)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text)',
+                  maxHeight: 180,
+                  overflowY: 'auto',
+                }}
+              >
+                {previewCaption || <span style={{ color: 'var(--muted)' }}>(no caption)</span>}
+              </div>
+            )}
           </div>
         )}
 
@@ -330,7 +426,13 @@ export default function PostConfirmModal({
             Cancel
           </button>
           <button
-            onClick={() => onConfirm(destination, { alsoFacebook })}
+            onClick={() =>
+              onConfirm(
+                destination,
+                { alsoFacebook },
+                captionDirty ? { caption: editedCaption } : undefined,
+              )
+            }
             className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105"
             style={{
               background: 'var(--accent)',

@@ -2,7 +2,7 @@
 // (server) so what the user previews is exactly what Instagram receives.
 // IG caption limit: 2200 chars. Hashtag limit: 30.
 
-const MAX_CAPTION_LENGTH = 2200
+export const MAX_CAPTION_LENGTH = 2200
 const MAX_HASHTAGS = 30
 
 export function buildCaption({

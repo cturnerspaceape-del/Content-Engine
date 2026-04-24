@@ -98,7 +98,12 @@ export default function ReelLounge({ onBack }: ReelLoungeProps) {
   const handlePost = async (
     destination: PostDestination,
     opts: { alsoFacebook: boolean },
+    _captionOverride?: string,
   ) => {
+    // Reel flow doesn't surface the caption-edit affordance today, so the
+    // override is never sent — parameter exists only to satisfy the shared
+    // ContentCard onPost signature.
+    void _captionOverride
     const result = await postItemToSocials(item, destination, opts)
     setItem((cur) => ({
       ...cur,
