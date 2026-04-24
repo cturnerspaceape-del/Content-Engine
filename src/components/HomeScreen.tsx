@@ -4,6 +4,7 @@ interface HomeScreenProps {
   onCarouselLounge: () => void
   onReelLounge: () => void
   onXPostLab: () => void
+  onShortsLab: () => void
   loggedCount: number
 }
 
@@ -13,6 +14,7 @@ export default function HomeScreen({
   onCarouselLounge,
   onReelLounge,
   onXPostLab,
+  onShortsLab,
   loggedCount,
 }: HomeScreenProps) {
   return (
@@ -98,6 +100,21 @@ export default function HomeScreen({
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">𝕏</span>
                 <span>X Post Lab</span>
+              </div>
+            </button>
+            <button
+              onClick={onShortsLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'rgba(255,0,79,.1)',
+                border: '2px solid #ff004f',
+                boxShadow: 'var(--shadow-md)',
+                color: '#ff004f',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🎵</span>
+                <span>Shorts Lab</span>
               </div>
             </button>
             {loggedCount > 0 && (

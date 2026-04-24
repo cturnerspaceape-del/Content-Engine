@@ -84,6 +84,7 @@ export type ViewState =
   | 'carousel-lounge'
   | 'reel-lounge'
   | 'x-post-lab'
+  | 'shorts-lab'
 
 export type InstagramFormat = 'Carousel' | 'Reel' | 'Single Image'
 

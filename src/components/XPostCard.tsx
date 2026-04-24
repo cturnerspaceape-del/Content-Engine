@@ -20,10 +20,23 @@ interface XPostCardProps {
 
 const TWEET_CHAR_LIMIT = 280
 
-const FORMAT_CHIP: Record<XFormat, { label: string; color: string }> = {
-  text: { label: 'X Post · Text', color: '#1d9bf0' },
-  image: { label: 'X Post · Image', color: '#f59e0b' },
-  reel: { label: 'X Post · Reel', color: '#ec4899' },
+const FORMAT_COLOR: Record<XFormat, string> = {
+  text: '#1d9bf0',
+  image: '#f59e0b',
+  reel: '#ec4899',
+}
+
+const FORMAT_LABEL: Record<XFormat, string> = {
+  text: 'Text',
+  image: 'Image',
+  reel: 'Reel',
+}
+
+function platformPrefix(platform: string): string {
+  if (platform === 'X') return 'X Post'
+  if (platform === 'TikTok') return 'TikTok'
+  if (platform === 'YouTube Shorts') return 'Shorts'
+  return platform
 }
 
 export default function XPostCard({
@@ -50,7 +63,10 @@ export default function XPostCard({
   const isGenerated = Boolean(item.generated)
   const gv = item.generatedVisual
   const tweet = gv?.caption ?? ''
-  const chip = FORMAT_CHIP[format]
+  const chip = {
+    label: `${platformPrefix(item.platform)} · ${FORMAT_LABEL[format]}`,
+    color: FORMAT_COLOR[format],
+  }
   const overLimit = tweet.length > TWEET_CHAR_LIMIT
 
   const titleParts = item.title.split(' — ')
