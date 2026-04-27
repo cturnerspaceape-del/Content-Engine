@@ -7,6 +7,7 @@ import ImageLab from './components/labs/ImageLab'
 import ReelLab from './components/labs/ReelLab'
 import TextPostLab from './components/labs/TextPostLab'
 import CarouselLab from './components/labs/CarouselLab'
+import EmailLab from './components/labs/EmailLab'
 import { usePersistedState } from './utils/persistedState'
 import type { ViewState, LoggedPost } from './types'
 
@@ -18,7 +19,6 @@ const VIEW_MIGRATIONS: Record<string, ViewState> = {
   'reel-lounge': 'reel-lab',
   'shorts-lab': 'reel-lab',
   'carousel-lounge': 'carousel-lab',
-  'email-lab': 'text-post-lab',
 }
 
 export default function App() {
@@ -62,6 +62,7 @@ export default function App() {
               onReelLab={() => switchView('reel-lab')}
               onTextPostLab={() => switchView('text-post-lab')}
               onCarouselLab={() => switchView('carousel-lab')}
+              onEmailLab={() => switchView('email-lab')}
               loggedCount={loggedPosts.length}
             />
           </div>
@@ -107,6 +108,11 @@ export default function App() {
         {view === 'carousel-lab' && (
           <div className="fade-in">
             <CarouselLab onBack={() => switchView('home')} />
+          </div>
+        )}
+        {view === 'email-lab' && (
+          <div className="fade-in">
+            <EmailLab onBack={() => switchView('home')} />
           </div>
         )}
       </div>

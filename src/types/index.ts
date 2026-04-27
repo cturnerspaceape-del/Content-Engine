@@ -92,6 +92,7 @@ export type ViewState =
   | 'reel-lab'
   | 'text-post-lab'
   | 'carousel-lab'
+  | 'email-lab'
 
 export type InstagramFormat = 'Carousel' | 'Reel' | 'Single Image'
 
