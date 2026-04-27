@@ -93,6 +93,15 @@ export default function EmailLab({ onBack }: EmailLabProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reRollBusy, setReRollBusy] = useState<Set<string>>(() => new Set())
+  const [recipientInput, setRecipientInput] = usePersistedState<string>(
+    'sl:emailLab:lastRecipient',
+    '',
+  )
+  const [sendBusy, setSendBusy] = useState(false)
+  // 'sent' shows for 3s then auto-clears; 'error: ...' persists until next send.
+  const [sendStatus, setSendStatus] = useState<{ kind: 'sent' | 'error'; text: string } | null>(
+    null,
+  )
 
   const html = useMemo(() => (campaign.email ? composeHtml(campaign.email) : ''), [campaign.email])
 
@@ -156,6 +165,50 @@ export default function EmailLab({ onBack }: EmailLabProps) {
 
   const handleGenerate = () => {
     void runGenerate(campaign.audienceType, campaign.emailType, true)
+  }
+
+  // Splits comma- / space- / newline-separated input into clean addresses.
+  // Mirrors the parsing used in PostConfirmModal.parseHashtagInput so the
+  // user can paste a list and it just works.
+  const parseRecipients = (raw: string): string[] =>
+    raw
+      .split(/[\s,;]+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0)
+
+  const recipients = parseRecipients(recipientInput)
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const recipientsValid = recipients.length > 0 && recipients.every((r) => EMAIL_REGEX.test(r))
+  const canSend = Boolean(campaign.email) && recipientsValid && !sendBusy && !busy
+
+  const handleSend = async () => {
+    if (!campaign.email || !canSend) return
+    setSendBusy(true)
+    setSendStatus(null)
+    try {
+      const res = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: recipients,
+          subject: campaign.email.subject,
+          html,
+          preheader: campaign.email.preheader,
+        }),
+      })
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `Send failed (${res.status})`)
+      }
+      const label = recipients.length === 1 ? recipients[0] : `${recipients.length} recipients`
+      setSendStatus({ kind: 'sent', text: `Sent ✓ to ${label}` })
+      window.setTimeout(() => setSendStatus(null), 3000)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setSendStatus({ kind: 'error', text: msg })
+    } finally {
+      setSendBusy(false)
+    }
   }
 
   const handleEdit = (next: GeneratedEmail) => {
@@ -386,10 +439,35 @@ export default function EmailLab({ onBack }: EmailLabProps) {
         </div>
 
         <div className="flex flex-col items-center gap-3 mt-6">
+          {campaign.email && (
+            <div className="flex items-center gap-2 w-full max-w-xl">
+              <input
+                type="text"
+                inputMode="email"
+                value={recipientInput}
+                onChange={(e) => setRecipientInput(e.target.value)}
+                placeholder="you@example.com (commas for multiple)"
+                aria-label="Recipient email"
+                className="flex-1 text-xs px-3 py-2 rounded-lg"
+                style={{
+                  background: 'var(--panel-2)',
+                  color: 'var(--text)',
+                  border: '1px solid var(--border)',
+                  fontFamily: 'inherit',
+                }}
+              />
+              {recipients.length > 0 && (
+                <span className="text-[10px]" style={{ color: 'var(--muted)' }}>
+                  {recipients.length} {recipients.length === 1 ? 'recipient' : 'recipients'}
+                  {!recipientsValid && ' — invalid'}
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap justify-center gap-2">
             <button
               onClick={handleGenerate}
-              disabled={busy}
+              disabled={busy || sendBusy}
               className="text-sm font-bold px-6 py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: 'linear-gradient(135deg, #f59e0b, #d97706)',
@@ -400,19 +478,43 @@ export default function EmailLab({ onBack }: EmailLabProps) {
               {busy ? 'Generating…' : campaign.email ? '⚡ Regenerate' : '⚡ Generate email'}
             </button>
             <button
-              disabled
-              className="text-sm font-bold px-6 py-3 rounded-xl"
-              title="Sending wires up in Phase 2 (Resend integration)"
+              onClick={() => void handleSend()}
+              disabled={!canSend}
+              title={
+                !campaign.email
+                  ? 'Generate an email first'
+                  : !recipientsValid
+                  ? 'Enter a valid recipient email'
+                  : 'Send via Resend'
+              }
+              className="text-sm font-bold px-6 py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: 'rgba(148,163,184,.1)',
-                color: 'var(--muted)',
-                border: '1px solid var(--border)',
-                cursor: 'not-allowed',
+                background: canSend ? 'var(--accent)' : 'rgba(148,163,184,.1)',
+                color: canSend ? '#fff' : 'var(--muted)',
+                border: canSend ? '1px solid var(--accent)' : '1px solid var(--border)',
+                cursor: canSend ? 'pointer' : 'not-allowed',
               }}
             >
-              📤 Send (Phase 2)
+              {sendBusy ? 'Sending…' : '📤 Send'}
             </button>
           </div>
+
+          {sendStatus && (
+            <div
+              className="text-xs font-semibold px-4 py-2 rounded-lg max-w-xl text-center"
+              style={{
+                background:
+                  sendStatus.kind === 'sent' ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.1)',
+                color: sendStatus.kind === 'sent' ? '#22c55e' : '#ef4444',
+                border:
+                  sendStatus.kind === 'sent'
+                    ? '1px solid rgba(34,197,94,.4)'
+                    : '1px solid rgba(239,68,68,.4)',
+              }}
+            >
+              {sendStatus.kind === 'sent' ? sendStatus.text : `Send failed: ${sendStatus.text}`}
+            </div>
+          )}
 
           {error && (
             <div

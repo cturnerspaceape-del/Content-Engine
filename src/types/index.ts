@@ -37,6 +37,12 @@ export interface PostedToYouTube {
   postedAt: string
 }
 
+export interface PostedToX {
+  tweetId: string
+  permalink: string
+  postedAt: string
+}
+
 export interface ContentItem {
   platform: Platform
   emoji: string
@@ -49,11 +55,13 @@ export interface ContentItem {
   postedToFacebook?: PostedToFacebook
   postedToThreads?: PostedToThreads
   postedToYouTube?: PostedToYouTube
+  postedToX?: PostedToX
   // IG is primary; if the optional cross-post to FB fails we surface it here
   // without blocking IG success. Cleared on retry.
   facebookError?: string
   threadsError?: string
   youtubeError?: string
+  xError?: string
   postError?: string
   generatedVisual?: {
     hook: string

@@ -12,6 +12,8 @@ import { publishToFacebookHandler, getFacebookAccountHandler } from './facebookH
 import { publishToThreadsHandler, getThreadsAccountHandler } from './threadsHandler'
 import { startThreadsTokenRefresh } from './threadsRefresh'
 import { publishToYouTubeHandler } from './youtubeHandler'
+import { sendEmailHandler } from './emailSendHandler'
+import { publishToXHandler, getXAccountHandler } from './xHandler'
 
 const app = express()
 app.use(express.json({ limit: '1mb' }))
@@ -51,6 +53,9 @@ app.get('/api/facebook/account', getFacebookAccountHandler)
 app.post('/api/threads/publish', publishToThreadsHandler)
 app.get('/api/threads/account', getThreadsAccountHandler)
 app.post('/api/youtube/publish', publishToYouTubeHandler)
+app.post('/api/email/send', sendEmailHandler)
+app.post('/api/x/publish', publishToXHandler)
+app.get('/api/x/account', getXAccountHandler)
 
 if (process.env.NODE_ENV === 'production') {
   const publicDir = path.resolve(process.cwd(), 'public')

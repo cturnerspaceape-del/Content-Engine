@@ -68,6 +68,9 @@ interface PostConfirmModalProps {
 // opens read from this. Empty-string caches a known-missing username.
 let usernameCache: string | null | undefined
 let pageNameCache: string | null | undefined
+// X is dormant until X_REFRESH_TOKEN is set on the server. Cache the
+// /account probe across mounts so we don't refetch on every open.
+let xConnectedCache: boolean | undefined
 
 const ALSO_FB_STORAGE_KEY = 'postConfirm.alsoFacebook'
 
@@ -107,6 +110,9 @@ export default function PostConfirmModal({
   const [pageName, setPageName] = useState<string | null>(
     pageNameCache === undefined ? null : pageNameCache,
   )
+  const [xConnected, setXConnected] = useState<boolean>(
+    xConnectedCache === undefined ? false : xConnectedCache,
+  )
   const [alsoFacebook, setAlsoFacebook] = useState<boolean>(readAlsoFacebookPreference())
   const [crossPostChecked, setCrossPostChecked] = useState<Set<TunerPlatform>>(
     () => new Set(crossPostPlatforms),
@@ -134,6 +140,26 @@ export default function PostConfirmModal({
         })
         .catch(() => {
           usernameCache = null
+        })
+      return () => {
+        cancelled = true
+      }
+    }
+    return undefined
+  }, [])
+
+  useEffect(() => {
+    if (xConnectedCache === undefined) {
+      let cancelled = false
+      fetch('/api/x/account')
+        .then((r) => r.json())
+        .then((data) => {
+          const connected = Boolean(data && data.ok)
+          xConnectedCache = connected
+          if (!cancelled) setXConnected(connected)
+        })
+        .catch(() => {
+          xConnectedCache = false
         })
       return () => {
         cancelled = true
@@ -356,12 +382,19 @@ export default function PostConfirmModal({
                 // checkbox that would 400 on submit.
                 const isYouTube = loc.id === 'YouTube Shorts'
                 const youtubeBlocked = isYouTube && format !== 'Reel'
-                const rowDisabled = isIG || youtubeBlocked
+                // X allows up to 4 images per tweet; disable for larger
+                // carousels. Also disable until the server reports the X
+                // account is connected (X_REFRESH_TOKEN present).
+                const isX = loc.id === 'X'
+                const xCarouselTooBig = isX && format === 'Carousel' && slideCount > 4
+                const xNotConnected = isX && !xConnected
+                const xBlocked = xCarouselTooBig || xNotConnected
+                const rowDisabled = isIG || youtubeBlocked || xBlocked
                 const checked = isIG
                   ? true
                   : isFB
                   ? alsoFacebook
-                  : !youtubeBlocked && crossPostChecked.has(loc.id as TunerPlatform)
+                  : !youtubeBlocked && !xBlocked && crossPostChecked.has(loc.id as TunerPlatform)
                 const onChange = (next: boolean) => {
                   if (rowDisabled) return
                   if (isFB) {
@@ -375,16 +408,23 @@ export default function PostConfirmModal({
                     return nextSet
                   })
                 }
+                const blockedReason = youtubeBlocked
+                  ? 'YouTube Shorts requires a Reel'
+                  : xCarouselTooBig
+                  ? 'X allows up to 4 images per tweet'
+                  : xNotConnected
+                  ? 'X account not connected yet'
+                  : undefined
                 return (
                   <label
                     key={loc.id}
                     className="flex items-center gap-2 cursor-pointer select-none"
                     style={{
                       color: 'var(--text)',
-                      opacity: isIG ? 0.85 : youtubeBlocked ? 0.4 : 1,
+                      opacity: isIG ? 0.85 : youtubeBlocked || xBlocked ? 0.4 : 1,
                       cursor: rowDisabled ? 'not-allowed' : 'pointer',
                     }}
-                    title={youtubeBlocked ? 'YouTube Shorts requires a Reel' : undefined}
+                    title={blockedReason}
                   >
                     <input
                       type="checkbox"

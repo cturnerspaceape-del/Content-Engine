@@ -186,6 +186,8 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
       threadsError: result.threadsError,
       postedToYouTube: result.youtube,
       youtubeError: result.youtubeError,
+      postedToX: result.x,
+      xError: result.xError,
       postError: undefined,
       ...(hasEdit && cur.generatedVisual
         ? {

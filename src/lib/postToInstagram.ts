@@ -4,6 +4,7 @@ import type {
   PostedToFacebook,
   PostedToInstagram,
   PostedToThreads,
+  PostedToX,
   PostedToYouTube,
 } from '../types'
 import type { TunerPlatform } from './platformTuners'
@@ -36,6 +37,13 @@ export interface YouTubePublishResponse {
   error?: string
 }
 
+export interface XPublishResponse {
+  ok: boolean
+  tweetId?: string
+  permalink?: string
+  error?: string
+}
+
 export interface SocialsResult {
   instagram: PostedToInstagram
   facebook?: PostedToFacebook
@@ -44,6 +52,8 @@ export interface SocialsResult {
   threadsError?: string
   youtube?: PostedToYouTube
   youtubeError?: string
+  x?: PostedToX
+  xError?: string
 }
 
 function assertPostableAsset(item: ContentItem) {
@@ -128,6 +138,27 @@ export async function postItemToThreads(item: ContentItem): Promise<PostedToThre
   }
 }
 
+// X (Twitter) cross-post. Supports Single Image, Carousel (≤4 slides), and
+// Reel (single video). Caption is X-tuner output already capped at 280 in the
+// backend.
+export async function postItemToX(item: ContentItem): Promise<PostedToX> {
+  const body = buildPublishBody(item)
+  const res = await fetch('/api/x/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = (await res.json().catch(() => ({}))) as XPublishResponse
+  if (!res.ok || !data.ok || !data.tweetId || !data.permalink) {
+    throw new Error(data.error || `X post failed (${res.status})`)
+  }
+  return {
+    tweetId: data.tweetId,
+    permalink: data.permalink,
+    postedAt: new Date().toISOString(),
+  }
+}
+
 // YouTube Shorts cross-post. Reel format only — backend will reject other
 // formats with a 400.
 export async function postItemToYouTubeShorts(item: ContentItem): Promise<PostedToYouTube> {
@@ -175,9 +206,10 @@ export async function postItemToFacebook(item: ContentItem): Promise<PostedToFac
 // FB stories aren't supported by the current FB integration. So when
 // destination is 'story' we skip every cross-post regardless of selection.
 //
-// X and TikTok are intentionally clipboard-only (no public posting API the
-// project is willing to depend on). Their checkboxes drive copy-to-clipboard
-// in the lab pages, not network calls here.
+// TikTok is intentionally clipboard-only (no public posting API the project
+// is willing to depend on). X has a real posting path now (Phase 6) but is
+// dormant until X_REFRESH_TOKEN is set on the server — until then `/api/x/account`
+// returns ok:false and the modal disables the X row.
 export async function postItemToSocials(
   item: ContentItem,
   destination: PostDestination,
@@ -192,6 +224,12 @@ export async function postItemToSocials(
   const wantThreads = selected.has('Threads')
   const wantYouTube
     = selected.has('YouTube Shorts') && item.generatedVisual?.format === 'Reel'
+  // X allows Single Image, ≤4-slide Carousel, or 1-video Reel. Reject larger
+  // carousels here so we don't bother the backend.
+  const xCarouselTooBig
+    = item.generatedVisual?.format === 'Carousel'
+    && (item.generatedVisual.slideUrls?.filter(Boolean).length ?? 0) > 4
+  const wantX = selected.has('X') && !xCarouselTooBig
 
   const tasks: Array<Promise<void>> = []
 
@@ -231,6 +269,18 @@ export async function postItemToSocials(
     )
   }
 
+  if (wantX) {
+    tasks.push(
+      postItemToX(item)
+        .then((x) => {
+          result.x = x
+        })
+        .catch((err) => {
+          result.xError = err instanceof Error ? err.message : String(err)
+        }),
+    )
+  }
+
   if (tasks.length > 0) await Promise.all(tasks)
   return result
 }
@@ -257,6 +307,11 @@ export function summarizeSocialsResult(result: SocialsResult): {
   if (result.youtube) parts.push('Shorts ✓')
   if (result.youtubeError) {
     parts.push(`Shorts failed: ${result.youtubeError}`)
+    hasError = true
+  }
+  if (result.x) parts.push('X ✓')
+  if (result.xError) {
+    parts.push(`X failed: ${result.xError}`)
     hasError = true
   }
   return { text: parts.join(' · '), hasError }
