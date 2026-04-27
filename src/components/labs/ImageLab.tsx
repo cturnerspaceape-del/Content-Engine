@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ContentCard from '../ContentCard'
 import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
+import PostConfirmModal from '../PostConfirmModal'
 import type { ContentItem, ContentPillar, PostDestination } from '../../types'
 import { generateContentForPost } from '../../data/instagramContentTemplates'
 import { getShotTemplate } from '../../data/shotTemplates'
@@ -27,6 +28,14 @@ interface ImageLabProps {
 }
 
 const SEED_PREFIX = 'Single Image'
+
+const PLATFORM_LABELS: Record<TunerPlatform, string> = {
+  'IG/FB': 'IG/FB',
+  X: 'X',
+  Threads: 'Threads',
+  TikTok: 'TikTok',
+  'YouTube Shorts': 'Shorts',
+}
 
 function makeSeed(title: string): ContentItem {
   return {
@@ -192,6 +201,87 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     setVariants((prev) => ({ ...prev, [platform]: tuneFor(platform, source) }))
   }
 
+  // Unified post flow state — owned by the lab page so the Post button can
+  // sit alongside Generate at the bottom and reflect ALL selected platforms.
+  const [postConfirming, setPostConfirming] = useState(false)
+  const [postBusy, setPostBusy] = useState(false)
+  const [postToast, setPostToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(
+    null,
+  )
+
+  const nonIgSelected = selectedPlatforms.filter((p) => p !== 'IG/FB')
+
+  const buildClipboardPayload = (): string => {
+    const sections: string[] = []
+    for (const platform of nonIgSelected) {
+      const v = variants[platform]
+      if (!v) continue
+      const head = `--- ${PLATFORM_LABELS[platform]} ---`
+      const body =
+        platform === 'YouTube Shorts'
+          ? [`Title: ${v.title ?? v.caption}`, '', v.description ?? ''].filter(Boolean).join('\n')
+          : [v.caption, v.hashtags.join(' ')].filter(Boolean).join('\n\n')
+      sections.push(`${head}\n${body}`)
+    }
+    return sections.join('\n\n')
+  }
+
+  const copyNonIgVariantsToClipboard = async (): Promise<boolean> => {
+    const payload = buildClipboardPayload()
+    if (!payload) return false
+    try {
+      await navigator.clipboard.writeText(payload)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const showToast = (kind: 'success' | 'warn', text: string) => {
+    setPostToast({ kind, text })
+    window.setTimeout(() => setPostToast(null), 4000)
+  }
+
+  const handleUnifiedPost = async () => {
+    if (!item.generatedVisual?.imageUrl) return
+    if (selectedPlatforms.includes('IG/FB')) {
+      setPostConfirming(true)
+      return
+    }
+    // X/Threads only — clipboard-only path.
+    const copied = await copyNonIgVariantsToClipboard()
+    if (copied) {
+      const labels = nonIgSelected.map((p) => PLATFORM_LABELS[p]).join(' & ')
+      showToast('success', `${labels} captions copied — paste into apps`)
+    } else {
+      showToast('warn', 'Could not copy to clipboard')
+    }
+  }
+
+  const onConfirmUnifiedPost = async (
+    destination: PostDestination,
+    opts: { alsoFacebook: boolean },
+    edits?: { caption?: string; hashtags?: string[] },
+  ) => {
+    setPostConfirming(false)
+    setPostBusy(true)
+    try {
+      const result = await handlePost(destination, opts, edits)
+      const copied = nonIgSelected.length > 0 ? await copyNonIgVariantsToClipboard() : false
+      const fbWarn = result?.facebookError
+      const igLine = fbWarn ? `IG posted ✓ · FB cross-post failed: ${fbWarn}` : 'Posted to IG/FB ✓'
+      const copyLine = copied
+        ? ` — ${nonIgSelected.map((p) => PLATFORM_LABELS[p]).join(' & ')} captions copied`
+        : ''
+      showToast(fbWarn ? 'warn' : 'success', `${igLine}${copyLine}`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      showToast('warn', `Post failed: ${msg}`)
+    } finally {
+      setPostBusy(false)
+    }
+  }
+
   // Pillar seed picker — small chip row above the platform picker so the
   // user can switch pillars without shuffling.
   const seedTitles = useMemo(() => pillarSeedTitles(SEED_PREFIX), [])
@@ -279,15 +369,17 @@ export default function ImageLab({ onBack }: ImageLabProps) {
                 onPost={handlePost}
                 allowedDestinations={['feed', 'story']}
                 onVisualResult={handleVisualResult}
+                hideHeaderBadges
+                hideShuffleGenerate
+                hidePostButton
               />
             ),
           }}
         />
 
-        {/* Generate button is repeated outside the IG card so it works from
-            any tab, since non-IG tabs don't surface the IG card's controls. */}
-        {selectedPlatforms.some((p) => p !== 'IG/FB') && (
-          <div className="flex justify-center mt-4">
+        {/* Single Generate + unified Post — replaces per-card duplicates. */}
+        {selectedPlatforms.length > 0 && (
+          <div className="flex flex-col items-center gap-3 mt-4">
             <button
               onClick={handleGenerate}
               className="text-sm font-bold px-6 py-3 rounded-xl"
@@ -298,7 +390,49 @@ export default function ImageLab({ onBack }: ImageLabProps) {
             >
               ⚡ Generate (image + all platform variants)
             </button>
+
+            {item.generatedVisual?.imageUrl && (
+              <button
+                onClick={handleUnifiedPost}
+                disabled={postBusy}
+                className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  background: 'rgba(59,130,246,.1)',
+                  border: '1px solid var(--accent)',
+                  color: 'var(--accent)',
+                }}
+              >
+                {postBusy
+                  ? 'Posting…'
+                  : `📤 Post to ${selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(', ')}`}
+              </button>
+            )}
+
+            {postToast && (
+              <div
+                className="text-xs font-semibold px-4 py-2 rounded-lg"
+                style={{
+                  background:
+                    postToast.kind === 'success'
+                      ? 'rgba(16,185,129,.12)'
+                      : 'rgba(251,146,60,.12)',
+                  color: postToast.kind === 'success' ? '#10b981' : '#fb923c',
+                  border: `1px solid ${postToast.kind === 'success' ? '#10b981' : '#fb923c'}`,
+                }}
+              >
+                {postToast.text}
+              </div>
+            )}
           </div>
+        )}
+
+        {postConfirming && item.generatedVisual && (
+          <PostConfirmModal
+            item={item}
+            allowedDestinations={['feed', 'story']}
+            onCancel={() => setPostConfirming(false)}
+            onConfirm={onConfirmUnifiedPost}
+          />
         )}
       </div>
     </div>

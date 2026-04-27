@@ -261,6 +261,11 @@ interface ContentCardProps {
   // generatedVisual. Lab pages wire this to their setItems so results persist
   // to localStorage — which is what makes refresh/remount free (no auto-refetch).
   onVisualResult?: (patch: VisualPatch) => void
+  // Image Lab opt-ins for a less redundant UI: lab page owns generate/post via
+  // its own bottom-of-page buttons, so the in-card duplicates are hidden.
+  hideHeaderBadges?: boolean
+  hideShuffleGenerate?: boolean
+  hidePostButton?: boolean
 }
 
 export default function ContentCard({
@@ -272,6 +277,9 @@ export default function ContentCard({
   onPost,
   allowedDestinations = ['feed'],
   onVisualResult,
+  hideHeaderBadges = false,
+  hideShuffleGenerate = false,
+  hidePostButton = false,
 }: ContentCardProps) {
   const formatColor = formatColors[item.contentType] || '#a855f7'
   const platformColor = platformColors[item.platform] || formatColor
@@ -412,21 +420,23 @@ export default function ContentCard({
         )}
 
         {/* Platform + format row */}
-        <div className="flex items-center gap-1.5 mb-2">
-          <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
-            style={{ background: `${platformColor}15`, color: platformColor }}
-          >
-            <span>{item.emoji}</span>
-            <span>{item.platform}</span>
-          </span>
-          <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: `${formatColor}15`, color: formatColor }}
-          >
-            {format}
-          </span>
-        </div>
+        {!hideHeaderBadges && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+              style={{ background: `${platformColor}15`, color: platformColor }}
+            >
+              <span>{item.emoji}</span>
+              <span>{item.platform}</span>
+            </span>
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: `${formatColor}15`, color: formatColor }}
+            >
+              {format}
+            </span>
+          </div>
+        )}
 
         {/* Title row */}
         <h3
@@ -702,36 +712,40 @@ export default function ContentCard({
         ) : (
           <div className="flex flex-col gap-2 mt-auto">
             <div className="flex gap-2">
-              <button
-                onClick={onShuffle}
-                className="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
-                style={{
-                  background: '#10b981',
-                  color: '#ffffff',
-                  boxShadow: 'var(--shadow-sm)',
-                }}
-              >
-                Shuffle
-              </button>
-              <button
-                onClick={onGenerate}
-                className="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
-                style={
-                  isGenerated
-                    ? {
-                        background: 'rgba(16,185,129,.1)',
-                        border: '1px solid #10b981',
-                        color: '#10b981',
-                      }
-                    : {
-                        background: 'transparent',
-                        border: '1px solid var(--border)',
-                        color: 'var(--muted)',
-                      }
-                }
-              >
-                {isGenerated ? 'Regenerate' : 'Generate'}
-              </button>
+              {!hideShuffleGenerate && (
+                <>
+                  <button
+                    onClick={onShuffle}
+                    className="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
+                    style={{
+                      background: '#10b981',
+                      color: '#ffffff',
+                      boxShadow: 'var(--shadow-sm)',
+                    }}
+                  >
+                    Shuffle
+                  </button>
+                  <button
+                    onClick={onGenerate}
+                    className="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
+                    style={
+                      isGenerated
+                        ? {
+                            background: 'rgba(16,185,129,.1)',
+                            border: '1px solid #10b981',
+                            color: '#10b981',
+                          }
+                        : {
+                            background: 'transparent',
+                            border: '1px solid var(--border)',
+                            color: 'var(--muted)',
+                          }
+                    }
+                  >
+                    {isGenerated ? 'Regenerate' : 'Generate'}
+                  </button>
+                </>
+              )}
               {isGenerated && format === 'Single Image' && (
                 <button
                   onClick={() =>
@@ -742,7 +756,7 @@ export default function ContentCard({
                     })
                   }
                   title="Same brief, new output (bypasses cache, costs ~$0.15)"
-                  className="py-2 px-3 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
+                  className={`${hideShuffleGenerate ? 'w-full' : ''} py-2 px-3 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105`}
                   style={{
                     background: 'rgba(251,146,60,.12)',
                     border: '1px solid #fb923c',
@@ -754,50 +768,52 @@ export default function ContentCard({
               )}
             </div>
             {/* Primary action: Post to Instagram (falls back to Log Post if no onPost wired). */}
-            <button
-              onClick={() => {
-                if (!canPost || !hasPostableAsset) return
-                setPostState('confirming')
-              }}
-              disabled={!canPost || !hasPostableAsset || postState === 'posting'}
-              title={
-                !isGenerated
-                  ? 'Generate the content first'
-                  : !hasPostableAsset
-                  ? 'Waiting for the visual to finish generating'
+            {!hidePostButton && (
+              <button
+                onClick={() => {
+                  if (!canPost || !hasPostableAsset) return
+                  setPostState('confirming')
+                }}
+                disabled={!canPost || !hasPostableAsset || postState === 'posting'}
+                title={
+                  !isGenerated
+                    ? 'Generate the content first'
+                    : !hasPostableAsset
+                    ? 'Waiting for the visual to finish generating'
+                    : postState === 'error'
+                    ? postErrorMessage ?? 'Post failed — click to retry'
+                    : undefined
+                }
+                className="w-full py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={
+                  postState === 'error'
+                    ? {
+                        background: 'rgba(239,68,68,.1)',
+                        border: '1px solid #ef4444',
+                        color: '#ef4444',
+                      }
+                    : {
+                        background: 'rgba(59,130,246,.1)',
+                        border: '1px solid var(--accent)',
+                        color: 'var(--accent)',
+                      }
+                }
+              >
+                {postState === 'posting'
+                  ? 'Posting…'
                   : postState === 'error'
-                  ? postErrorMessage ?? 'Post failed — click to retry'
-                  : undefined
-              }
-              className="w-full py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              style={
-                postState === 'error'
-                  ? {
-                      background: 'rgba(239,68,68,.1)',
-                      border: '1px solid #ef4444',
-                      color: '#ef4444',
-                    }
-                  : {
-                      background: 'rgba(59,130,246,.1)',
-                      border: '1px solid var(--accent)',
-                      color: 'var(--accent)',
-                    }
-              }
-            >
-              {postState === 'posting'
-                ? 'Posting…'
-                : postState === 'error'
-                ? 'Retry Post'
-                : onPost
-                ? 'Post to Instagram'
-                : 'Log Post'}
-            </button>
-            {postState === 'error' && postErrorMessage && (
+                  ? 'Retry Post'
+                  : onPost
+                  ? 'Post to Instagram'
+                  : 'Log Post'}
+              </button>
+            )}
+            {!hidePostButton && postState === 'error' && postErrorMessage && (
               <p className="text-[10px] px-1" style={{ color: '#ef4444' }}>
                 {postErrorMessage}
               </p>
             )}
-            {postState !== 'error' && facebookWarning && (
+            {!hidePostButton && postState !== 'error' && facebookWarning && (
               <p className="text-[10px] px-1" style={{ color: '#fb923c' }}>
                 IG posted ✓ · Facebook cross-post failed: {facebookWarning}
               </p>

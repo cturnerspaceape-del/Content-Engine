@@ -71,6 +71,10 @@ export default function MultiPlatformPreview({
         {selected.map((platform) => {
           const variant = variants[platform]
           const custom = customRender?.[platform]
+          // Skip empty non-custom slots — the bottom Generate button is the
+          // call-to-action; per-platform "No variant yet" placeholders just
+          // add noise.
+          if (!custom && !variant) return null
           return (
             <div key={platform} className={platform === effectiveTab ? '' : 'mt-4'}>
               {custom ? (
