@@ -18,8 +18,7 @@ interface MultiPlatformPreviewProps {
 }
 
 const PLATFORM_LABELS: Record<TunerPlatform, string> = {
-  Instagram: 'Instagram',
-  Facebook: 'Facebook',
+  'IG/FB': 'IG/FB',
   X: 'X',
   Threads: 'Threads',
   TikTok: 'TikTok',
@@ -28,13 +27,21 @@ const PLATFORM_LABELS: Record<TunerPlatform, string> = {
 }
 
 const PLATFORM_ICONS: Record<TunerPlatform, string> = {
-  Instagram: '📷',
-  Facebook: 'f',
+  'IG/FB': '📷',
   X: '𝕏',
   Threads: '@',
   TikTok: '🎵',
   'YouTube Shorts': '▶',
   Email: '📧',
+}
+
+const PLATFORM_COLOR_KEY: Record<TunerPlatform, string> = {
+  'IG/FB': 'Instagram',
+  X: 'X',
+  Threads: 'Threads',
+  TikTok: 'TikTok',
+  'YouTube Shorts': 'YouTube Shorts',
+  Email: 'Email',
 }
 
 export default function MultiPlatformPreview({
@@ -72,7 +79,7 @@ export default function MultiPlatformPreview({
       <div className="flex flex-wrap justify-center gap-2 mb-4">
         {selected.map((p) => {
           const active = effectiveTab === p
-          const accent = platformColors[p] ?? 'var(--accent)'
+          const accent = platformColors[PLATFORM_COLOR_KEY[p]] ?? 'var(--accent)'
           return (
             <button
               key={p}
@@ -122,7 +129,7 @@ interface PreviewCardProps {
 }
 
 function PreviewCard({ platform, variant, assetUrl, assetKind, onRetune }: PreviewCardProps) {
-  const accent = platformColors[platform] ?? 'var(--accent)'
+  const accent = platformColors[PLATFORM_COLOR_KEY[platform]] ?? 'var(--accent)'
 
   if (!variant) {
     return (

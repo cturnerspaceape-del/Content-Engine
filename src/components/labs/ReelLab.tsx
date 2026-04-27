@@ -73,15 +73,32 @@ export default function ReelLab({ onBack }: ReelLabProps) {
     () => ({}),
   )
 
-  // Re-tune all selected non-IG platforms whenever IG caption changes or
-  // a newly-added platform has no cached variant yet.
+  // Migrate older persisted selections that still hold 'Instagram' /
+  // 'Facebook' as separate strings — collapse to a single 'IG/FB'.
+  useEffect(() => {
+    setSelectedPlatforms((prev) => {
+      const stale = prev as ReadonlyArray<string>
+      const hasOld = stale.includes('Instagram') || stale.includes('Facebook')
+      if (!hasOld) return prev
+      const filtered = prev.filter(
+        (p) => p !== ('Instagram' as TunerPlatform) && p !== ('Facebook' as TunerPlatform),
+      )
+      return ['IG/FB' as TunerPlatform, ...filtered.filter((p) => p !== 'IG/FB')]
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Re-tune all selected non-IG/FB platforms whenever IG caption changes
+  // or a newly-added platform has no cached variant yet. The IG/FB tab
+  // uses the existing ContentCard via customRender, so it doesn't need a
+  // stored variant.
   useEffect(() => {
     if (!item.generatedVisual) return
     const source = tunerSourceFromItem(item)
     setVariants((prev) => {
       const next = { ...prev }
       for (const platform of selectedPlatforms) {
-        if (platform === 'Instagram') continue
+        if (platform === 'IG/FB') continue
         if (!next[platform] || next[platform]!.caption === '') {
           next[platform] = tuneFor(platform, source)
         }
@@ -126,10 +143,10 @@ export default function ReelLab({ onBack }: ReelLabProps) {
     _edits?: { caption?: string; hashtags?: string[] },
   ) => {
     void _edits
-    // The Facebook chip acts as another way to enable the IG → FB cross-post:
-    // if Facebook is in the chip selection OR the IG card's checkbox is on,
-    // pass alsoFacebook=true.
-    const alsoFacebook = opts.alsoFacebook || selectedPlatforms.includes('Facebook')
+    // IG/FB chip is one Meta destination — selecting it implies cross-post
+    // to Facebook. The IG card's own alsoFacebook checkbox is still
+    // honored as an OR so both paths work.
+    const alsoFacebook = opts.alsoFacebook || selectedPlatforms.includes('IG/FB')
     const result = await postItemToSocials(item, destination, { alsoFacebook })
     setItem((cur) => ({
       ...cur,
@@ -185,7 +202,7 @@ export default function ReelLab({ onBack }: ReelLabProps) {
             🎬 Reel Lab
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-            One Veo clip, tuned per platform — IG Reel, TikTok, YouTube Shorts, X
+            One Veo clip, tuned per platform — IG/FB Reel, TikTok, YouTube Shorts, X
           </p>
         </div>
 
@@ -225,7 +242,7 @@ export default function ReelLab({ onBack }: ReelLabProps) {
           onRetune={handleRetune}
           tabStateKey="sl:reelLab:activeTab"
           customRender={{
-            Instagram: () => (
+            'IG/FB': () => (
               <ContentCard
                 item={item}
                 index={0}
@@ -240,7 +257,7 @@ export default function ReelLab({ onBack }: ReelLabProps) {
           }}
         />
 
-        {selectedPlatforms.some((p) => p !== 'Instagram') && (
+        {selectedPlatforms.some((p) => p !== 'IG/FB') && (
           <div className="flex justify-center mt-4">
             <button
               onClick={handleGenerate}

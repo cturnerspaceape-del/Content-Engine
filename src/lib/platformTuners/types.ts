@@ -1,9 +1,14 @@
 import type { ContentPillar } from '../../types'
 import type { TextArchetype } from '../seeds/textArchetype'
 
+// 'IG/FB' is one cross-post destination representing both Meta apps. They
+// share publish logic (postItemToSocials always cross-posts IG → FB when
+// alsoFacebook=true) and the FB feed receives the IG caption verbatim, so
+// surfacing two separate chips would be misleading. The underlying
+// ContentItem.platform stays as 'Instagram' for storage; this is the
+// UI-level cross-post abstraction.
 export type TunerPlatform =
-  | 'Instagram'
-  | 'Facebook'
+  | 'IG/FB'
   | 'X'
   | 'Threads'
   | 'TikTok'

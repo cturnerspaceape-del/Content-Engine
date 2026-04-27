@@ -18,8 +18,7 @@ interface PlatformPickerProps {
 }
 
 const PLATFORM_LABELS: Record<TunerPlatform, string> = {
-  Instagram: 'Instagram',
-  Facebook: 'Facebook',
+  'IG/FB': 'IG/FB',
   X: 'X',
   Threads: 'Threads',
   TikTok: 'TikTok',
@@ -28,13 +27,24 @@ const PLATFORM_LABELS: Record<TunerPlatform, string> = {
 }
 
 const PLATFORM_ICONS: Record<TunerPlatform, string> = {
-  Instagram: '📷',
-  Facebook: 'f',
+  'IG/FB': '📷',
   X: '𝕏',
   Threads: '@',
   TikTok: '🎵',
   'YouTube Shorts': '▶',
   Email: '📧',
+}
+
+// IG/FB shares one chip; the underlying Platform (Instagram or Facebook)
+// in PlatformContentItem.platformColors stays separate, so look up under
+// the IG color so the chip reads as a Meta destination.
+const PLATFORM_COLOR_KEY: Record<TunerPlatform, string> = {
+  'IG/FB': 'Instagram',
+  X: 'X',
+  Threads: 'Threads',
+  TikTok: 'TikTok',
+  'YouTube Shorts': 'YouTube Shorts',
+  Email: 'Email',
 }
 
 export default function PlatformPicker({
@@ -72,7 +82,7 @@ export default function PlatformPicker({
       </span>
       {compatible.map((p) => {
         const active = selectedSet.has(p)
-        const accent = platformColors[p] ?? 'var(--accent)'
+        const accent = platformColors[PLATFORM_COLOR_KEY[p]] ?? 'var(--accent)'
         return (
           <button
             key={p}

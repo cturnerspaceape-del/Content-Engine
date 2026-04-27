@@ -1,6 +1,5 @@
 import type { PlatformVariant, TunerPlatform, TunerSource } from './types'
-import { tuneForInstagram } from './ig'
-import { tuneForFacebook } from './facebook'
+import { tuneForIGFB } from './ig'
 import { tuneForX } from './x'
 import { tuneForThreads } from './threads'
 import { tuneForTikTok } from './tiktok'
@@ -9,8 +8,7 @@ import { tuneForEmail } from './email'
 
 export type { PlatformVariant, TunerPlatform, TunerSource, TunerFormat } from './types'
 export {
-  tuneForInstagram,
-  tuneForFacebook,
+  tuneForIGFB,
   tuneForX,
   tuneForThreads,
   tuneForTikTok,
@@ -19,8 +17,7 @@ export {
 }
 
 const TUNERS: Record<TunerPlatform, (source: TunerSource) => PlatformVariant> = {
-  Instagram: tuneForInstagram,
-  Facebook: tuneForFacebook,
+  'IG/FB': tuneForIGFB,
   X: tuneForX,
   Threads: tuneForThreads,
   TikTok: tuneForTikTok,
@@ -34,9 +31,9 @@ export const FORMAT_PLATFORM_COMPAT: Record<
   TunerSource['format'],
   ReadonlyArray<TunerPlatform>
 > = {
-  image: ['Instagram', 'Facebook', 'X', 'Threads', 'Email'],
-  video: ['Instagram', 'Facebook', 'X', 'TikTok', 'YouTube Shorts'],
-  carousel: ['Instagram', 'Facebook', 'X', 'Threads', 'Email'],
+  image: ['IG/FB', 'X', 'Threads', 'Email'],
+  video: ['IG/FB', 'X', 'TikTok', 'YouTube Shorts'],
+  carousel: ['IG/FB', 'X', 'Threads', 'Email'],
   text: ['X', 'Threads', 'Email'],
 }
 
