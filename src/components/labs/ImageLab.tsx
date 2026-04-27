@@ -195,12 +195,6 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     return { facebookError: result.facebookError }
   }
 
-  const handleRetune = (platform: TunerPlatform) => {
-    if (!item.generatedVisual) return
-    const source = tunerSourceFromItem(item)
-    setVariants((prev) => ({ ...prev, [platform]: tuneFor(platform, source) }))
-  }
-
   // Unified post flow state — owned by the lab page so the Post button can
   // sit alongside Generate at the bottom and reflect ALL selected platforms.
   const [postConfirming, setPostConfirming] = useState(false)
@@ -322,7 +316,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
             🧪 Image Lab
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-            One image, tuned per platform — IG/FB, X, Threads
+            One image, tuned per platform — IG/FB, X, Threads, TikTok, Shorts
           </p>
         </div>
 
@@ -357,7 +351,6 @@ export default function ImageLab({ onBack }: ImageLabProps) {
           variants={variants}
           assetUrl={item.generatedVisual?.imageUrl}
           assetKind="image"
-          onRetune={handleRetune}
           customRender={{
             'IG/FB': () => (
               <ContentCard
@@ -377,19 +370,28 @@ export default function ImageLab({ onBack }: ImageLabProps) {
           }}
         />
 
-        {/* Single Generate + unified Post — replaces per-card duplicates. */}
+        {/* Unified bottom action row: Shuffle / Regenerate / Post. */}
         {selectedPlatforms.length > 0 && (
           <div className="flex flex-col items-center gap-3 mt-4">
-            <button
-              onClick={handleGenerate}
-              className="text-sm font-bold px-6 py-3 rounded-xl"
-              style={{
-                background: platformColors.Instagram ?? '#a855f7',
-                color: 'white',
-              }}
-            >
-              ⚡ Generate (image + all platform variants)
-            </button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                onClick={handleShuffle}
+                className="text-sm font-bold px-5 py-3 rounded-xl"
+                style={{ background: '#10b981', color: 'white' }}
+              >
+                🔀 Shuffle
+              </button>
+              <button
+                onClick={handleGenerate}
+                className="text-sm font-bold px-6 py-3 rounded-xl"
+                style={{
+                  background: platformColors.Instagram ?? '#a855f7',
+                  color: 'white',
+                }}
+              >
+                ⚡ {item.generatedVisual ? 'Regenerate' : 'Generate'} (image + all platform variants)
+              </button>
+            </div>
 
             {item.generatedVisual?.imageUrl && (
               <button

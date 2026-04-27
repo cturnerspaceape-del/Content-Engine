@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ContentCard from '../ContentCard'
 import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
+import PostConfirmModal from '../PostConfirmModal'
 import type { ContentItem, ContentPillar, PostDestination } from '../../types'
 import { generateReelLoungePost } from '../../data/instagramContentTemplates'
 import { getReelArc } from '../../data/reelArcs'
@@ -27,6 +28,14 @@ interface ReelLabProps {
 }
 
 const SEED_PREFIX = 'Reel Lab'
+
+const PLATFORM_LABELS: Record<TunerPlatform, string> = {
+  'IG/FB': 'IG/FB',
+  X: 'X',
+  Threads: 'Threads',
+  TikTok: 'TikTok',
+  'YouTube Shorts': 'Shorts',
+}
 
 function makeSeed(title: string): ContentItem {
   return {
@@ -140,28 +149,122 @@ export default function ReelLab({ onBack }: ReelLabProps) {
   const handlePost = async (
     destination: PostDestination,
     opts: { alsoFacebook: boolean },
-    _edits?: { caption?: string; hashtags?: string[] },
+    edits?: { caption?: string; hashtags?: string[] },
   ) => {
-    void _edits
+    const hasEdit =
+      (edits?.caption != null || edits?.hashtags != null) && Boolean(item.generatedVisual)
+    const itemToPost = hasEdit
+      ? {
+          ...item,
+          generatedVisual: {
+            ...item.generatedVisual!,
+            ...(edits?.caption != null ? { caption: edits.caption } : {}),
+            ...(edits?.hashtags != null ? { hashtags: edits.hashtags } : {}),
+          },
+        }
+      : item
     // IG/FB chip is one Meta destination — selecting it implies cross-post
     // to Facebook. The IG card's own alsoFacebook checkbox is still
     // honored as an OR so both paths work.
     const alsoFacebook = opts.alsoFacebook || selectedPlatforms.includes('IG/FB')
-    const result = await postItemToSocials(item, destination, { alsoFacebook })
+    const result = await postItemToSocials(itemToPost, destination, { alsoFacebook })
     setItem((cur) => ({
       ...cur,
       postedToInstagram: result.instagram,
       postedToFacebook: result.facebook,
       facebookError: result.facebookError,
       postError: undefined,
+      ...(hasEdit && cur.generatedVisual
+        ? {
+            generatedVisual: {
+              ...cur.generatedVisual,
+              ...(edits?.caption != null ? { caption: edits.caption } : {}),
+              ...(edits?.hashtags != null ? { hashtags: edits.hashtags } : {}),
+            },
+          }
+        : {}),
     }))
     return { facebookError: result.facebookError }
   }
 
-  const handleRetune = (platform: TunerPlatform) => {
-    if (!item.generatedVisual) return
-    const source = tunerSourceFromItem(item)
-    setVariants((prev) => ({ ...prev, [platform]: tuneFor(platform, source) }))
+  // Unified post flow state — owned by the lab page so the Post button can
+  // sit alongside Generate at the bottom and reflect ALL selected platforms.
+  const [postConfirming, setPostConfirming] = useState(false)
+  const [postBusy, setPostBusy] = useState(false)
+  const [postToast, setPostToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(
+    null,
+  )
+
+  const nonIgSelected = selectedPlatforms.filter((p) => p !== 'IG/FB')
+
+  const buildClipboardPayload = (): string => {
+    const sections: string[] = []
+    for (const platform of nonIgSelected) {
+      const v = variants[platform]
+      if (!v) continue
+      const head = `--- ${PLATFORM_LABELS[platform]} ---`
+      const body =
+        platform === 'YouTube Shorts'
+          ? [`Title: ${v.title ?? v.caption}`, '', v.description ?? ''].filter(Boolean).join('\n')
+          : [v.caption, v.hashtags.join(' ')].filter(Boolean).join('\n\n')
+      sections.push(`${head}\n${body}`)
+    }
+    return sections.join('\n\n')
+  }
+
+  const copyNonIgVariantsToClipboard = async (): Promise<boolean> => {
+    const payload = buildClipboardPayload()
+    if (!payload) return false
+    try {
+      await navigator.clipboard.writeText(payload)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const showToast = (kind: 'success' | 'warn', text: string) => {
+    setPostToast({ kind, text })
+    window.setTimeout(() => setPostToast(null), 4000)
+  }
+
+  const handleUnifiedPost = async () => {
+    if (!item.generatedVisual?.reelUrl) return
+    if (selectedPlatforms.includes('IG/FB')) {
+      setPostConfirming(true)
+      return
+    }
+    const copied = await copyNonIgVariantsToClipboard()
+    if (copied) {
+      const labels = nonIgSelected.map((p) => PLATFORM_LABELS[p]).join(' & ')
+      showToast('success', `${labels} captions copied — paste into apps`)
+    } else {
+      showToast('warn', 'Could not copy to clipboard')
+    }
+  }
+
+  const onConfirmUnifiedPost = async (
+    destination: PostDestination,
+    opts: { alsoFacebook: boolean },
+    edits?: { caption?: string; hashtags?: string[] },
+  ) => {
+    setPostConfirming(false)
+    setPostBusy(true)
+    try {
+      const result = await handlePost(destination, opts, edits)
+      const copied = nonIgSelected.length > 0 ? await copyNonIgVariantsToClipboard() : false
+      const fbWarn = result?.facebookError
+      const igLine = fbWarn ? `IG posted ✓ · FB cross-post failed: ${fbWarn}` : 'Posted to IG/FB ✓'
+      const copyLine = copied
+        ? ` — ${nonIgSelected.map((p) => PLATFORM_LABELS[p]).join(' & ')} captions copied`
+        : ''
+      showToast(fbWarn ? 'warn' : 'success', `${igLine}${copyLine}`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      showToast('warn', `Post failed: ${msg}`)
+    } finally {
+      setPostBusy(false)
+    }
   }
 
   const seedTitles = useMemo(() => reelSeedTitles(SEED_PREFIX), [])
@@ -202,7 +305,7 @@ export default function ReelLab({ onBack }: ReelLabProps) {
             🎬 Reel Lab
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-            One Veo clip, tuned per platform — IG/FB Reel, TikTok, YouTube Shorts, X
+            One Veo clip, tuned per platform — IG/FB Reel, X, Threads, TikTok, Shorts
           </p>
         </div>
 
@@ -239,7 +342,6 @@ export default function ReelLab({ onBack }: ReelLabProps) {
           variants={variants}
           assetUrl={item.generatedVisual?.reelUrl}
           assetKind="video"
-          onRetune={handleRetune}
           customRender={{
             'IG/FB': () => (
               <ContentCard
@@ -251,24 +353,78 @@ export default function ReelLab({ onBack }: ReelLabProps) {
                 onPost={handlePost}
                 allowedDestinations={['feed', 'story']}
                 onVisualResult={handleVisualResult}
+                hideHeaderBadges
+                hideShuffleGenerate
+                hidePostButton
               />
             ),
           }}
         />
 
-        {selectedPlatforms.some((p) => p !== 'IG/FB') && (
-          <div className="flex justify-center mt-4">
-            <button
-              onClick={handleGenerate}
-              className="text-sm font-bold px-6 py-3 rounded-xl"
-              style={{
-                background: platformColors.Instagram ?? '#a855f7',
-                color: 'white',
-              }}
-            >
-              ⚡ Generate (reel + all platform variants)
-            </button>
+        {selectedPlatforms.length > 0 && (
+          <div className="flex flex-col items-center gap-3 mt-4">
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                onClick={handleShuffle}
+                className="text-sm font-bold px-5 py-3 rounded-xl"
+                style={{ background: '#10b981', color: 'white' }}
+              >
+                🔀 Shuffle
+              </button>
+              <button
+                onClick={handleGenerate}
+                className="text-sm font-bold px-6 py-3 rounded-xl"
+                style={{
+                  background: platformColors.Instagram ?? '#a855f7',
+                  color: 'white',
+                }}
+              >
+                ⚡ {item.generatedVisual ? 'Regenerate' : 'Generate'} (reel + all platform variants)
+              </button>
+            </div>
+
+            {item.generatedVisual?.reelUrl && (
+              <button
+                onClick={handleUnifiedPost}
+                disabled={postBusy}
+                className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  background: 'rgba(59,130,246,.1)',
+                  border: '1px solid var(--accent)',
+                  color: 'var(--accent)',
+                }}
+              >
+                {postBusy
+                  ? 'Posting…'
+                  : `📤 Post to ${selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(', ')}`}
+              </button>
+            )}
+
+            {postToast && (
+              <div
+                className="text-xs font-semibold px-4 py-2 rounded-lg"
+                style={{
+                  background:
+                    postToast.kind === 'success'
+                      ? 'rgba(16,185,129,.12)'
+                      : 'rgba(251,146,60,.12)',
+                  color: postToast.kind === 'success' ? '#10b981' : '#fb923c',
+                  border: `1px solid ${postToast.kind === 'success' ? '#10b981' : '#fb923c'}`,
+                }}
+              >
+                {postToast.text}
+              </div>
+            )}
           </div>
+        )}
+
+        {postConfirming && item.generatedVisual && (
+          <PostConfirmModal
+            item={item}
+            allowedDestinations={['feed', 'story']}
+            onCancel={() => setPostConfirming(false)}
+            onConfirm={onConfirmUnifiedPost}
+          />
         )}
       </div>
     </div>

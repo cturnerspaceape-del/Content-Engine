@@ -7,10 +7,9 @@ interface MultiPlatformPreviewProps {
   variants: Partial<Record<TunerPlatform, PlatformVariant>>
   assetUrl?: string
   assetKind?: 'image' | 'video'
-  onRetune?: (platform: TunerPlatform) => void
-  // Per-platform render override. When provided, the corresponding tab
-  // renders the custom node instead of the built-in PreviewCard. Used by
-  // ImageLab/ReelLab/CarouselLab to keep the existing IG ContentCard
+  // Per-platform render override. When provided for the first selected
+  // platform, the custom node renders instead of the built-in PreviewCard.
+  // Used by ImageLab/ReelLab/CarouselLab to keep the existing IG ContentCard
   // (with its publish flow) inside the IG/FB tab.
   customRender?: Partial<Record<TunerPlatform, () => React.ReactNode>>
 }
@@ -44,16 +43,15 @@ export default function MultiPlatformPreview({
   variants,
   assetUrl,
   assetKind,
-  onRetune,
   customRender,
 }: MultiPlatformPreviewProps) {
-  // Active preview = first selected platform. Removed the duplicate tab
-  // strip — the cross-post chip row above already shows what's selected.
-  // To focus a different platform, the user toggles the IG/FB chip off
-  // (since IG/FB sorts first) which surfaces the next selected variant.
-  const effectiveTab = selected[0]
+  // Single-slot preview: render only the first selected platform. The
+  // remaining selected platforms still get tuned in the background by the
+  // parent lab (so the unified Post button can copy their captions to
+  // clipboard) — they just don't get a separate stacked card here.
+  const primary = selected[0]
 
-  if (!effectiveTab) {
+  if (!primary) {
     return (
       <div className="text-center text-sm py-12" style={{ color: 'var(--muted)' }}>
         Pick at least one platform to preview a variant.
@@ -61,36 +59,22 @@ export default function MultiPlatformPreview({
     )
   }
 
+  const custom = customRender?.[primary]
+  const variant = variants[primary]
+
   return (
     <div className="flex justify-center">
       <div style={{ width: '100%', maxWidth: 480 }}>
-        {/* If multiple platforms are selected, render every non-IG/FB
-            variant stacked beneath whatever the customRender (typically
-            the IG ContentCard) shows. The IG/FB tab is always first when
-            present; the rest stack below for at-a-glance comparison. */}
-        {selected.map((platform) => {
-          const variant = variants[platform]
-          const custom = customRender?.[platform]
-          // Skip empty non-custom slots — the bottom Generate button is the
-          // call-to-action; per-platform "No variant yet" placeholders just
-          // add noise.
-          if (!custom && !variant) return null
-          return (
-            <div key={platform} className={platform === effectiveTab ? '' : 'mt-4'}>
-              {custom ? (
-                custom()
-              ) : (
-                <PreviewCard
-                  platform={platform}
-                  variant={variant}
-                  assetUrl={assetUrl}
-                  assetKind={assetKind}
-                  onRetune={onRetune ? () => onRetune(platform) : undefined}
-                />
-              )}
-            </div>
-          )
-        })}
+        {custom ? (
+          custom()
+        ) : (
+          <PreviewCard
+            platform={primary}
+            variant={variant}
+            assetUrl={assetUrl}
+            assetKind={assetKind}
+          />
+        )}
       </div>
     </div>
   )
@@ -101,10 +85,9 @@ interface PreviewCardProps {
   variant?: PlatformVariant
   assetUrl?: string
   assetKind?: 'image' | 'video'
-  onRetune?: () => void
 }
 
-function PreviewCard({ platform, variant, assetUrl, assetKind, onRetune }: PreviewCardProps) {
+function PreviewCard({ platform, variant, assetUrl, assetKind }: PreviewCardProps) {
   const accent = platformColors[PLATFORM_COLOR_KEY[platform]] ?? 'var(--accent)'
 
   if (!variant) {
@@ -156,19 +139,6 @@ function PreviewCard({ platform, variant, assetUrl, assetKind, onRetune }: Previ
 
       <div className="flex gap-2 mt-4">
         <CopyButton variant={variant} />
-        {onRetune && (
-          <button
-            onClick={onRetune}
-            className="text-xs font-semibold px-3 py-2 rounded-lg"
-            style={{
-              background: 'var(--panel-2)',
-              color: 'var(--text)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            🎲 Re-tune
-          </button>
-        )}
       </div>
     </div>
   )

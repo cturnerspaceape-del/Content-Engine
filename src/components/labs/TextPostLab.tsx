@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
 import { usePersistedState } from '../../utils/persistedState'
@@ -16,6 +16,14 @@ import {
 
 interface TextPostLabProps {
   onBack: () => void
+}
+
+const PLATFORM_LABELS: Record<TunerPlatform, string> = {
+  'IG/FB': 'IG/FB',
+  X: 'X',
+  Threads: 'Threads',
+  TikTok: 'TikTok',
+  'YouTube Shorts': 'Shorts',
 }
 
 const ARCHETYPE_DESCRIPTIONS: Record<TextArchetype, string> = {
@@ -110,9 +118,40 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     setVariants(next)
   }
 
-  const handleRetune = (platform: TunerPlatform) => {
-    const source: TunerSource = { format: 'text', archetype }
-    setVariants((prev) => ({ ...prev, [platform]: tuneFor(platform, source) }))
+  const [copyToast, setCopyToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(
+    null,
+  )
+
+  const buildClipboardPayload = (): string => {
+    const sections: string[] = []
+    for (const platform of selectedPlatforms) {
+      const v = variants[platform]
+      if (!v) continue
+      const head = `--- ${PLATFORM_LABELS[platform]} ---`
+      const body =
+        platform === 'YouTube Shorts'
+          ? [`Title: ${v.title ?? v.caption}`, '', v.description ?? ''].filter(Boolean).join('\n')
+          : [v.caption, v.hashtags.join(' ')].filter(Boolean).join('\n\n')
+      sections.push(`${head}\n${body}`)
+    }
+    return sections.join('\n\n')
+  }
+
+  const handleCopyAll = async () => {
+    const payload = buildClipboardPayload()
+    if (!payload) {
+      setCopyToast({ kind: 'warn', text: 'Nothing to copy yet — click Generate first' })
+      window.setTimeout(() => setCopyToast(null), 4000)
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(payload)
+      const labels = selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(' & ')
+      setCopyToast({ kind: 'success', text: `${labels} captions copied — paste into apps` })
+    } catch {
+      setCopyToast({ kind: 'warn', text: 'Could not copy to clipboard' })
+    }
+    window.setTimeout(() => setCopyToast(null), 4000)
   }
 
   const archetypeChips = useMemo(() => TEXT_ARCHETYPES, [])
@@ -186,21 +225,59 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
         <MultiPlatformPreview
           selected={selectedPlatforms}
           variants={variants}
-          onRetune={handleRetune}
         />
 
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={handleGenerate}
-            className="text-sm font-bold px-6 py-3 rounded-xl"
-            style={{
-              background: 'linear-gradient(135deg, #1d9bf0, #8b5cf6)',
-              color: 'white',
-            }}
-          >
-            ⚡ Generate (all platforms)
-          </button>
-        </div>
+        {selectedPlatforms.length > 0 && (
+          <div className="flex flex-col items-center gap-3 mt-4">
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                onClick={handleGenerate}
+                className="text-sm font-bold px-5 py-3 rounded-xl"
+                style={{ background: '#10b981', color: 'white' }}
+              >
+                🔀 Shuffle
+              </button>
+              <button
+                onClick={handleGenerate}
+                className="text-sm font-bold px-6 py-3 rounded-xl"
+                style={{
+                  background: 'linear-gradient(135deg, #1d9bf0, #8b5cf6)',
+                  color: 'white',
+                }}
+              >
+                ⚡ Regenerate (all platforms)
+              </button>
+            </div>
+
+            <button
+              onClick={handleCopyAll}
+              className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"
+              style={{
+                background: 'rgba(59,130,246,.1)',
+                border: '1px solid var(--accent)',
+                color: 'var(--accent)',
+              }}
+            >
+              📤 Copy for {selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(', ')}
+            </button>
+
+            {copyToast && (
+              <div
+                className="text-xs font-semibold px-4 py-2 rounded-lg"
+                style={{
+                  background:
+                    copyToast.kind === 'success'
+                      ? 'rgba(16,185,129,.12)'
+                      : 'rgba(251,146,60,.12)',
+                  color: copyToast.kind === 'success' ? '#10b981' : '#fb923c',
+                  border: `1px solid ${copyToast.kind === 'success' ? '#10b981' : '#fb923c'}`,
+                }}
+              >
+                {copyToast.text}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
