@@ -8,6 +8,7 @@ interface HomeScreenProps {
   onEmailLab: () => void
   onImageLab: () => void
   onReelLab: () => void
+  onTextPostLab: () => void
   loggedCount: number
 }
 
@@ -21,6 +22,7 @@ export default function HomeScreen({
   onEmailLab,
   onImageLab,
   onReelLab,
+  onTextPostLab,
   loggedCount,
 }: HomeScreenProps) {
   return (
@@ -98,6 +100,34 @@ export default function HomeScreen({
                     background: 'rgba(236,72,153,.2)',
                     color: '#ec4899',
                     border: '1px solid rgba(236,72,153,.4)',
+                  }}
+                >
+                  ✨ NEW
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={onTextPostLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(29,155,240,.18), rgba(139,92,246,.18))',
+                border: '2px solid #1d9bf0',
+                boxShadow: 'var(--shadow-md)',
+                color: '#1d9bf0',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">✍️</span>
+                <span>Text Post Lab</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: '2px 6px',
+                    borderRadius: 999,
+                    background: 'rgba(29,155,240,.2)',
+                    color: '#1d9bf0',
+                    border: '1px solid rgba(29,155,240,.4)',
                   }}
                 >
                   ✨ NEW

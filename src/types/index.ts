@@ -96,7 +96,7 @@ export type ViewState =
   | 'email-lab'
   | 'image-lab'
   | 'reel-lab'
-  | 'text-lab'
+  | 'text-post-lab'
   | 'carousel-lab'
 
 export type EmailTypeId =
