@@ -3,6 +3,7 @@ import type { TextArchetype } from '../seeds/textArchetype'
 
 export type TunerPlatform =
   | 'Instagram'
+  | 'Facebook'
   | 'X'
   | 'Threads'
   | 'TikTok'

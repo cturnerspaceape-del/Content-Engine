@@ -19,6 +19,7 @@ interface MultiPlatformPreviewProps {
 
 const PLATFORM_LABELS: Record<TunerPlatform, string> = {
   Instagram: 'Instagram',
+  Facebook: 'Facebook',
   X: 'X',
   Threads: 'Threads',
   TikTok: 'TikTok',
@@ -28,6 +29,7 @@ const PLATFORM_LABELS: Record<TunerPlatform, string> = {
 
 const PLATFORM_ICONS: Record<TunerPlatform, string> = {
   Instagram: '📷',
+  Facebook: 'f',
   X: '𝕏',
   Threads: '@',
   TikTok: '🎵',

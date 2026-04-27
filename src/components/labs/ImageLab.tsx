@@ -138,7 +138,11 @@ export default function ImageLab({ onBack }: ImageLabProps) {
           },
         }
       : item
-    const result = await postItemToSocials(itemToPost, destination, opts)
+    // The Facebook chip acts as another way to enable the IG → FB cross-post:
+    // if Facebook is in the chip selection OR the IG card's checkbox is on,
+    // pass alsoFacebook=true.
+    const alsoFacebook = opts.alsoFacebook || selectedPlatforms.includes('Facebook')
+    const result = await postItemToSocials(itemToPost, destination, { alsoFacebook })
     setItem((cur) => ({
       ...cur,
       postedToInstagram: result.instagram,
