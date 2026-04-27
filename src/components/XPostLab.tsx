@@ -5,6 +5,7 @@ import { X_TEXT_SEEDS, generateXTextPost } from '../data/xPostTemplates'
 import { generateContentForPost } from '../data/instagramContentTemplates'
 import { getShotTemplate } from '../data/shotTemplates'
 import { usePersistedState } from '../utils/persistedState'
+import { pillarSeedTitles } from '../lib/seeds/pillarImage'
 
 interface XPostLabProps {
   onBack: () => void
@@ -12,15 +13,8 @@ interface XPostLabProps {
 
 type XLabFormat = 'text' | 'image'
 
-// Seeds reused from Single Image Lab for the Image tab.
-const IMAGE_SEEDS = [
-  'Single Image — Lifestyle: Cultural Moment',
-  'Single Image — Product Centric: New Drop Reveal',
-  'Single Image — Education: Flavor Breakdown',
-  'Single Image — Entertainment: Hot Take',
-  'Single Image — Brand Building: Founder Story',
-  'Single Image — Social Proof: First Timer Reaction',
-]
+// Image seeds shared with Single Image Lab — same prefix, same titles.
+const IMAGE_SEEDS = pillarSeedTitles('Single Image')
 
 const TWEET_CHAR_LIMIT = 280
 

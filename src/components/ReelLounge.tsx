@@ -4,21 +4,17 @@ import { generateReelLoungePost } from '../data/instagramContentTemplates'
 import { getReelArc } from '../data/reelArcs'
 import { usePersistedState } from '../utils/persistedState'
 import { postItemToSocials } from '../lib/postToInstagram'
+import { REEL_ARC_SEEDS, formatReelSeedTitle, findReelSeedIdxFromTitle, pickDifferentReelSeedIdx } from '../lib/seeds/reelArc'
 
 interface ReelLoungeProps {
   onBack: () => void
 }
 
-// Seed titles mirror the six reel arcs in src/data/reelArcs.ts. Pillar in the
-// title drives the hook/caption pools, same parsing pattern as SingleImageLab.
-const SEEDS: Array<{ arcId: string; title: string }> = [
-  { arcId: 'drop-teaser', title: 'Reel Lounge — Product Centric: New Drop Reveal' },
-  { arcId: 'flavor-cinemagraph', title: 'Reel Lounge — Product Centric: Flavor Moment' },
-  { arcId: 'day-in-the-life', title: 'Reel Lounge — Lifestyle: Cultural Moment' },
-  { arcId: 'cultural-cutaway', title: 'Reel Lounge — Entertainment: Hot Take' },
-  { arcId: 'unbox-reveal', title: 'Reel Lounge — Product Centric: Unbox Reveal' },
-  { arcId: 'strain-mood', title: 'Reel Lounge — Brand Building: Founder Story' },
-]
+const SEED_PREFIX = 'Reel Lounge'
+const SEEDS: Array<{ arcId: string; title: string }> = REEL_ARC_SEEDS.map((s) => ({
+  arcId: s.arcId,
+  title: formatReelSeedTitle(SEED_PREFIX, s),
+}))
 
 function makeSeed(title: string): ContentItem {
   return {
@@ -38,17 +34,8 @@ function decorateTitle(item: ContentItem, seedTitle: string): ContentItem {
   return { ...item, title: `${seedTitle}  ·  🎞️ ${name}` }
 }
 
-function findSeedIdx(title: string): number {
-  const idx = SEEDS.findIndex((s) => title.startsWith(s.title))
-  return idx >= 0 ? idx : 0
-}
-
-function pickDifferentSeedIdx(current: number): number {
-  if (SEEDS.length <= 1) return 0
-  let next = Math.floor(Math.random() * SEEDS.length)
-  while (next === current) next = Math.floor(Math.random() * SEEDS.length)
-  return next
-}
+const findSeedIdx = (title: string) => findReelSeedIdxFromTitle(SEED_PREFIX, title)
+const pickDifferentSeedIdx = pickDifferentReelSeedIdx
 
 export default function ReelLounge({ onBack }: ReelLoungeProps) {
   // Persisted shape migrated from ContentItem[] (legacy 6-card grid) to a

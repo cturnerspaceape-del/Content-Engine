@@ -4,19 +4,14 @@ import { generateContentForPost } from '../data/instagramContentTemplates'
 import { getShotTemplate } from '../data/shotTemplates'
 import { usePersistedState } from '../utils/persistedState'
 import { postItemToSocials } from '../lib/postToInstagram'
+import { pillarSeedTitles, findPillarSeedIdxFromTitle, pickDifferentPillarSeedIdx } from '../lib/seeds/pillarImage'
 
 interface SingleImageLabProps {
   onBack: () => void
 }
 
-const SEED_TITLES = [
-  'Single Image — Lifestyle: Cultural Moment',
-  'Single Image — Product Centric: New Drop Reveal',
-  'Single Image — Education: Flavor Breakdown',
-  'Single Image — Entertainment: Hot Take',
-  'Single Image — Brand Building: Founder Story',
-  'Single Image — Social Proof: First Timer Reaction',
-]
+const SEED_PREFIX = 'Single Image'
+const SEED_TITLES = pillarSeedTitles(SEED_PREFIX)
 
 function makeSeed(title: string): ContentItem {
   return {
@@ -36,17 +31,8 @@ function decorateTitle(item: ContentItem, seedTitle: string): ContentItem {
   return { ...item, title: `${seedTitle}  ·  🎬 ${name}` }
 }
 
-function findSeedIdx(title: string): number {
-  const idx = SEED_TITLES.findIndex((t) => title.startsWith(t))
-  return idx >= 0 ? idx : 0
-}
-
-function pickDifferentSeedIdx(current: number): number {
-  if (SEED_TITLES.length <= 1) return 0
-  let next = Math.floor(Math.random() * SEED_TITLES.length)
-  while (next === current) next = Math.floor(Math.random() * SEED_TITLES.length)
-  return next
-}
+const findSeedIdx = (title: string) => findPillarSeedIdxFromTitle(SEED_PREFIX, title)
+const pickDifferentSeedIdx = pickDifferentPillarSeedIdx
 
 export default function SingleImageLab({ onBack }: SingleImageLabProps) {
   // Persisted shape migrated from ContentItem[] (legacy 6-card grid) to a

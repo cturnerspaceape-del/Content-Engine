@@ -3,6 +3,7 @@ import XPostCard from './XPostCard'
 import { generateReelLoungePost } from '../data/instagramContentTemplates'
 import { getReelArc } from '../data/reelArcs'
 import { usePersistedState } from '../utils/persistedState'
+import { REEL_ARC_SEEDS, formatReelSeedTitle } from '../lib/seeds/reelArc'
 
 interface ShortsLabProps {
   onBack: () => void
@@ -10,15 +11,11 @@ interface ShortsLabProps {
 
 type ShortsPlatform = 'TikTok' | 'YouTube Shorts'
 
-// Reel seed pool reused from Reel Lounge.
-const REEL_SEEDS: Array<{ arcId: string; title: string }> = [
-  { arcId: 'drop-teaser', title: 'Shorts — Product Centric: New Drop Reveal' },
-  { arcId: 'flavor-cinemagraph', title: 'Shorts — Product Centric: Flavor Moment' },
-  { arcId: 'day-in-the-life', title: 'Shorts — Lifestyle: Cultural Moment' },
-  { arcId: 'cultural-cutaway', title: 'Shorts — Entertainment: Hot Take' },
-  { arcId: 'unbox-reveal', title: 'Shorts — Product Centric: Unbox Reveal' },
-  { arcId: 'strain-mood', title: 'Shorts — Brand Building: Founder Story' },
-]
+const SEED_PREFIX = 'Shorts'
+const REEL_SEEDS: Array<{ arcId: string; title: string }> = REEL_ARC_SEEDS.map((s) => ({
+  arcId: s.arcId,
+  title: formatReelSeedTitle(SEED_PREFIX, s),
+}))
 
 // Platform-appropriate caption caps. TikTok allows 2200 chars like IG; Shorts
 // title maxes at 100 though the description is larger. We cap at the title
