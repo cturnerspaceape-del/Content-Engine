@@ -9,6 +9,7 @@ interface HomeScreenProps {
   onImageLab: () => void
   onReelLab: () => void
   onTextPostLab: () => void
+  onCarouselLab: () => void
   loggedCount: number
 }
 
@@ -23,6 +24,7 @@ export default function HomeScreen({
   onImageLab,
   onReelLab,
   onTextPostLab,
+  onCarouselLab,
   loggedCount,
 }: HomeScreenProps) {
   return (
@@ -128,6 +130,34 @@ export default function HomeScreen({
                     background: 'rgba(29,155,240,.2)',
                     color: '#1d9bf0',
                     border: '1px solid rgba(29,155,240,.4)',
+                  }}
+                >
+                  ✨ NEW
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={onCarouselLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(6,182,212,.18), rgba(8,145,178,.12))',
+                border: '2px solid #06b6d4',
+                boxShadow: 'var(--shadow-md)',
+                color: '#06b6d4',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🎠</span>
+                <span>Carousel Lab</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: '2px 6px',
+                    borderRadius: 999,
+                    background: 'rgba(6,182,212,.2)',
+                    color: '#06b6d4',
+                    border: '1px solid rgba(6,182,212,.4)',
                   }}
                 >
                   ✨ NEW

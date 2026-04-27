@@ -12,6 +12,7 @@ import EmailLab from './components/EmailLab'
 import ImageLab from './components/labs/ImageLab'
 import ReelLab from './components/labs/ReelLab'
 import TextPostLab from './components/labs/TextPostLab'
+import CarouselLab from './components/labs/CarouselLab'
 import { usePersistedState } from './utils/persistedState'
 import type { ViewState, LoggedPost } from './types'
 
@@ -53,6 +54,7 @@ export default function App() {
               onImageLab={() => switchView('image-lab')}
               onReelLab={() => switchView('reel-lab')}
               onTextPostLab={() => switchView('text-post-lab')}
+              onCarouselLab={() => switchView('carousel-lab')}
               loggedCount={loggedPosts.length}
             />
           </div>
@@ -123,6 +125,11 @@ export default function App() {
         {view === 'text-post-lab' && (
           <div className="fade-in">
             <TextPostLab onBack={() => switchView('home')} />
+          </div>
+        )}
+        {view === 'carousel-lab' && (
+          <div className="fade-in">
+            <CarouselLab onBack={() => switchView('home')} />
           </div>
         )}
       </div>

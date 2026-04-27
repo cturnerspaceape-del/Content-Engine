@@ -33,7 +33,7 @@ export const FORMAT_PLATFORM_COMPAT: Record<
 > = {
   image: ['IG/FB', 'X', 'Threads', 'Email'],
   video: ['IG/FB', 'X', 'TikTok', 'YouTube Shorts'],
-  carousel: ['IG/FB', 'X', 'Threads', 'Email'],
+  carousel: ['IG/FB', 'X', 'Threads'],
   text: ['X', 'Threads', 'Email'],
 }
 
