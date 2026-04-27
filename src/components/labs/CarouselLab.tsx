@@ -74,9 +74,8 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
   )
 
   // Migrate older persisted selections that still hold 'Instagram' /
-  // 'Facebook' as separate strings — collapse to a single 'IG/FB'. Also
-  // strip any 'Email' values left over from earlier carousel-format
-  // configs (Email no longer applies to carousels).
+  // 'Facebook' / 'Email' as separate strings — collapse Meta to a
+  // single 'IG/FB' chip and strip Email entirely.
   useEffect(() => {
     setSelectedPlatforms((prev) => {
       const stale = prev as ReadonlyArray<string>
@@ -87,9 +86,9 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
       if (!hasOld) return prev
       const filtered = prev.filter(
         (p) =>
-          p !== ('Instagram' as TunerPlatform) &&
-          p !== ('Facebook' as TunerPlatform) &&
-          p !== 'Email',
+          (p as string) !== 'Instagram' &&
+          (p as string) !== 'Facebook' &&
+          (p as string) !== 'Email',
       )
       return ['IG/FB' as TunerPlatform, ...filtered.filter((p) => p !== 'IG/FB')]
     })
@@ -271,7 +270,6 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
           assetUrl={heroSlideUrl}
           assetKind="image"
           onRetune={handleRetune}
-          tabStateKey="sl:carouselLab:activeTab"
           customRender={{
             'IG/FB': () => (
               <ContentCard

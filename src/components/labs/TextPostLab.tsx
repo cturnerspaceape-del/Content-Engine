@@ -25,9 +25,6 @@ const ARCHETYPE_DESCRIPTIONS: Record<TextArchetype, string> = {
   Question: 'An open question to spark replies.',
   Shoutout: 'Thanks to community, partners, or customers.',
   'Meme Line': 'A one-liner the group chat will screenshot.',
-  Newsletter: 'Recap of what shipped and what is coming.',
-  Welcome: 'First touch after sign-up — set the tone, drop a code.',
-  'Re-engagement': "Win back subscribers who haven't opened in a while.",
 }
 
 function platformsForArchetype(archetype: TextArchetype): TunerPlatform[] {
@@ -41,6 +38,16 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     'Hot Take',
   )
 
+  // Migrate stale email-only archetypes (Newsletter / Welcome /
+  // Re-engagement) that may still be in localStorage after Email was
+  // dropped from the cross-post matrix.
+  useEffect(() => {
+    if (!(TEXT_ARCHETYPES as readonly string[]).includes(archetype)) {
+      setArchetype('Hot Take')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const [selectedPlatforms, setSelectedPlatforms] = usePersistedState<TunerPlatform[]>(
     'sl:textPostLab:platforms',
     () => platformsForArchetype('Hot Take'),
@@ -50,6 +57,16 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     'sl:textPostLab:variants',
     () => ({}),
   )
+
+  // Strip stale 'Email' values from any older persisted selection.
+  useEffect(() => {
+    setSelectedPlatforms((prev) => {
+      const stale = prev as ReadonlyArray<string>
+      if (!stale.includes('Email')) return prev
+      return prev.filter((p) => (p as string) !== 'Email')
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // When archetype changes, prune any selected platforms that are no longer
   // compatible (e.g. switching to "Newsletter" drops X + Threads from the
@@ -130,7 +147,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
             ✍️ Text Post Lab
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-            Pure text, tuned per platform — X / Threads / Email
+            Pure text, tuned per platform — X / Threads
           </p>
         </div>
 
@@ -170,7 +187,6 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
           selected={selectedPlatforms}
           variants={variants}
           onRetune={handleRetune}
-          tabStateKey="sl:textPostLab:activeTab"
         />
 
         <div className="flex justify-center mt-4">

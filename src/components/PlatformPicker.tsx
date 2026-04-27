@@ -23,7 +23,6 @@ const PLATFORM_LABELS: Record<TunerPlatform, string> = {
   Threads: 'Threads',
   TikTok: 'TikTok',
   'YouTube Shorts': 'Shorts',
-  Email: 'Email',
 }
 
 const PLATFORM_ICONS: Record<TunerPlatform, string> = {
@@ -32,7 +31,6 @@ const PLATFORM_ICONS: Record<TunerPlatform, string> = {
   Threads: '@',
   TikTok: '🎵',
   'YouTube Shorts': '▶',
-  Email: '📧',
 }
 
 // IG/FB shares one chip; the underlying Platform (Instagram or Facebook)
@@ -44,7 +42,6 @@ const PLATFORM_COLOR_KEY: Record<TunerPlatform, string> = {
   Threads: 'Threads',
   TikTok: 'TikTok',
   'YouTube Shorts': 'YouTube Shorts',
-  Email: 'Email',
 }
 
 export default function PlatformPicker({

@@ -1,14 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import HomeScreen from './components/HomeScreen'
 import WeeklyCalendar from './components/WeeklyCalendar'
 import StrategyDashboard from './components/StrategyDashboard'
 import PostLog from './components/PostLog'
-import SingleImageLab from './components/SingleImageLab'
-import CarouselLounge from './components/CarouselLounge'
-import ReelLounge from './components/ReelLounge'
-import XPostLab from './components/XPostLab'
-import ShortsLab from './components/ShortsLab'
-import EmailLab from './components/EmailLab'
 import ImageLab from './components/labs/ImageLab'
 import ReelLab from './components/labs/ReelLab'
 import TextPostLab from './components/labs/TextPostLab'
@@ -16,10 +10,29 @@ import CarouselLab from './components/labs/CarouselLab'
 import { usePersistedState } from './utils/persistedState'
 import type { ViewState, LoggedPost } from './types'
 
+// Migrate persisted view names from the legacy Lab routes (sil-lab,
+// x-post-lab, reel-lounge, etc.) to the new format-based Labs.
+const VIEW_MIGRATIONS: Record<string, ViewState> = {
+  'sil-lab': 'image-lab',
+  'x-post-lab': 'text-post-lab',
+  'reel-lounge': 'reel-lab',
+  'shorts-lab': 'reel-lab',
+  'carousel-lounge': 'carousel-lab',
+  'email-lab': 'text-post-lab',
+}
+
 export default function App() {
   const [view, setView] = usePersistedState<ViewState>('sl:view', 'home')
   const [animating, setAnimating] = useState(false)
   const [loggedPosts, setLoggedPosts] = usePersistedState<LoggedPost[]>('sl:loggedPosts', [])
+
+  // Run migration once on mount: if the user was last on a deleted route,
+  // bounce them to the corresponding new Lab.
+  useEffect(() => {
+    const migrated = VIEW_MIGRATIONS[view as string]
+    if (migrated) setView(migrated)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const switchView = (target: ViewState) => {
     setAnimating(true)
@@ -45,12 +58,6 @@ export default function App() {
           <div className="fade-in">
             <HomeScreen
               onPostLog={() => switchView('postlog')}
-              onSilLab={() => switchView('sil-lab')}
-              onCarouselLounge={() => switchView('carousel-lounge')}
-              onReelLounge={() => switchView('reel-lounge')}
-              onXPostLab={() => switchView('x-post-lab')}
-              onShortsLab={() => switchView('shorts-lab')}
-              onEmailLab={() => switchView('email-lab')}
               onImageLab={() => switchView('image-lab')}
               onReelLab={() => switchView('reel-lab')}
               onTextPostLab={() => switchView('text-post-lab')}
@@ -80,36 +87,6 @@ export default function App() {
               posts={loggedPosts}
               onBack={() => switchView('home')}
             />
-          </div>
-        )}
-        {view === 'sil-lab' && (
-          <div className="fade-in">
-            <SingleImageLab onBack={() => switchView('home')} />
-          </div>
-        )}
-        {view === 'carousel-lounge' && (
-          <div className="fade-in">
-            <CarouselLounge onBack={() => switchView('home')} />
-          </div>
-        )}
-        {view === 'reel-lounge' && (
-          <div className="fade-in">
-            <ReelLounge onBack={() => switchView('home')} />
-          </div>
-        )}
-        {view === 'x-post-lab' && (
-          <div className="fade-in">
-            <XPostLab onBack={() => switchView('home')} />
-          </div>
-        )}
-        {view === 'shorts-lab' && (
-          <div className="fade-in">
-            <ShortsLab onBack={() => switchView('home')} />
-          </div>
-        )}
-        {view === 'email-lab' && (
-          <div className="fade-in">
-            <EmailLab onBack={() => switchView('home')} />
           </div>
         )}
         {view === 'image-lab' && (

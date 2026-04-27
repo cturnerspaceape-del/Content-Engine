@@ -1,7 +1,6 @@
-// Cross-platform text archetypes. Each archetype is a tone/intent that any
-// text-capable platform (X, Threads, Email) can render in its own format.
-// The archetype is the *unifying axis*; per-platform tuners apply char limits,
-// hashtag policy, and structural fields (e.g. Email subject + body) on top.
+// Cross-platform text archetypes. Each archetype is a tone/intent that
+// X and Threads can render in their own format. Per-platform tuners
+// apply char limits and hashtag policy on top.
 
 export const TEXT_ARCHETYPES = [
   'Hot Take',
@@ -10,26 +9,21 @@ export const TEXT_ARCHETYPES = [
   'Question',
   'Shoutout',
   'Meme Line',
-  'Newsletter',
-  'Welcome',
-  'Re-engagement',
 ] as const
 
 export type TextArchetype = (typeof TEXT_ARCHETYPES)[number]
 
-// Some archetypes are short-form only (X/Threads). Others (Newsletter,
-// Welcome, Re-engagement) only make sense as long-form Email. The Lab
-// uses this to grey out non-applicable platforms in the picker.
-export const ARCHETYPE_PLATFORM_COMPAT: Record<TextArchetype, ReadonlyArray<'X' | 'Threads' | 'Email'>> = {
-  'Hot Take': ['X', 'Threads', 'Email'],
-  'Drop Announce': ['X', 'Threads', 'Email'],
-  Hook: ['X', 'Threads', 'Email'],
+// All current archetypes are X + Threads compatible. Kept as a record
+// (rather than dropping it) so the Lab's picker logic doesn't need to
+// special-case "no constraint" — and so adding a future archetype with
+// platform restrictions stays backward-compatible.
+export const ARCHETYPE_PLATFORM_COMPAT: Record<TextArchetype, ReadonlyArray<'X' | 'Threads'>> = {
+  'Hot Take': ['X', 'Threads'],
+  'Drop Announce': ['X', 'Threads'],
+  Hook: ['X', 'Threads'],
   Question: ['X', 'Threads'],
-  Shoutout: ['X', 'Threads', 'Email'],
+  Shoutout: ['X', 'Threads'],
   'Meme Line': ['X', 'Threads'],
-  Newsletter: ['Email'],
-  Welcome: ['Email'],
-  'Re-engagement': ['Email'],
 }
 
 export function archetypeFromTitle(title: string, fallback: TextArchetype = 'Hot Take'): TextArchetype {

@@ -13,7 +13,6 @@ export type TunerPlatform =
   | 'Threads'
   | 'TikTok'
   | 'YouTube Shorts'
-  | 'Email'
 
 export type TunerFormat = 'image' | 'video' | 'carousel' | 'text'
 
@@ -32,16 +31,10 @@ export interface TunerSource {
 
 export interface PlatformVariant {
   platform: TunerPlatform
-  // Primary user-visible text — caption / tweet / email body.
+  // Primary user-visible text — caption / tweet.
   caption: string
   hashtags: string[]
   charLimit: number
-  // Email-only:
-  subject?: string
-  preheader?: string
-  bodyHtml?: string
-  ctaLabel?: string
-  ctaUrl?: string
   // YouTube-only:
   title?: string
   description?: string

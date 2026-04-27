@@ -240,7 +240,6 @@ export default function ReelLab({ onBack }: ReelLabProps) {
           assetUrl={item.generatedVisual?.reelUrl}
           assetKind="video"
           onRetune={handleRetune}
-          tabStateKey="sl:reelLab:activeTab"
           customRender={{
             'IG/FB': () => (
               <ContentCard

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { usePersistedState } from '../utils/persistedState'
 import type { PlatformVariant, TunerPlatform } from '../lib/platformTuners'
 import { platformColors } from './PlatformContentItem'
 
@@ -9,11 +8,10 @@ interface MultiPlatformPreviewProps {
   assetUrl?: string
   assetKind?: 'image' | 'video'
   onRetune?: (platform: TunerPlatform) => void
-  tabStateKey: string
   // Per-platform render override. When provided, the corresponding tab
   // renders the custom node instead of the built-in PreviewCard. Used by
-  // ImageLab to keep the existing IG ContentCard (with its publish flow)
-  // inside the Instagram tab while X/Email use the lightweight preview.
+  // ImageLab/ReelLab/CarouselLab to keep the existing IG ContentCard
+  // (with its publish flow) inside the IG/FB tab.
   customRender?: Partial<Record<TunerPlatform, () => React.ReactNode>>
 }
 
@@ -23,7 +21,6 @@ const PLATFORM_LABELS: Record<TunerPlatform, string> = {
   Threads: 'Threads',
   TikTok: 'TikTok',
   'YouTube Shorts': 'Shorts',
-  Email: 'Email',
 }
 
 const PLATFORM_ICONS: Record<TunerPlatform, string> = {
@@ -32,7 +29,6 @@ const PLATFORM_ICONS: Record<TunerPlatform, string> = {
   Threads: '@',
   TikTok: '🎵',
   'YouTube Shorts': '▶',
-  Email: '📧',
 }
 
 const PLATFORM_COLOR_KEY: Record<TunerPlatform, string> = {
@@ -41,7 +37,6 @@ const PLATFORM_COLOR_KEY: Record<TunerPlatform, string> = {
   Threads: 'Threads',
   TikTok: 'TikTok',
   'YouTube Shorts': 'YouTube Shorts',
-  Email: 'Email',
 }
 
 export default function MultiPlatformPreview({
@@ -50,19 +45,13 @@ export default function MultiPlatformPreview({
   assetUrl,
   assetKind,
   onRetune,
-  tabStateKey,
   customRender,
 }: MultiPlatformPreviewProps) {
-  const [activeTab, setActiveTab] = usePersistedState<TunerPlatform>(
-    tabStateKey,
-    () => selected[0] ?? 'Instagram',
-  )
-
-  // If the active tab is no longer in the selection set (user deselected),
-  // fall back to the first selected platform.
-  const effectiveTab: TunerPlatform | undefined = selected.includes(activeTab)
-    ? activeTab
-    : selected[0]
+  // Active preview = first selected platform. Removed the duplicate tab
+  // strip — the cross-post chip row above already shows what's selected.
+  // To focus a different platform, the user toggles the IG/FB chip off
+  // (since IG/FB sorts first) which surfaces the next selected variant.
+  const effectiveTab = selected[0]
 
   if (!effectiveTab) {
     return (
@@ -72,49 +61,32 @@ export default function MultiPlatformPreview({
     )
   }
 
-  const variant = variants[effectiveTab]
-
   return (
-    <div>
-      <div className="flex flex-wrap justify-center gap-2 mb-4">
-        {selected.map((p) => {
-          const active = effectiveTab === p
-          const accent = platformColors[PLATFORM_COLOR_KEY[p]] ?? 'var(--accent)'
+    <div className="flex justify-center">
+      <div style={{ width: '100%', maxWidth: 480 }}>
+        {/* If multiple platforms are selected, render every non-IG/FB
+            variant stacked beneath whatever the customRender (typically
+            the IG ContentCard) shows. The IG/FB tab is always first when
+            present; the rest stack below for at-a-glance comparison. */}
+        {selected.map((platform) => {
+          const variant = variants[platform]
+          const custom = customRender?.[platform]
           return (
-            <button
-              key={p}
-              onClick={() => setActiveTab(p)}
-              className="text-xs font-bold px-4 py-2 rounded-full transition-all"
-              style={{
-                background: active ? `${accent}22` : 'var(--panel-2)',
-                color: active ? accent : 'var(--muted)',
-                border: `1px solid ${active ? accent : 'var(--border)'}`,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <span style={{ fontSize: 14 }}>{PLATFORM_ICONS[p]}</span>
-              <span>{PLATFORM_LABELS[p]}</span>
-            </button>
+            <div key={platform} className={platform === effectiveTab ? '' : 'mt-4'}>
+              {custom ? (
+                custom()
+              ) : (
+                <PreviewCard
+                  platform={platform}
+                  variant={variant}
+                  assetUrl={assetUrl}
+                  assetKind={assetKind}
+                  onRetune={onRetune ? () => onRetune(platform) : undefined}
+                />
+              )}
+            </div>
           )
         })}
-      </div>
-
-      <div className="flex justify-center">
-        <div style={{ width: '100%', maxWidth: 480 }}>
-          {customRender?.[effectiveTab] ? (
-            customRender[effectiveTab]!()
-          ) : (
-            <PreviewCard
-              platform={effectiveTab}
-              variant={variant}
-              assetUrl={assetUrl}
-              assetKind={assetKind}
-              onRetune={onRetune ? () => onRetune(effectiveTab) : undefined}
-            />
-          )}
-        </div>
       </div>
     </div>
   )
@@ -172,9 +144,7 @@ function PreviewCard({ platform, variant, assetUrl, assetKind, onRetune }: Previ
         />
       )}
 
-      {platform === 'Email' ? (
-        <EmailFields variant={variant} />
-      ) : platform === 'YouTube Shorts' ? (
+      {platform === 'YouTube Shorts' ? (
         <YouTubeFields variant={variant} />
       ) : (
         <DefaultFields variant={variant} />
@@ -240,49 +210,6 @@ function DefaultFields({ variant }: { variant: PlatformVariant }) {
   )
 }
 
-function EmailFields({ variant }: { variant: PlatformVariant }) {
-  return (
-    <div className="space-y-3">
-      <Field label="Subject" value={variant.subject ?? variant.caption} />
-      {variant.preheader && <Field label="Preheader" value={variant.preheader} />}
-      {variant.bodyHtml && (
-        <div>
-          <div
-            className="text-[10px] font-bold uppercase tracking-wider mb-1"
-            style={{ color: 'var(--muted)' }}
-          >
-            Body
-          </div>
-          <div
-            className="text-sm rounded-lg p-3"
-            style={{
-              background: 'var(--panel-2)',
-              color: 'var(--text)',
-              lineHeight: 1.5,
-              border: '1px solid var(--border)',
-            }}
-            dangerouslySetInnerHTML={{ __html: variant.bodyHtml }}
-          />
-        </div>
-      )}
-      {variant.ctaLabel && (
-        <div className="flex items-center gap-2 text-xs">
-          <span
-            className="px-3 py-1.5 rounded-md font-bold"
-            style={{ background: '#8b5cf6', color: 'white' }}
-          >
-            {variant.ctaLabel}
-          </span>
-          <span style={{ color: 'var(--muted)' }}>→</span>
-          <code className="text-[11px]" style={{ color: 'var(--muted)' }}>
-            {variant.ctaUrl}
-          </code>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function YouTubeFields({ variant }: { variant: PlatformVariant }) {
   return (
     <div className="space-y-3">
@@ -332,19 +259,6 @@ function CopyButton({ variant }: { variant: PlatformVariant }) {
   const [copied, setCopied] = useState(false)
 
   const buildPayload = (): string => {
-    if (variant.platform === 'Email') {
-      return [
-        `Subject: ${variant.subject ?? ''}`,
-        variant.preheader ? `Preheader: ${variant.preheader}` : '',
-        '',
-        // Strip HTML tags for plain-text copy.
-        (variant.bodyHtml ?? '').replace(/<[^>]+>/g, '').trim(),
-        '',
-        variant.ctaLabel ? `CTA: ${variant.ctaLabel} → ${variant.ctaUrl ?? ''}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n')
-    }
     if (variant.platform === 'YouTube Shorts') {
       return [
         `Title: ${variant.title ?? variant.caption}`,
@@ -377,7 +291,10 @@ function CopyButton({ variant }: { variant: PlatformVariant }) {
         border: copied ? '1px solid #10b981' : '1px solid transparent',
       }}
     >
-      {copied ? '✓ Copied' : '📋 Copy for ' + (variant.platform === 'YouTube Shorts' ? 'Shorts' : variant.platform)}
+      {copied
+        ? '✓ Copied'
+        : '📋 Copy for ' +
+          (variant.platform === 'YouTube Shorts' ? 'Shorts' : variant.platform)}
     </button>
   )
 }

@@ -59,12 +59,6 @@ const X_TEXT_POOL: Record<TextArchetype, string[]> = {
     "Tell me it's Friday without telling me it's Friday. I'll start:",
     "That moment the cap clicks into place and it just feels right.",
   ],
-  // Email-only archetypes — tuneForX should not be called with these
-  // because they're filtered out by ARCHETYPE_PLATFORM_COMPAT, but
-  // empty arrays keep the type total. Falls through to Hot Take pool.
-  Newsletter: [],
-  Welcome: [],
-  'Re-engagement': [],
 }
 
 function pickRandom<T>(arr: readonly T[]): T {

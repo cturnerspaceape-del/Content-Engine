@@ -88,39 +88,10 @@ export type ViewState =
   | 'calendar'
   | 'strategy'
   | 'postlog'
-  | 'sil-lab'
-  | 'carousel-lounge'
-  | 'reel-lounge'
-  | 'x-post-lab'
-  | 'shorts-lab'
-  | 'email-lab'
   | 'image-lab'
   | 'reel-lab'
   | 'text-post-lab'
   | 'carousel-lab'
-
-export type EmailTypeId =
-  | 'drop-announce'
-  | 'flavor-spotlight'
-  | 'welcome'
-  | 'newsletter'
-  | 'education'
-  | 're-engagement'
-  | 'limited-drop'
-
-export interface EmailItem {
-  typeId: EmailTypeId
-  title: string
-  description: string
-  generated?: boolean
-  content?: {
-    subject: string
-    preheader: string
-    bodyHtml: string
-    ctaLabel: string
-    ctaUrl: string
-  }
-}
 
 export type InstagramFormat = 'Carousel' | 'Reel' | 'Single Image'
 
