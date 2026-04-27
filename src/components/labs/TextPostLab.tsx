@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
+import TextVariantEditDialog from '../TextVariantEditDialog'
+import TextPostReviewModal from '../TextPostReviewModal'
 import { usePersistedState } from '../../utils/persistedState'
 import {
   TEXT_ARCHETYPES,
-  ARCHETYPE_PLATFORM_COMPAT,
   type TextArchetype,
 } from '../../lib/seeds/textArchetype'
 import {
@@ -35,20 +36,13 @@ const ARCHETYPE_DESCRIPTIONS: Record<TextArchetype, string> = {
   'Meme Line': 'A one-liner the group chat will screenshot.',
 }
 
-function platformsForArchetype(archetype: TextArchetype): TunerPlatform[] {
-  // Intersect text-format compat (X / Threads / Email) with archetype compat.
-  return defaultSelectedPlatforms('text', archetype)
-}
-
 export default function TextPostLab({ onBack }: TextPostLabProps) {
   const [archetype, setArchetype] = usePersistedState<TextArchetype>(
     'sl:textPostLab:archetype',
     'Hot Take',
   )
 
-  // Migrate stale email-only archetypes (Newsletter / Welcome /
-  // Re-engagement) that may still be in localStorage after Email was
-  // dropped from the cross-post matrix.
+  // Migrate stale email-only archetypes that may still be in localStorage.
   useEffect(() => {
     if (!(TEXT_ARCHETYPES as readonly string[]).includes(archetype)) {
       setArchetype('Hot Take')
@@ -58,7 +52,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
 
   const [selectedPlatforms, setSelectedPlatforms] = usePersistedState<TunerPlatform[]>(
     'sl:textPostLab:platforms',
-    () => platformsForArchetype('Hot Take'),
+    () => defaultSelectedPlatforms('text'),
   )
 
   const [variants, setVariants] = usePersistedState<Partial<Record<TunerPlatform, PlatformVariant>>>(
@@ -76,30 +70,14 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // When archetype changes, prune any selected platforms that are no longer
-  // compatible (e.g. switching to "Newsletter" drops X + Threads from the
-  // selection because they're Email-only).
-  useEffect(() => {
-    const archCompat = ARCHETYPE_PLATFORM_COMPAT[archetype] as ReadonlyArray<string>
-    setSelectedPlatforms((prev) => {
-      const pruned = prev.filter((p) => archCompat.includes(p))
-      // If pruning emptied the selection, fall back to the archetype default.
-      if (pruned.length === 0) return platformsForArchetype(archetype)
-      // If pruning didn't change anything, keep the same array reference so
-      // the variant-effect below doesn't re-fire unnecessarily.
-      return pruned.length === prev.length ? prev : pruned
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [archetype])
-
   // Auto-tune variants whenever archetype changes or a new platform is added.
+  // Cached variants survive across archetype changes (keyed by platform), so
+  // user edits made for one archetype persist if they switch and switch back.
   useEffect(() => {
     const source: TunerSource = { format: 'text', archetype }
     setVariants((prev) => {
       const next: Partial<Record<TunerPlatform, PlatformVariant>> = {}
       for (const platform of selectedPlatforms) {
-        // Re-roll a fresh variant on archetype change; reuse the cached
-        // variant if the platform was already selected for this archetype.
         const cached = prev[platform]
         next[platform] =
           cached && cached.platform === platform ? cached : tuneFor(platform, source)
@@ -118,9 +96,33 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     setVariants(next)
   }
 
-  const [copyToast, setCopyToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(
-    null,
-  )
+  // Pick a different archetype than the current one and re-tune. Mirrors
+  // pickDifferentPillarSeedIdx from the image Labs.
+  const handleShuffle = () => {
+    const idx = TEXT_ARCHETYPES.indexOf(archetype)
+    let nextIdx = idx
+    if (TEXT_ARCHETYPES.length > 1) {
+      while (nextIdx === idx) {
+        nextIdx = Math.floor(Math.random() * TEXT_ARCHETYPES.length)
+      }
+    }
+    const nextArchetype = TEXT_ARCHETYPES[nextIdx]
+    setArchetype(nextArchetype)
+    // Force a fresh tune for the new archetype across all selected platforms,
+    // since the cached variants are tuned to the previous archetype.
+    const source: TunerSource = { format: 'text', archetype: nextArchetype }
+    const next: Partial<Record<TunerPlatform, PlatformVariant>> = {}
+    for (const platform of selectedPlatforms) {
+      next[platform] = tuneFor(platform, source)
+    }
+    setVariants(next)
+  }
+
+  const [toast, setToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(null)
+  const showToast = (kind: 'success' | 'warn', text: string) => {
+    setToast({ kind, text })
+    window.setTimeout(() => setToast(null), 4000)
+  }
 
   const buildClipboardPayload = (): string => {
     const sections: string[] = []
@@ -137,24 +139,53 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     return sections.join('\n\n')
   }
 
-  const handleCopyAll = async () => {
+  const [postReviewing, setPostReviewing] = useState(false)
+
+  const handlePost = () => {
     const payload = buildClipboardPayload()
     if (!payload) {
-      setCopyToast({ kind: 'warn', text: 'Nothing to copy yet — click Generate first' })
-      window.setTimeout(() => setCopyToast(null), 4000)
+      showToast('warn', 'Nothing to copy yet — click Generate first')
+      return
+    }
+    setPostReviewing(true)
+  }
+
+  const confirmPost = async () => {
+    setPostReviewing(false)
+    const payload = buildClipboardPayload()
+    if (!payload) {
+      showToast('warn', 'Nothing to copy')
       return
     }
     try {
       await navigator.clipboard.writeText(payload)
-      const labels = selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(' & ')
-      setCopyToast({ kind: 'success', text: `${labels} captions copied — paste into apps` })
+      const labels = selectedPlatforms
+        .filter((p) => variants[p])
+        .map((p) => PLATFORM_LABELS[p])
+        .join(' & ')
+      showToast('success', `${labels} captions copied — paste into apps`)
     } catch {
-      setCopyToast({ kind: 'warn', text: 'Could not copy to clipboard' })
+      showToast('warn', 'Could not copy to clipboard')
     }
-    window.setTimeout(() => setCopyToast(null), 4000)
   }
 
-  const archetypeChips = useMemo(() => TEXT_ARCHETYPES, [])
+  // Inline edit dialog state.
+  const [editingPlatform, setEditingPlatform] = useState<TunerPlatform | null>(null)
+
+  const handleSaveEdit = (next: { caption: string; hashtags: string[] }) => {
+    if (!editingPlatform) return
+    setVariants((prev) => {
+      const cur = prev[editingPlatform]
+      if (!cur) return prev
+      return {
+        ...prev,
+        [editingPlatform]: { ...cur, caption: next.caption, hashtags: next.hashtags },
+      }
+    })
+    setEditingPlatform(null)
+  }
+
+  const editingVariant = editingPlatform ? variants[editingPlatform] : null
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
@@ -186,12 +217,12 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
             ✍️ Text Post Lab
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-            Pure text, tuned per platform — X / Threads
+            One thought, tuned for X &amp; Threads
           </p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-2 mb-2">
-          {archetypeChips.map((a) => {
+          {TEXT_ARCHETYPES.map((a) => {
             const active = a === archetype
             return (
               <button
@@ -219,19 +250,19 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
           format="text"
           selected={selectedPlatforms}
           onChange={setSelectedPlatforms}
-          archetype={archetype}
         />
 
         <MultiPlatformPreview
           selected={selectedPlatforms}
           variants={variants}
+          onEditVariant={(platform) => setEditingPlatform(platform)}
         />
 
         {selectedPlatforms.length > 0 && (
           <div className="flex flex-col items-center gap-3 mt-4">
             <div className="flex flex-wrap justify-center gap-2">
               <button
-                onClick={handleGenerate}
+                onClick={handleShuffle}
                 className="text-sm font-bold px-5 py-3 rounded-xl"
                 style={{ background: '#10b981', color: 'white' }}
               >
@@ -250,7 +281,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
             </div>
 
             <button
-              onClick={handleCopyAll}
+              onClick={handlePost}
               className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"
               style={{
                 background: 'rgba(59,130,246,.1)',
@@ -258,25 +289,45 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
                 color: 'var(--accent)',
               }}
             >
-              📤 Copy for {selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(', ')}
+              📤 Post to {selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(' & ')}
             </button>
 
-            {copyToast && (
+            {toast && (
               <div
                 className="text-xs font-semibold px-4 py-2 rounded-lg"
                 style={{
                   background:
-                    copyToast.kind === 'success'
+                    toast.kind === 'success'
                       ? 'rgba(16,185,129,.12)'
                       : 'rgba(251,146,60,.12)',
-                  color: copyToast.kind === 'success' ? '#10b981' : '#fb923c',
-                  border: `1px solid ${copyToast.kind === 'success' ? '#10b981' : '#fb923c'}`,
+                  color: toast.kind === 'success' ? '#10b981' : '#fb923c',
+                  border: `1px solid ${toast.kind === 'success' ? '#10b981' : '#fb923c'}`,
                 }}
               >
-                {copyToast.text}
+                {toast.text}
               </div>
             )}
           </div>
+        )}
+
+        {postReviewing && (
+          <TextPostReviewModal
+            platforms={selectedPlatforms}
+            variants={variants}
+            onCancel={() => setPostReviewing(false)}
+            onConfirm={confirmPost}
+          />
+        )}
+
+        {editingPlatform && editingVariant && (
+          <TextVariantEditDialog
+            platform={editingPlatform}
+            caption={editingVariant.caption}
+            hashtags={editingVariant.hashtags}
+            charLimit={editingVariant.charLimit}
+            onSave={handleSaveEdit}
+            onCancel={() => setEditingPlatform(null)}
+          />
         )}
       </div>
     </div>

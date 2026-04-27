@@ -12,6 +12,9 @@ interface MultiPlatformPreviewProps {
   // Used by ImageLab/ReelLab/CarouselLab to keep the existing IG ContentCard
   // (with its publish flow) inside the IG/FB tab.
   customRender?: Partial<Record<TunerPlatform, () => React.ReactNode>>
+  // When set, the built-in PreviewCard renders an Edit button next to Copy.
+  // Used by TextPostLab to surface inline caption editing per platform.
+  onEditVariant?: (platform: TunerPlatform) => void
 }
 
 const PLATFORM_LABELS: Record<TunerPlatform, string> = {
@@ -44,6 +47,7 @@ export default function MultiPlatformPreview({
   assetUrl,
   assetKind,
   customRender,
+  onEditVariant,
 }: MultiPlatformPreviewProps) {
   // Single-slot preview: render only the first selected platform. The
   // remaining selected platforms still get tuned in the background by the
@@ -73,6 +77,7 @@ export default function MultiPlatformPreview({
             variant={variant}
             assetUrl={assetUrl}
             assetKind={assetKind}
+            onEdit={onEditVariant ? () => onEditVariant(primary) : undefined}
           />
         )}
       </div>
@@ -85,9 +90,10 @@ interface PreviewCardProps {
   variant?: PlatformVariant
   assetUrl?: string
   assetKind?: 'image' | 'video'
+  onEdit?: () => void
 }
 
-function PreviewCard({ platform, variant, assetUrl, assetKind }: PreviewCardProps) {
+function PreviewCard({ platform, variant, assetUrl, assetKind, onEdit }: PreviewCardProps) {
   const accent = platformColors[PLATFORM_COLOR_KEY[platform]] ?? 'var(--accent)'
 
   if (!variant) {
@@ -139,6 +145,19 @@ function PreviewCard({ platform, variant, assetUrl, assetKind }: PreviewCardProp
 
       <div className="flex gap-2 mt-4">
         <CopyButton variant={variant} />
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="text-xs font-bold px-3 py-2 rounded-lg transition-all"
+            style={{
+              background: 'rgba(148,163,184,.1)',
+              color: 'var(--text)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            ✏️ Edit
+          </button>
+        )}
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import EmailTypePicker from '../email/EmailTypePicker'
 import AudienceToggle from '../email/AudienceToggle'
 import EmailPreview from '../email/EmailPreview'
-import EmailEditor from '../email/EmailEditor'
+import EmailEditor, { type ReRollTarget } from '../email/EmailEditor'
 import { usePersistedState } from '../../utils/persistedState'
 import { composeHtml } from '../../lib/email/composeHtml'
 import { generateEmail, generateEmailImage } from '../../lib/email/api'
@@ -88,6 +88,7 @@ export default function EmailLab({ onBack }: EmailLabProps) {
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reRollBusy, setReRollBusy] = useState<Set<string>>(() => new Set())
 
   const html = useMemo(() => (campaign.email ? composeHtml(campaign.email) : ''), [campaign.email])
 
@@ -161,6 +162,105 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     }))
   }
 
+  const reRollKey = (t: ReRollTarget): string =>
+    t.cellIdx == null ? `s${t.sectionIdx}` : `s${t.sectionIdx}c${t.cellIdx}`
+
+  const handleReRollImage = async (target: ReRollTarget) => {
+    const key = reRollKey(target)
+    setReRollBusy((cur) => {
+      const next = new Set(cur)
+      next.add(key)
+      return next
+    })
+    setError(null)
+    try {
+      const cur = campaign.email
+      if (!cur) return
+      const section = cur.sections[target.sectionIdx]
+      if (!section) return
+
+      let prompt: string | undefined
+      let slot: 'hero' | 'product'
+      if (target.cellIdx == null) {
+        if (section.kind !== 'hero') return
+        const heroData = section.data as HeroSectionData
+        prompt = heroData.imagePrompt
+        slot = 'hero'
+      } else {
+        if (section.kind !== 'product') return
+        const productData = section.data as ProductSectionData
+        prompt = productData.cells[target.cellIdx]?.imagePrompt
+        slot = 'product'
+      }
+      if (!prompt) {
+        setError('No image prompt on this slot — regenerate the email first.')
+        return
+      }
+
+      const variationSeed = Math.floor(Math.random() * 1e9)
+      try {
+        const r = await generateEmailImage({ slot, prompt, variationSeed })
+        setCampaign((curCampaign) => {
+          if (!curCampaign.email) return curCampaign
+          const sections = curCampaign.email.sections.map((s, i) => {
+            if (i !== target.sectionIdx) return s
+            if (target.cellIdx == null) {
+              const heroData = s.data as HeroSectionData
+              return {
+                ...s,
+                data: { ...heroData, imageUrl: r.url, imageError: undefined },
+              } as EmailSection
+            }
+            const productData = s.data as ProductSectionData
+            const cells = productData.cells.map((c, idx) =>
+              idx === target.cellIdx
+                ? { ...c, imageUrl: r.url, imageError: undefined }
+                : c,
+            )
+            return { ...s, data: { ...productData, cells } } as EmailSection
+          })
+          const nextEmail = { ...curCampaign.email, sections }
+          return {
+            ...curCampaign,
+            email: nextEmail,
+            cache: { ...curCampaign.cache, [curCampaign.audienceType]: nextEmail },
+          }
+        })
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        setError(msg)
+        // Surface error inline on the slot too.
+        setCampaign((curCampaign) => {
+          if (!curCampaign.email) return curCampaign
+          const sections = curCampaign.email.sections.map((s, i) => {
+            if (i !== target.sectionIdx) return s
+            if (target.cellIdx == null) {
+              const heroData = s.data as HeroSectionData
+              return { ...s, data: { ...heroData, imageError: msg } } as EmailSection
+            }
+            const productData = s.data as ProductSectionData
+            const cells = productData.cells.map((c, idx) =>
+              idx === target.cellIdx ? { ...c, imageError: msg } : c,
+            )
+            return { ...s, data: { ...productData, cells } } as EmailSection
+          })
+          const nextEmail = { ...curCampaign.email, sections }
+          return {
+            ...curCampaign,
+            email: nextEmail,
+            cache: { ...curCampaign.cache, [curCampaign.audienceType]: nextEmail },
+          }
+        })
+      }
+    } finally {
+      setReRollBusy((cur) => {
+        const next = new Set(cur)
+        next.delete(key)
+        return next
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
       <div className="max-w-6xl mx-auto">
@@ -213,7 +313,12 @@ export default function EmailLab({ onBack }: EmailLabProps) {
         >
           <div>
             {campaign.email ? (
-              <EmailEditor email={campaign.email} onChange={handleEdit} />
+              <EmailEditor
+                email={campaign.email}
+                onChange={handleEdit}
+                onReRollImage={handleReRollImage}
+                busyKeys={reRollBusy}
+              />
             ) : (
               <div
                 style={{

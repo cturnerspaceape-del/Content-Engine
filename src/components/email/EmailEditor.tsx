@@ -1,8 +1,25 @@
-import type { GeneratedEmail, EmailSection } from '../../lib/email/types'
+import type {
+  GeneratedEmail,
+  EmailSection,
+  HeroSectionData,
+  ProductSectionData,
+  ProductCellData,
+} from '../../lib/email/types'
+
+export interface ReRollTarget {
+  sectionIdx: number
+  cellIdx?: number
+}
+
+function reRollKey(t: ReRollTarget): string {
+  return t.cellIdx == null ? `s${t.sectionIdx}` : `s${t.sectionIdx}c${t.cellIdx}`
+}
 
 interface EmailEditorProps {
   email: GeneratedEmail
   onChange: (next: GeneratedEmail) => void
+  onReRollImage?: (target: ReRollTarget) => void
+  busyKeys?: ReadonlySet<string>
 }
 
 function setSubject(email: GeneratedEmail, subject: string): GeneratedEmail {
@@ -43,7 +60,32 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 }
 
-export default function EmailEditor({ email, onChange }: EmailEditorProps) {
+const reRollBtnStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  padding: '6px 10px',
+  borderRadius: 8,
+  background: 'rgba(245,158,11,.15)',
+  color: '#f59e0b',
+  border: '1px solid #f59e0b',
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+}
+
+const reRollBusyStyle: React.CSSProperties = {
+  ...reRollBtnStyle,
+  background: 'rgba(148,163,184,.1)',
+  color: 'var(--muted)',
+  border: '1px solid var(--border)',
+  cursor: 'wait',
+}
+
+export default function EmailEditor({
+  email,
+  onChange,
+  onReRollImage,
+  busyKeys,
+}: EmailEditorProps) {
   return (
     <div
       style={{
@@ -80,19 +122,126 @@ export default function EmailEditor({ email, onChange }: EmailEditorProps) {
         <SectionEditor
           key={s.id}
           section={s}
+          sectionIdx={idx}
           onPatch={(patch) => onChange(patchSection(email, idx, patch))}
+          onReRollImage={onReRollImage}
+          busyKeys={busyKeys}
         />
       ))}
     </div>
   )
 }
 
+function ImageRow({
+  imageUrl,
+  imageError,
+  busy,
+  onReRoll,
+  label,
+}: {
+  imageUrl?: string
+  imageError?: string
+  busy: boolean
+  onReRoll?: () => void
+  label?: string
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: 8,
+        marginBottom: 8,
+        background: 'var(--panel-2)',
+        border: '1px solid var(--border)',
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 8,
+          overflow: 'hidden',
+          background: 'var(--panel)',
+          border: '1px solid var(--border)',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--muted)',
+          fontSize: 11,
+        }}
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : imageError ? (
+          <span title={imageError}>⚠️</span>
+        ) : (
+          <span>◌</span>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {label && (
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'var(--text)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {label}
+          </div>
+        )}
+        {imageError && (
+          <div
+            style={{
+              fontSize: 10,
+              color: '#fb923c',
+              marginTop: 2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            title={imageError}
+          >
+            {imageError}
+          </div>
+        )}
+      </div>
+      {onReRoll && (
+        <button
+          onClick={onReRoll}
+          disabled={busy}
+          style={busy ? reRollBusyStyle : reRollBtnStyle}
+        >
+          {busy ? '…' : '🔀 Re-roll'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function SectionEditor({
   section,
+  sectionIdx,
   onPatch,
+  onReRollImage,
+  busyKeys,
 }: {
   section: EmailSection
+  sectionIdx: number
   onPatch: (patch: Record<string, unknown>) => void
+  onReRollImage?: (target: ReRollTarget) => void
+  busyKeys?: ReadonlySet<string>
 }) {
   const data = section.data as unknown as Record<string, unknown>
   const heading = (
@@ -100,30 +249,104 @@ function SectionEditor({
   )
 
   switch (section.kind) {
-    case 'hero':
+    case 'hero': {
+      const hero = section.data as HeroSectionData
+      const heroBusy = busyKeys?.has(reRollKey({ sectionIdx })) ?? false
       return (
         <div>
           {heading}
+          <ImageRow
+            imageUrl={hero.imageUrl}
+            imageError={hero.imageError}
+            busy={heroBusy}
+            onReRoll={onReRollImage ? () => onReRollImage({ sectionIdx }) : undefined}
+            label="Hero image"
+          />
           <input
-            value={(data.eyebrow as string) ?? ''}
+            value={hero.eyebrow ?? ''}
             onChange={(e) => onPatch({ eyebrow: e.target.value })}
             style={{ ...inputStyle, marginBottom: 8 }}
             placeholder="Eyebrow (optional)"
           />
           <input
-            value={(data.headline as string) ?? ''}
+            value={hero.headline ?? ''}
             onChange={(e) => onPatch({ headline: e.target.value })}
             style={{ ...inputStyle, marginBottom: 8, fontWeight: 700 }}
             placeholder="Headline"
           />
           <textarea
-            value={(data.subhead as string) ?? ''}
+            value={hero.subhead ?? ''}
             onChange={(e) => onPatch({ subhead: e.target.value })}
-            style={{ ...inputStyle, minHeight: 60 }}
+            style={{ ...inputStyle, minHeight: 60, marginBottom: 8 }}
             placeholder="Subhead (optional)"
+          />
+          <input
+            value={hero.imagePrompt ?? ''}
+            onChange={(e) => onPatch({ imagePrompt: e.target.value })}
+            style={{ ...inputStyle, fontSize: 12, color: 'var(--muted)' }}
+            placeholder="Image prompt (edit before re-rolling)"
           />
         </div>
       )
+    }
+    case 'product': {
+      const product = section.data as ProductSectionData
+      return (
+        <div>
+          {heading}
+          {product.cells.length === 0 ? (
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--muted)',
+                fontStyle: 'italic',
+                padding: '8px 12px',
+                background: 'var(--panel-2)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+              }}
+            >
+              No cells yet — regenerate the email.
+            </div>
+          ) : (
+            product.cells.map((cell: ProductCellData, cellIdx: number) => {
+              const busy = busyKeys?.has(reRollKey({ sectionIdx, cellIdx })) ?? false
+              return (
+                <div key={cellIdx} style={{ marginBottom: 6 }}>
+                  <ImageRow
+                    imageUrl={cell.imageUrl}
+                    imageError={cell.imageError}
+                    busy={busy}
+                    onReRoll={
+                      onReRollImage
+                        ? () => onReRollImage({ sectionIdx, cellIdx })
+                        : undefined
+                    }
+                    label={cell.name}
+                  />
+                  <input
+                    value={cell.imagePrompt ?? ''}
+                    onChange={(e) => {
+                      const nextCells = product.cells.map((c, i) =>
+                        i === cellIdx ? { ...c, imagePrompt: e.target.value } : c,
+                      )
+                      onPatch({ cells: nextCells })
+                    }}
+                    style={{
+                      ...inputStyle,
+                      fontSize: 12,
+                      color: 'var(--muted)',
+                      marginTop: -2,
+                    }}
+                    placeholder="Image prompt for this cell"
+                  />
+                </div>
+              )
+            })
+          )}
+        </div>
+      )
+    }
     case 'offer':
       return (
         <div>
@@ -209,8 +432,6 @@ function SectionEditor({
         </div>
       )
     default:
-      // benefits / product / footer rendered read-only in v1 — image regen
-      // and bullet/cell editing are v2.
       return (
         <div>
           {heading}
