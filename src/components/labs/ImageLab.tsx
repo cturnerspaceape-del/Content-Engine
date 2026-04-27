@@ -432,6 +432,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
           <PostConfirmModal
             item={item}
             allowedDestinations={['feed', 'story']}
+            crossPostPlatforms={nonIgSelected}
             onCancel={() => setPostConfirming(false)}
             onConfirm={onConfirmUnifiedPost}
           />

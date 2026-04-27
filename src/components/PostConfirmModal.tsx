@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ContentItem, PostDestination } from '../types'
 import { MAX_CAPTION_LENGTH, buildCaption } from '../lib/instagramCaption'
+import type { TunerPlatform } from '../lib/platformTuners'
+
+type PostLocationId = 'IG' | 'FB' | TunerPlatform
+
+const POST_LOCATIONS: ReadonlyArray<{ id: PostLocationId; label: string; icon: string }> = [
+  { id: 'IG', label: 'Instagram', icon: '📷' },
+  { id: 'FB', label: 'Facebook', icon: '📘' },
+  { id: 'X', label: 'X', icon: '𝕏' },
+  { id: 'Threads', label: 'Threads', icon: '@' },
+  { id: 'TikTok', label: 'TikTok', icon: '🎵' },
+  { id: 'YouTube Shorts', label: 'YouTube Shorts', icon: '▶' },
+]
 
 export interface PostConfirmOptions {
   alsoFacebook: boolean
@@ -32,6 +44,10 @@ export function formatHashtagsForInput(tags: string[] | undefined): string {
 interface PostConfirmModalProps {
   item: ContentItem
   allowedDestinations: PostDestination[]
+  // Non-IG platforms the user picked on the lab page. Drives which rows in
+  // the "Confirm post location" checklist start checked. UI-only for now —
+  // toggling these does not yet filter the clipboard payload.
+  crossPostPlatforms?: ReadonlyArray<TunerPlatform>
   onCancel: () => void
   onConfirm: (
     destination: PostDestination,
@@ -68,6 +84,7 @@ function writeAlsoFacebookPreference(value: boolean) {
 export default function PostConfirmModal({
   item,
   allowedDestinations,
+  crossPostPlatforms = [],
   onCancel,
   onConfirm,
 }: PostConfirmModalProps) {
@@ -81,6 +98,9 @@ export default function PostConfirmModal({
     pageNameCache === undefined ? null : pageNameCache,
   )
   const [alsoFacebook, setAlsoFacebook] = useState<boolean>(readAlsoFacebookPreference())
+  const [crossPostChecked, setCrossPostChecked] = useState<Set<TunerPlatform>>(
+    () => new Set(crossPostPlatforms),
+  )
   const originalCaption = item.generatedVisual?.caption ?? ''
   const originalHashtags = item.generatedVisual?.hashtags ?? []
   const [isEditingCaption, setIsEditingCaption] = useState(false)
@@ -230,7 +250,7 @@ export default function PostConfirmModal({
           className="text-lg font-bold mb-1"
           style={{ color: 'var(--text)' }}
         >
-          Post to Instagram now?
+          Post Now?
         </h2>
         <p className="text-xs mb-4" style={{ color: 'var(--muted)' }}>
           Review what will be posted. Nothing goes live until you confirm.
@@ -308,18 +328,59 @@ export default function PostConfirmModal({
         )}
 
         {showFacebookCheckbox && (
-          <label
-            className="flex items-center gap-2 mb-4 cursor-pointer select-none"
-            style={{ color: 'var(--text)' }}
-          >
-            <input
-              type="checkbox"
-              checked={alsoFacebook}
-              onChange={(e) => handleToggleFacebook(e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: 'var(--accent)' }}
-            />
-            <span className="text-xs font-semibold">Also post to Facebook Page</span>
-          </label>
+          <div className="mb-4">
+            <p
+              className="text-[11px] font-bold uppercase mb-1.5"
+              style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}
+            >
+              Confirm post location
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {POST_LOCATIONS.map((loc) => {
+                const isIG = loc.id === 'IG'
+                const isFB = loc.id === 'FB'
+                const checked = isIG
+                  ? true
+                  : isFB
+                  ? alsoFacebook
+                  : crossPostChecked.has(loc.id as TunerPlatform)
+                const onChange = (next: boolean) => {
+                  if (isIG) return
+                  if (isFB) {
+                    handleToggleFacebook(next)
+                    return
+                  }
+                  setCrossPostChecked((prev) => {
+                    const nextSet = new Set(prev)
+                    if (next) nextSet.add(loc.id as TunerPlatform)
+                    else nextSet.delete(loc.id as TunerPlatform)
+                    return nextSet
+                  })
+                }
+                return (
+                  <label
+                    key={loc.id}
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                    style={{
+                      color: 'var(--text)',
+                      opacity: isIG ? 0.85 : 1,
+                      cursor: isIG ? 'default' : 'pointer',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={isIG}
+                      onChange={(e) => onChange(e.target.checked)}
+                      style={{ width: 16, height: 16, accentColor: 'var(--accent)' }}
+                    />
+                    <span style={{ fontSize: 14 }}>{loc.icon}</span>
+                    <span className="text-xs font-semibold">{loc.label}</span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
         )}
 
         {/* Caption preview or Story note */}

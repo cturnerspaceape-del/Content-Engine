@@ -422,6 +422,7 @@ export default function ReelLab({ onBack }: ReelLabProps) {
           <PostConfirmModal
             item={item}
             allowedDestinations={['feed', 'story']}
+            crossPostPlatforms={nonIgSelected}
             onCancel={() => setPostConfirming(false)}
             onConfirm={onConfirmUnifiedPost}
           />

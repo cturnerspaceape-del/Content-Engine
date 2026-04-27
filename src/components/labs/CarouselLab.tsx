@@ -432,6 +432,7 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
           <PostConfirmModal
             item={item}
             allowedDestinations={['feed']}
+            crossPostPlatforms={nonIgSelected}
             onCancel={() => setPostConfirming(false)}
             onConfirm={onConfirmUnifiedPost}
           />
