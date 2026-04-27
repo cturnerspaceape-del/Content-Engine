@@ -26,11 +26,13 @@ export default function HomeScreen({
         <div className="glass-panel p-8">
           {/* Logo/Title */}
           <div className="text-center mb-8">
-            <div className="text-5xl mb-4">🚀</div>
+            <div className="text-5xl mb-4">
+              <span className="float">🚀</span>
+            </div>
             <h1
-              className="text-4xl font-bold mb-2"
+              className="font-display text-4xl mb-2"
               style={{
-                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                background: 'linear-gradient(135deg, #ff5fa2 0%, #b8a4ff 50%, #7cd2ff 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -38,6 +40,9 @@ export default function HomeScreen({
             >
               SPACELAUNCHER
             </h1>
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>
+              content lab for Space Ape.
+            </p>
           </div>
 
           <div className="space-y-4">

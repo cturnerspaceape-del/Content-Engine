@@ -86,6 +86,10 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     'sl:emailLab:viewport',
     'desktop',
   )
+  const [mobileTab, setMobileTab] = usePersistedState<'edit' | 'preview'>(
+    'sl:emailLab:mobileTab',
+    'edit',
+  )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reRollBusy, setReRollBusy] = useState<Set<string>>(() => new Set())
@@ -302,16 +306,34 @@ export default function EmailLab({ onBack }: EmailLabProps) {
           cachedAudiences={cachedAudiences}
         />
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0,360px) minmax(0,1fr)',
-            gap: 24,
-            marginTop: 16,
-            alignItems: 'start',
-          }}
-        >
-          <div>
+        {/* Mobile-only Edit / Preview pill — desktop shows both panes side-by-side. */}
+        <div className="md:hidden flex justify-center mt-3">
+          <div
+            className="inline-flex p-1 rounded-full"
+            style={{ background: 'var(--panel-2)', border: '1px solid var(--border)' }}
+          >
+            {(['edit', 'preview'] as const).map((tab) => {
+              const active = mobileTab === tab
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setMobileTab(tab)}
+                  className="text-xs font-bold px-4 py-1.5 rounded-full transition-all"
+                  style={{
+                    background: active ? 'var(--brand-pink)' : 'transparent',
+                    color: active ? '#ffffff' : 'var(--muted)',
+                    minHeight: 32,
+                  }}
+                >
+                  {tab === 'edit' ? '✍️ Edit' : '👁 Preview'}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="email-lab-grid" data-mobile-tab={mobileTab}>
+          <div className="email-lab-pane email-lab-edit">
             {campaign.email ? (
               <EmailEditor
                 email={campaign.email}
@@ -336,7 +358,7 @@ export default function EmailLab({ onBack }: EmailLabProps) {
             )}
           </div>
 
-          <div>
+          <div className="email-lab-pane email-lab-preview">
             {campaign.email ? (
               <EmailPreview
                 html={html}

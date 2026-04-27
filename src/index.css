@@ -3,23 +3,38 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f0f2f5;
+  /* Surface tokens — warm pastel playground */
+  --bg: #faf6f1;
   --panel: #ffffff;
-  --panel-2: #f5f7f9;
-  --text: #1a1a1a;
-  --muted: #6b7280;
+  --panel-2: #f5eee6;
+  --text: #1a1230;
+  --muted: #6b5b7a;
   --accent: #3b82f6;
   --accent-2: #60a5fa;
   --accent-3: #2563eb;
   --danger: #ef4444;
   --ok: #10b981;
   --warning: #f59e0b;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.1);
-  --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
-  --shadow-md: 0 4px 6px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,.1), 0 4px 6px rgba(0,0,0,.05);
-  --shadow-xl: 0 20px 25px rgba(0,0,0,.1), 0 10px 10px rgba(0,0,0,.04);
-  --border: #e2e8f0;
+  --border: #ece2d6;
+
+  /* Brand palette — Space Ape / @starface aesthetic */
+  --brand-pink: #ff5fa2;
+  --brand-lilac: #b8a4ff;
+  --brand-sky: #7cd2ff;
+  --brand-butter: #ffd66b;
+  --brand-mint: #9bf0c6;
+  --brand-ink: #1a1230;
+
+  /* Aubergine-tinted shadows so cards feel warm, not cold-grey */
+  --shadow-sm: 0 1px 2px rgba(26,18,48,.06), 0 1px 3px rgba(26,18,48,.08);
+  --shadow:    0 1px 3px rgba(26,18,48,.08), 0 1px 2px rgba(26,18,48,.05);
+  --shadow-md: 0 4px 10px rgba(26,18,48,.08), 0 2px 4px rgba(26,18,48,.05);
+  --shadow-lg: 0 12px 24px rgba(26,18,48,.10), 0 4px 8px rgba(26,18,48,.06);
+  --shadow-xl: 0 24px 40px rgba(26,18,48,.12), 0 10px 16px rgba(26,18,48,.06);
+
+  /* Typography */
+  --font-body: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -30,17 +45,40 @@
 html, body {
   margin: 0;
   min-height: 100%;
-  background: var(--bg);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--text);
   width: 100%;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
 }
 
-/* Respect iPhone safe areas (notch / Dynamic Island / home indicator)
-   when launched as a standalone home-screen app. */
+/* App-wide warm aurora background — soft pink/lilac/sky over warm cream,
+   with a fixed grain layer for tactile feel. Slow GPU pan. */
+body {
+  background:
+    radial-gradient(at 12% 8%, rgba(255,95,162,.10) 0%, transparent 45%),
+    radial-gradient(at 88% 12%, rgba(184,164,255,.10) 0%, transparent 50%),
+    radial-gradient(at 50% 92%, rgba(124,210,255,.09) 0%, transparent 55%),
+    radial-gradient(at 92% 88%, rgba(255,214,107,.07) 0%, transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10vh -10vw;
+  background-image: radial-gradient(rgba(26,18,48,.035) 1px, transparent 1px);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: 0;
+  animation: bgPan 38s ease-in-out infinite alternate;
+}
+
 #root {
+  position: relative;
+  z-index: 1;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
@@ -48,17 +86,21 @@ html, body {
 }
 
 .glass-panel {
-  background: var(--panel);
+  background: rgba(255,255,255,.82);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
-  border-radius: 16px;
+  border-radius: 18px;
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
 }
 
 .glass-panel-dark {
-  background: var(--panel-2);
+  background: rgba(245,238,230,.82);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  border-radius: 16px;
+  border-radius: 18px;
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
 }
 
 button, a {
@@ -73,13 +115,14 @@ input, textarea, select {
   background: var(--panel);
   color: var(--text);
   font-size: 14px;
+  font-family: inherit;
   transition: all 0.2s ease;
 }
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: var(--brand-pink);
+  box-shadow: 0 0 0 3px rgba(255,95,162,.18);
 }
 
 ::-webkit-scrollbar {
@@ -93,12 +136,12 @@ input:focus, textarea:focus, select:focus {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(184,164,255,.55);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(255,95,162,.65);
 }
 
 .gradient-text {
@@ -110,10 +153,21 @@ input:focus, textarea:focus, select:focus {
 
 .bg-app-gradient {
   background:
-    radial-gradient(at 0% 0%, rgba(59,130,246,0.06) 0%, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(168,85,247,0.05) 0%, transparent 50%),
+    radial-gradient(at 0% 0%, rgba(255,95,162,.07) 0%, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(184,164,255,.06) 0%, transparent 50%),
     var(--bg);
 }
+
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand-glow-pink  { box-shadow: 0 8px 24px rgba(255,95,162,.30); }
+.brand-glow-lilac { box-shadow: 0 8px 24px rgba(184,164,255,.30); }
+.brand-glow-sky   { box-shadow: 0 8px 24px rgba(124,210,255,.30); }
+.brand-glow-butter{ box-shadow: 0 8px 24px rgba(255,214,107,.30); }
 
 .day-anchor {
   scroll-margin-top: 140px;
@@ -161,6 +215,16 @@ input:focus, textarea:focus, select:focus {
   to { transform: rotate(360deg); }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes bgPan {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-2%, -2%, 0); }
+}
+
 .fade-in {
   animation: fadeIn 0.3s ease-out;
 }
@@ -177,12 +241,41 @@ input:focus, textarea:focus, select:focus {
   animation: spin 1s linear infinite;
 }
 
+.float {
+  animation: float 4s ease-in-out infinite;
+  display: inline-block;
+}
+
 .hover-scale {
   transition: transform 0.2s ease;
 }
 
 .hover-scale:hover {
   transform: scale(1.02);
+}
+
+/* ========== EMAIL LAB RESPONSIVE GRID ==========
+   Desktop: 2-col side-by-side (editor / preview).
+   Mobile: 1-col with mobileTab toggle hiding the inactive pane. */
+.email-lab-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+.email-lab-pane {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .email-lab-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .email-lab-grid[data-mobile-tab="edit"] .email-lab-preview { display: none; }
+  .email-lab-grid[data-mobile-tab="preview"] .email-lab-edit { display: none; }
 }
 
 /* ========== MOBILE OPTIMIZATIONS ========== */
@@ -201,7 +294,7 @@ input:focus, textarea:focus, select:focus {
   }
 
   .glass-panel, .glass-panel-dark {
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
   ::-webkit-scrollbar {
@@ -215,4 +308,15 @@ input:focus, textarea:focus, select:focus {
   .text-\[10px\], .text-\[9px\] {
     font-size: 11px !important;
   }
+}
+
+/* ========== REDUCED MOTION ========== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  body::before { animation: none !important; }
+  .float { animation: none !important; }
 }

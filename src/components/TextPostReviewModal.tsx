@@ -69,7 +69,9 @@ export default function TextPostReviewModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(0,0,0,0.7)',
+        background: 'rgba(26,18,48,0.55)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
         padding: 16,
       }}
       onClick={onCancel}
