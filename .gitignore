@@ -18,6 +18,9 @@ dist-ssr
 .env
 .env.local
 
+# Server-local publish error log (debug endpoint reads this)
+server/.publish-errors.jsonl
+
 # AI-generated assets (derived, not source)
 public/generated/
 

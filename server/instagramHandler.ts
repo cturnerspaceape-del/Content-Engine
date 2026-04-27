@@ -7,6 +7,7 @@ import {
   publishSingleImage,
   publishStory,
 } from './instagram'
+import { recordPublishError } from './publishErrorLog'
 
 type Destination = 'feed' | 'story'
 type Format = 'Single Image' | 'Reel' | 'Carousel'
@@ -77,6 +78,7 @@ export async function publishToInstagramHandler(req: Request, res: Response): Pr
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[instagram] publish failed:', message)
+    void recordPublishError({ platform: 'instagram', format, destination, message })
     res.status(500).json({ ok: false, error: message })
   }
 }

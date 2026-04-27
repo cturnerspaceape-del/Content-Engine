@@ -3,7 +3,10 @@ import type {
   PostDestination,
   PostedToFacebook,
   PostedToInstagram,
+  PostedToThreads,
+  PostedToYouTube,
 } from '../types'
+import type { TunerPlatform } from './platformTuners'
 
 export interface PublishResponse {
   ok: boolean
@@ -19,10 +22,28 @@ export interface FacebookPublishResponse {
   error?: string
 }
 
+export interface ThreadsPublishResponse {
+  ok: boolean
+  mediaId?: string
+  permalink?: string
+  error?: string
+}
+
+export interface YouTubePublishResponse {
+  ok: boolean
+  videoId?: string
+  permalink?: string
+  error?: string
+}
+
 export interface SocialsResult {
   instagram: PostedToInstagram
   facebook?: PostedToFacebook
   facebookError?: string
+  threads?: PostedToThreads
+  threadsError?: string
+  youtube?: PostedToYouTube
+  youtubeError?: string
 }
 
 function assertPostableAsset(item: ContentItem) {
@@ -87,6 +108,46 @@ export async function postItemToInstagram(
   }
 }
 
+// Threads cross-post. Supports image/video/carousel; uses the same generated
+// asset as IG. Caption-tuner truncation (500 chars) happens server-side.
+export async function postItemToThreads(item: ContentItem): Promise<PostedToThreads> {
+  const body = buildPublishBody(item)
+  const res = await fetch('/api/threads/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = (await res.json().catch(() => ({}))) as ThreadsPublishResponse
+  if (!res.ok || !data.ok || !data.mediaId) {
+    throw new Error(data.error || `Threads post failed (${res.status})`)
+  }
+  return {
+    mediaId: data.mediaId,
+    permalink: data.permalink,
+    postedAt: new Date().toISOString(),
+  }
+}
+
+// YouTube Shorts cross-post. Reel format only — backend will reject other
+// formats with a 400.
+export async function postItemToYouTubeShorts(item: ContentItem): Promise<PostedToYouTube> {
+  const body = buildPublishBody(item)
+  const res = await fetch('/api/youtube/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = (await res.json().catch(() => ({}))) as YouTubePublishResponse
+  if (!res.ok || !data.ok || !data.videoId || !data.permalink) {
+    throw new Error(data.error || `YouTube post failed (${res.status})`)
+  }
+  return {
+    videoId: data.videoId,
+    permalink: data.permalink,
+    postedAt: new Date().toISOString(),
+  }
+}
+
 // Facebook cross-post. Only supports feed-style destinations (no Stories).
 export async function postItemToFacebook(item: ContentItem): Promise<PostedToFacebook> {
   const body = buildPublishBody(item)
@@ -106,24 +167,97 @@ export async function postItemToFacebook(item: ContentItem): Promise<PostedToFac
   }
 }
 
-// Orchestrator — IG is primary, FB is a best-effort cross-post. FB is only
-// attempted for feed posts (not Stories) and only when alsoFacebook is true.
-// FB failure does NOT fail the overall action; it surfaces as facebookError
-// on the result so the card can show a non-blocking warning.
+// Orchestrator — IG is primary; FB / Threads / YouTube are best-effort
+// cross-posts. Only IG failure aborts the flow; cross-post failures surface
+// as per-platform `*Error` fields without blocking each other.
+//
+// Stories are IG-only — Threads has no stories, YouTube isn't ephemeral, and
+// FB stories aren't supported by the current FB integration. So when
+// destination is 'story' we skip every cross-post regardless of selection.
+//
+// X and TikTok are intentionally clipboard-only (no public posting API the
+// project is willing to depend on). Their checkboxes drive copy-to-clipboard
+// in the lab pages, not network calls here.
 export async function postItemToSocials(
   item: ContentItem,
   destination: PostDestination,
-  opts: { alsoFacebook: boolean },
+  opts: { alsoFacebook: boolean; selectedCrossPosts?: TunerPlatform[] },
 ): Promise<SocialsResult> {
   const instagram = await postItemToInstagram(item, destination)
-  if (!opts.alsoFacebook || destination !== 'feed') {
-    return { instagram }
+  const result: SocialsResult = { instagram }
+
+  if (destination !== 'feed') return result
+
+  const selected = new Set<TunerPlatform>(opts.selectedCrossPosts ?? [])
+  const wantThreads = selected.has('Threads')
+  const wantYouTube
+    = selected.has('YouTube Shorts') && item.generatedVisual?.format === 'Reel'
+
+  const tasks: Array<Promise<void>> = []
+
+  if (opts.alsoFacebook) {
+    tasks.push(
+      postItemToFacebook(item)
+        .then((facebook) => {
+          result.facebook = facebook
+        })
+        .catch((err) => {
+          result.facebookError = err instanceof Error ? err.message : String(err)
+        }),
+    )
   }
-  try {
-    const facebook = await postItemToFacebook(item)
-    return { instagram, facebook }
-  } catch (err) {
-    const facebookError = err instanceof Error ? err.message : String(err)
-    return { instagram, facebookError }
+
+  if (wantThreads) {
+    tasks.push(
+      postItemToThreads(item)
+        .then((threads) => {
+          result.threads = threads
+        })
+        .catch((err) => {
+          result.threadsError = err instanceof Error ? err.message : String(err)
+        }),
+    )
   }
+
+  if (wantYouTube) {
+    tasks.push(
+      postItemToYouTubeShorts(item)
+        .then((youtube) => {
+          result.youtube = youtube
+        })
+        .catch((err) => {
+          result.youtubeError = err instanceof Error ? err.message : String(err)
+        }),
+    )
+  }
+
+  if (tasks.length > 0) await Promise.all(tasks)
+  return result
+}
+
+// Builds a one-line toast summary from a SocialsResult — IG is always success
+// (otherwise postItemToSocials would have thrown). Each cross-post platform
+// adds a " · X ✓" or " · X failed: <msg>" segment.
+export function summarizeSocialsResult(result: SocialsResult): {
+  text: string
+  hasError: boolean
+} {
+  const parts: string[] = ['IG ✓']
+  let hasError = false
+  if (result.facebook) parts.push('FB ✓')
+  if (result.facebookError) {
+    parts.push(`FB failed: ${result.facebookError}`)
+    hasError = true
+  }
+  if (result.threads) parts.push('Threads ✓')
+  if (result.threadsError) {
+    parts.push(`Threads failed: ${result.threadsError}`)
+    hasError = true
+  }
+  if (result.youtube) parts.push('Shorts ✓')
+  if (result.youtubeError) {
+    parts.push(`Shorts failed: ${result.youtubeError}`)
+    hasError = true
+  }
+  return { text: parts.join(' · '), hasError }
 }

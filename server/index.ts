@@ -7,7 +7,11 @@ import { generateReelHandler } from './generateReel'
 import { generateEmailHandler } from './generateEmail'
 import { generateEmailImageHandler } from './generateEmailImage'
 import { publishToInstagramHandler, getInstagramAccountHandler } from './instagramHandler'
+import { getInstagramDebugHandler } from './instagramDebugHandler'
 import { publishToFacebookHandler, getFacebookAccountHandler } from './facebookHandler'
+import { publishToThreadsHandler, getThreadsAccountHandler } from './threadsHandler'
+import { startThreadsTokenRefresh } from './threadsRefresh'
+import { publishToYouTubeHandler } from './youtubeHandler'
 
 const app = express()
 app.use(express.json({ limit: '1mb' }))
@@ -41,8 +45,12 @@ if (process.env.DISABLE_GENERATION === '1') {
 // generation; publishing an already-made asset is free).
 app.post('/api/instagram/publish', publishToInstagramHandler)
 app.get('/api/instagram/account', getInstagramAccountHandler)
+app.get('/api/instagram/debug', getInstagramDebugHandler)
 app.post('/api/facebook/publish', publishToFacebookHandler)
 app.get('/api/facebook/account', getFacebookAccountHandler)
+app.post('/api/threads/publish', publishToThreadsHandler)
+app.get('/api/threads/account', getThreadsAccountHandler)
+app.post('/api/youtube/publish', publishToYouTubeHandler)
 
 if (process.env.NODE_ENV === 'production') {
   const publicDir = path.resolve(process.cwd(), 'public')
@@ -53,6 +61,8 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(distDir, 'index.html'))
   })
 }
+
+startThreadsTokenRefresh()
 
 const port = Number(process.env.PORT ?? 3001)
 app.listen(port, () => {

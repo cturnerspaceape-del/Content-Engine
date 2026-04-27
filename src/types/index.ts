@@ -25,6 +25,18 @@ export interface PostedToFacebook {
   postedAt: string
 }
 
+export interface PostedToThreads {
+  mediaId: string
+  permalink?: string
+  postedAt: string
+}
+
+export interface PostedToYouTube {
+  videoId: string
+  permalink: string
+  postedAt: string
+}
+
 export interface ContentItem {
   platform: Platform
   emoji: string
@@ -35,9 +47,13 @@ export interface ContentItem {
   logged?: boolean
   postedToInstagram?: PostedToInstagram
   postedToFacebook?: PostedToFacebook
+  postedToThreads?: PostedToThreads
+  postedToYouTube?: PostedToYouTube
   // IG is primary; if the optional cross-post to FB fails we surface it here
   // without blocking IG success. Cleared on retry.
   facebookError?: string
+  threadsError?: string
+  youtubeError?: string
   postError?: string
   generatedVisual?: {
     hook: string

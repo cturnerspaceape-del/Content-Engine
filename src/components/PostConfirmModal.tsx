@@ -48,11 +48,19 @@ interface PostConfirmModalProps {
   // the "Confirm post location" checklist start checked. UI-only for now —
   // toggling these does not yet filter the clipboard payload.
   crossPostPlatforms?: ReadonlyArray<TunerPlatform>
+  // When the parent is waiting on a publish call, show a busy state and
+  // disable the buttons so the user can't double-click. The parent stays
+  // responsible for dismissing the modal on success.
+  busy?: boolean
+  // Server-side error from the most recent attempt. Surfaces inline so the
+  // user can see the raw Graph API message without hunting through toasts.
+  lastError?: string | null
   onCancel: () => void
   onConfirm: (
     destination: PostDestination,
     opts: PostConfirmOptions,
     edits?: PostConfirmEdits,
+    selectedCrossPosts?: TunerPlatform[],
   ) => void
 }
 
@@ -85,6 +93,8 @@ export default function PostConfirmModal({
   item,
   allowedDestinations,
   crossPostPlatforms = [],
+  busy = false,
+  lastError = null,
   onCancel,
   onConfirm,
 }: PostConfirmModalProps) {
@@ -341,13 +351,19 @@ export default function PostConfirmModal({
               {POST_LOCATIONS.map((loc) => {
                 const isIG = loc.id === 'IG'
                 const isFB = loc.id === 'FB'
+                // YouTube Shorts only accepts video uploads — disable the row
+                // when the current item isn't a Reel so the user can't tick a
+                // checkbox that would 400 on submit.
+                const isYouTube = loc.id === 'YouTube Shorts'
+                const youtubeBlocked = isYouTube && format !== 'Reel'
+                const rowDisabled = isIG || youtubeBlocked
                 const checked = isIG
                   ? true
                   : isFB
                   ? alsoFacebook
-                  : crossPostChecked.has(loc.id as TunerPlatform)
+                  : !youtubeBlocked && crossPostChecked.has(loc.id as TunerPlatform)
                 const onChange = (next: boolean) => {
-                  if (isIG) return
+                  if (rowDisabled) return
                   if (isFB) {
                     handleToggleFacebook(next)
                     return
@@ -365,14 +381,15 @@ export default function PostConfirmModal({
                     className="flex items-center gap-2 cursor-pointer select-none"
                     style={{
                       color: 'var(--text)',
-                      opacity: isIG ? 0.85 : 1,
-                      cursor: isIG ? 'default' : 'pointer',
+                      opacity: isIG ? 0.85 : youtubeBlocked ? 0.4 : 1,
+                      cursor: rowDisabled ? 'not-allowed' : 'pointer',
                     }}
+                    title={youtubeBlocked ? 'YouTube Shorts requires a Reel' : undefined}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
-                      disabled={isIG}
+                      disabled={rowDisabled}
                       onChange={(e) => onChange(e.target.checked)}
                       style={{ width: 16, height: 16, accentColor: 'var(--accent)' }}
                     />
@@ -514,20 +531,43 @@ export default function PostConfirmModal({
           {destinationLine}
         </p>
 
+        {lastError && (
+          <div
+            className="rounded-lg p-3 mb-4 text-[11px]"
+            style={{
+              background: 'rgba(239,68,68,.08)',
+              border: '1px solid rgba(239,68,68,.4)',
+              color: 'var(--text)',
+            }}
+          >
+            <p className="font-bold mb-1" style={{ color: '#ef4444' }}>
+              Last attempt failed
+            </p>
+            <p style={{ color: 'var(--muted)', wordBreak: 'break-word' }}>{lastError}</p>
+            <p className="mt-1.5" style={{ color: 'var(--muted)', fontSize: 10 }}>
+              Hit <code>/api/instagram/debug</code> for token + env diagnostics.
+            </p>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <button
             onClick={onCancel}
             autoFocus
+            disabled={busy}
             className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all"
             style={{
               background: 'var(--panel-2)',
               color: 'var(--text)',
               border: '1px solid var(--border)',
+              opacity: busy ? 0.5 : 1,
+              cursor: busy ? 'not-allowed' : 'pointer',
             }}
           >
             Cancel
           </button>
           <button
+            disabled={busy}
             onClick={() =>
               onConfirm(
                 destination,
@@ -538,16 +578,19 @@ export default function PostConfirmModal({
                       ...(hashtagsDirty ? { hashtags: editedHashtags } : {}),
                     }
                   : undefined,
+                Array.from(crossPostChecked),
               )
             }
-            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105"
+            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all"
             style={{
               background: 'var(--accent)',
               color: '#fff',
               border: '1px solid var(--accent)',
+              opacity: busy ? 0.7 : 1,
+              cursor: busy ? 'wait' : 'pointer',
             }}
           >
-            {confirmLabel}
+            {busy ? 'Posting…' : confirmLabel}
           </button>
         </div>
       </div>

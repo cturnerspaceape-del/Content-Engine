@@ -7,7 +7,7 @@ import type { ContentItem, ContentPillar, PostDestination } from '../../types'
 import { generateContentForPost } from '../../data/instagramContentTemplates'
 import { getShotTemplate } from '../../data/shotTemplates'
 import { usePersistedState } from '../../utils/persistedState'
-import { postItemToSocials } from '../../lib/postToInstagram'
+import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
 import {
   PILLAR_IMAGE_SEEDS,
   formatPillarSeedTitle,
@@ -162,6 +162,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     destination: PostDestination,
     opts: { alsoFacebook: boolean },
     edits?: { caption?: string; hashtags?: string[] },
+    selectedCrossPosts?: TunerPlatform[],
   ) => {
     const hasEdit =
       (edits?.caption != null || edits?.hashtags != null) && Boolean(item.generatedVisual)
@@ -179,12 +180,19 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     // to Facebook. The IG card's own alsoFacebook checkbox is still
     // honored as an OR so both paths work.
     const alsoFacebook = opts.alsoFacebook || selectedPlatforms.includes('IG/FB')
-    const result = await postItemToSocials(itemToPost, destination, { alsoFacebook })
+    const result = await postItemToSocials(itemToPost, destination, {
+      alsoFacebook,
+      selectedCrossPosts,
+    })
     setItem((cur) => ({
       ...cur,
       postedToInstagram: result.instagram,
       postedToFacebook: result.facebook,
       facebookError: result.facebookError,
+      postedToThreads: result.threads,
+      threadsError: result.threadsError,
+      postedToYouTube: result.youtube,
+      youtubeError: result.youtubeError,
       postError: undefined,
       ...(hasEdit && cur.generatedVisual
         ? {
@@ -196,13 +204,14 @@ export default function ImageLab({ onBack }: ImageLabProps) {
           }
         : {}),
     }))
-    return { facebookError: result.facebookError }
+    return result
   }
 
   // Unified post flow state — owned by the lab page so the Post button can
   // sit alongside Generate at the bottom and reflect ALL selected platforms.
   const [postConfirming, setPostConfirming] = useState(false)
   const [postBusy, setPostBusy] = useState(false)
+  const [postError, setPostError] = useState<string | null>(null)
   const [postToast, setPostToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(
     null,
   )
@@ -260,20 +269,27 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     destination: PostDestination,
     opts: { alsoFacebook: boolean },
     edits?: { caption?: string; hashtags?: string[] },
+    selectedCrossPosts?: TunerPlatform[],
   ) => {
-    setPostConfirming(false)
     setPostBusy(true)
+    setPostError(null)
     try {
-      const result = await handlePost(destination, opts, edits)
-      const copied = nonIgSelected.length > 0 ? await copyNonIgVariantsToClipboard() : false
-      const fbWarn = result?.facebookError
-      const igLine = fbWarn ? `IG posted ✓ · FB cross-post failed: ${fbWarn}` : 'Posted to IG/FB ✓'
+      const result = await handlePost(destination, opts, edits, selectedCrossPosts)
+      // Only platforms we DON'T post via API still need clipboard copy
+      // (X, TikTok). Threads + YouTube Shorts are now real API posts when
+      // checked, so exclude them from the clipboard.
+      const apiHandled = new Set<TunerPlatform>(['Threads', 'YouTube Shorts'])
+      const clipboardPlatforms = nonIgSelected.filter((p) => !apiHandled.has(p))
+      const copied = clipboardPlatforms.length > 0 ? await copyNonIgVariantsToClipboard() : false
+      const summary = summarizeSocialsResult(result)
       const copyLine = copied
-        ? ` — ${nonIgSelected.map((p) => PLATFORM_LABELS[p]).join(' & ')} captions copied`
+        ? ` — ${clipboardPlatforms.map((p) => PLATFORM_LABELS[p]).join(' & ')} captions copied`
         : ''
-      showToast(fbWarn ? 'warn' : 'success', `${igLine}${copyLine}`)
+      setPostConfirming(false)
+      showToast(summary.hasError ? 'warn' : 'success', `${summary.text}${copyLine}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
+      setPostError(msg)
       showToast('warn', `Post failed: ${msg}`)
     } finally {
       setPostBusy(false)
@@ -437,7 +453,13 @@ export default function ImageLab({ onBack }: ImageLabProps) {
             item={item}
             allowedDestinations={['feed', 'story']}
             crossPostPlatforms={nonIgSelected}
-            onCancel={() => setPostConfirming(false)}
+            busy={postBusy}
+            lastError={postError}
+            onCancel={() => {
+              if (postBusy) return
+              setPostConfirming(false)
+              setPostError(null)
+            }}
             onConfirm={onConfirmUnifiedPost}
           />
         )}
