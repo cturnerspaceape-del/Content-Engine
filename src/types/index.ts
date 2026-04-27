@@ -94,6 +94,10 @@ export type ViewState =
   | 'x-post-lab'
   | 'shorts-lab'
   | 'email-lab'
+  | 'image-lab'
+  | 'video-lab'
+  | 'text-lab'
+  | 'carousel-lab'
 
 export type EmailTypeId =
   | 'drop-announce'

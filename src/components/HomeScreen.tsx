@@ -6,6 +6,7 @@ interface HomeScreenProps {
   onXPostLab: () => void
   onShortsLab: () => void
   onEmailLab: () => void
+  onImageLab: () => void
   loggedCount: number
 }
 
@@ -17,6 +18,7 @@ export default function HomeScreen({
   onXPostLab,
   onShortsLab,
   onEmailLab,
+  onImageLab,
   loggedCount,
 }: HomeScreenProps) {
   return (
@@ -44,6 +46,34 @@ export default function HomeScreen({
 
           {/* Launch Button */}
           <div className="space-y-4">
+            <button
+              onClick={onImageLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(245,158,11,.18), rgba(29,155,240,.12))',
+                border: '2px solid #f59e0b',
+                boxShadow: 'var(--shadow-md)',
+                color: '#f59e0b',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🧪</span>
+                <span>Image Lab</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: '2px 6px',
+                    borderRadius: 999,
+                    background: 'rgba(245,158,11,.2)',
+                    color: '#f59e0b',
+                    border: '1px solid rgba(245,158,11,.4)',
+                  }}
+                >
+                  ✨ NEW
+                </span>
+              </div>
+            </button>
             <button
               onClick={onSilLab}
               className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"

@@ -10,6 +10,11 @@ interface MultiPlatformPreviewProps {
   assetKind?: 'image' | 'video'
   onRetune?: (platform: TunerPlatform) => void
   tabStateKey: string
+  // Per-platform render override. When provided, the corresponding tab
+  // renders the custom node instead of the built-in PreviewCard. Used by
+  // ImageLab to keep the existing IG ContentCard (with its publish flow)
+  // inside the Instagram tab while X/Email use the lightweight preview.
+  customRender?: Partial<Record<TunerPlatform, () => React.ReactNode>>
 }
 
 const PLATFORM_LABELS: Record<TunerPlatform, string> = {
@@ -37,6 +42,7 @@ export default function MultiPlatformPreview({
   assetKind,
   onRetune,
   tabStateKey,
+  customRender,
 }: MultiPlatformPreviewProps) {
   const [activeTab, setActiveTab] = usePersistedState<TunerPlatform>(
     tabStateKey,
@@ -88,13 +94,17 @@ export default function MultiPlatformPreview({
 
       <div className="flex justify-center">
         <div style={{ width: '100%', maxWidth: 480 }}>
-          <PreviewCard
-            platform={effectiveTab}
-            variant={variant}
-            assetUrl={assetUrl}
-            assetKind={assetKind}
-            onRetune={onRetune ? () => onRetune(effectiveTab) : undefined}
-          />
+          {customRender?.[effectiveTab] ? (
+            customRender[effectiveTab]!()
+          ) : (
+            <PreviewCard
+              platform={effectiveTab}
+              variant={variant}
+              assetUrl={assetUrl}
+              assetKind={assetKind}
+              onRetune={onRetune ? () => onRetune(effectiveTab) : undefined}
+            />
+          )}
         </div>
       </div>
     </div>
