@@ -1,4 +1,12 @@
-export type Platform = 'TikTok' | 'Blog Post' | 'Facebook' | 'Instagram' | 'X' | 'YouTube Shorts'
+export type Platform =
+  | 'TikTok'
+  | 'Blog Post'
+  | 'Facebook'
+  | 'Instagram'
+  | 'X'
+  | 'Threads'
+  | 'YouTube Shorts'
+  | 'Email'
 
 export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
 

@@ -5,12 +5,14 @@ import type { ContentItem } from '../types'
 //   2. Add a color entry below
 // The weekly calendar / ContentCard will pick it up automatically.
 export const platformColors: Record<string, string> = {
-  'TikTok': '#ef4444',
+  'TikTok': '#ff004f',
   'Blog Post': '#10b981',
   'Facebook': '#3b82f6',
   'Instagram': '#a855f7',
   'X': '#1a1a1a',
-  'YouTube Shorts': '#ef4444',
+  'Threads': '#1a1a1a',
+  'YouTube Shorts': '#ff0000',
+  'Email': '#8b5cf6',
 }
 
 const formatColors: Record<string, string> = {
