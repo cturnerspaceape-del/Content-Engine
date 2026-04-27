@@ -7,6 +7,7 @@ interface HomeScreenProps {
   onShortsLab: () => void
   onEmailLab: () => void
   onImageLab: () => void
+  onReelLab: () => void
   loggedCount: number
 }
 
@@ -19,6 +20,7 @@ export default function HomeScreen({
   onShortsLab,
   onEmailLab,
   onImageLab,
+  onReelLab,
   loggedCount,
 }: HomeScreenProps) {
   return (
@@ -68,6 +70,34 @@ export default function HomeScreen({
                     background: 'rgba(245,158,11,.2)',
                     color: '#f59e0b',
                     border: '1px solid rgba(245,158,11,.4)',
+                  }}
+                >
+                  ✨ NEW
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={onReelLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(236,72,153,.18), rgba(255,0,79,.12))',
+                border: '2px solid #ec4899',
+                boxShadow: 'var(--shadow-md)',
+                color: '#ec4899',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🎬</span>
+                <span>Reel Lab</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: '2px 6px',
+                    borderRadius: 999,
+                    background: 'rgba(236,72,153,.2)',
+                    color: '#ec4899',
+                    border: '1px solid rgba(236,72,153,.4)',
                   }}
                 >
                   ✨ NEW

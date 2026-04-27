@@ -95,7 +95,7 @@ export type ViewState =
   | 'shorts-lab'
   | 'email-lab'
   | 'image-lab'
-  | 'video-lab'
+  | 'reel-lab'
   | 'text-lab'
   | 'carousel-lab'
 
