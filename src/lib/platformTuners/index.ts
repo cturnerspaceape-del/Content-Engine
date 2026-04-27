@@ -22,7 +22,7 @@ export const FORMAT_PLATFORM_COMPAT: Record<
   TunerSource['format'],
   ReadonlyArray<TunerPlatform>
 > = {
-  image: ['IG/FB', 'X', 'Threads', 'TikTok', 'YouTube Shorts'],
+  image: ['IG/FB', 'X', 'Threads'],
   video: ['IG/FB', 'X', 'Threads', 'TikTok', 'YouTube Shorts'],
   carousel: ['IG/FB', 'X', 'Threads'],
   text: ['X', 'Threads'],

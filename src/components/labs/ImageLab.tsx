@@ -83,21 +83,25 @@ export default function ImageLab({ onBack }: ImageLabProps) {
   )
 
   // Migrate older persisted selections that still hold 'Instagram' /
-  // 'Facebook' as separate strings, or stale 'Email' values that no
-  // longer apply to the image format.
+  // 'Facebook' as separate strings, or stale 'Email' / 'TikTok' /
+  // 'YouTube Shorts' values that no longer apply to the image format.
   useEffect(() => {
     setSelectedPlatforms((prev) => {
       const stale = prev as ReadonlyArray<string>
       const hasOld =
         stale.includes('Instagram') ||
         stale.includes('Facebook') ||
-        stale.includes('Email')
+        stale.includes('Email') ||
+        stale.includes('TikTok') ||
+        stale.includes('YouTube Shorts')
       if (!hasOld) return prev
       const filtered = prev.filter(
         (p) =>
           (p as string) !== 'Instagram' &&
           (p as string) !== 'Facebook' &&
-          (p as string) !== 'Email',
+          (p as string) !== 'Email' &&
+          (p as string) !== 'TikTok' &&
+          (p as string) !== 'YouTube Shorts',
       )
       return ['IG/FB' as TunerPlatform, ...filtered.filter((p) => p !== 'IG/FB')]
     })
@@ -316,7 +320,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
             🧪 Image Lab
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-            One image, tuned per platform — IG/FB, X, Threads, TikTok, Shorts
+            One image, tuned per platform — IG/FB, X, Threads
           </p>
         </div>
 
