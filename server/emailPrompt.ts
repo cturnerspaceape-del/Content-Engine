@@ -16,7 +16,7 @@ interface BuildEmailPromptInput {
   campaignNote?: string
 }
 
-const BRAND_BIBLE = `Space Ape is a premium cannabis live-resin vape brand selling primarily through B2B retail (dispensaries / smoke shops). Voice is confident, youthful, premium — never apologetic, never bro-y. Editorial energy, Starface / Glossier / Fenty references, never a dispensary menu. Concise sentences. No emojis in body copy (icons in benefit bullets are ok). Never invent product specs, prices, or claims that don't exist.`
+const BRAND_BIBLE = `Space Ape is a premium cannabis live-resin vape brand selling primarily through B2B retail (dispensaries / smoke shops). Email is the formal, professional channel — read like a measured note from a premium brand to a retail buyer who runs a real business. Confident and direct without slang. Complete sentences, sentence case, conventional grammar. Concise and scannable. No emojis in body copy (icons in benefit bullets are ok by design). Never apologetic, never bro-y, never youthful-social-copy energy. Never invent product specs, prices, or claims that don't exist. No third-party brand mentions. No social-media slang ("vibe", "drop the link", "y'all", etc.) — save that for the IG/X/Threads channels.`
 
 export function buildEmailPrompt(input: BuildEmailPromptInput): string {
   const sections: string[] = []
@@ -42,7 +42,7 @@ export function buildEmailPrompt(input: BuildEmailPromptInput): string {
   sections.push(`OUTPUT FORMAT — return STRICT JSON, no prose, matching this TypeScript shape:
 
 {
-  "subject": string,           // <= 60 chars, scroll-stopping, lowercase ok if it fits the brand
+  "subject": string,           // <= 60 chars, sentence case, professional and direct (no all-lowercase, no caps storms, no emojis)
   "preheader": string,         // 35-90 chars, complements the subject (don't repeat it)
   "sections": Array<{
     "kind": "header" | "hero" | "offer" | "product" | "benefits" | "social_proof" | "cta" | "footer",
@@ -71,6 +71,7 @@ HARD CONSTRAINTS:
   - No invented prices, percentages off, or specific dates unless the user supplies them.
   - No third-party brand mentions.
   - Match the audience tone exactly — "existing" reads confident; "inactive" reads warm and low-pressure.
+  - No slang, no caps for emphasis, no exclamation points outside of the offer line. Treat the reader as a professional retail buyer.
   - Image prompts MUST describe visuals only (composition, lighting, mood, flavor color cues). Never request text/words/logos in the image.
   - Keep all copy concise and scannable. Long paragraphs lose readers.`)
 

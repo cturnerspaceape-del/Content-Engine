@@ -35,33 +35,35 @@ const COMPLIANCE_RULES = `COMPLIANCE — non-negotiable, applies in every voice 
 - No absolute effect language. "Better high" → "better experience". "Will make you ___" → "many users describe ___ as ___" or "often reported as ___".
 - "Uplifting / relaxing / energizing" must be hedged when used as an effect ("often reported as uplifting", "many users describe it as relaxing"). Used as flavor/mood adjectives ("uplifting vibe", "relaxed shoot") it's fine.
 - No THC percentages — they vary by batch.
-- Adult enthusiasts only. Never frame the product as a solution to a condition.
-- Never include emojis (the labs surface to multiple platforms with their own typographic conventions).`
+- Adult enthusiasts only. Never frame the product as a solution to a condition.`
 
 const VOICE_MODES: Record<VoiceMode, string> = {
-  raw: `VOICE: Raw Conner mode. Founder energy, unfiltered.
-- Caps for emphasis when the line earns it. Multiple exclamation points are fine.
-- Slang ok: dude, fam, bet, lowkey, no joke, straight fire. Casual, urgent, founder-on-a-rant.
-- Run-on energy is welcome — let sentences spill when the hype is real.
-- Cosmic imagery often: rocket fuel, intergalactic, cosmic, in orbit, from another planet.
-- Sales hype tactics: scarcity ("low stock"), audience appeals ("for the ones who get it"), bold claims about hardware and flavor.
-- Drop perfect grammar for voice when it's funnier or hits harder.
-DO: caps for emphasis, slang, cosmic metaphors, scarcity beats, founder confidence.
-DON'T: read like a brand manager wrote it, hedge every claim, sound polite, use clinical language.`,
-  polished: `VOICE: Polished Space Ape mode. Client / dispenser-facing but still bold.
-- Grammatical sentences. Confident, bold, cosmic — but readable to a budtender or a retail buyer.
+  raw: `VOICE: Raw Conner mode. Founder energy, unfiltered, VERY silly and fun.
+- This is group-chat-from-a-hyped-founder energy. Goofs, bits, jokes, mock-serious takes, self-aware brand chaos. Confidence is the foundation — silliness is the delivery.
+- Emojis welcome and encouraged: 1–4 per caption, used like punchlines or visual beats (🚀 🍊 🤌 💀 😤 🍒 🍇 🛸 🔥 etc.). Pick the right one for the line; don't carpet-bomb.
+- Caps for emphasis when the line earns it. Multiple exclamation points are fine. Run-on energy is welcome — let sentences spill when the hype is real.
+- Slang ok: dude, fam, bet, lowkey, no joke, straight fire, ayo, ngl. Casual, urgent, founder-on-a-rant.
+- Cosmic imagery often: rocket fuel, intergalactic, cosmic, in orbit, from another planet 🛸.
+- Sales hype tactics: scarcity, audience appeals, bold claims about hardware and flavor.
+- Drop perfect grammar for voice when it's funnier or hits harder. Be willing to make a fool of the brand for the bit.
+DO: emojis as punchlines, caps for emphasis, slang, cosmic metaphors, dumb jokes that still hit, founder confidence.
+DON'T: read like a brand manager wrote it, hedge every claim, sound polite, use clinical language, emoji-spam every word.`,
+  polished: `VOICE: Polished Space Ape mode. Client/dispenser-facing — confident, bold, and still fun.
+- Grammatical sentences with personality. Premium doesn't have to mean serious — light jokes and clever turns of phrase are welcome.
+- Emojis ok in moderation: 1–3 per caption when they earn the line. Skew product/flavor-relevant (🍊 🍒 🛸 ⚡ ✨ 💎). Skip them entirely when the line lands without one.
 - Cosmic metaphors stay ("flavor that goes intergalactic", "cosmic clouds") but framed as product or experience claims.
 - Lean into the craft: live-resin extraction, terpene profile, hardware specs (variable voltage, fast-charging, water-resistant), 4G vs 2G positioning.
-- Show the difference between "ultra premium" and the rest of the shelf. Show why a connoisseur would care.
-DO: clean grammar, cosmic-but-clear metaphors, real product specifics, craft language.
-DON'T: emojis, excessive caps, slang stacked three deep, run-on chaos.`,
-  compliance: `VOICE: Compliance-Safe retail mode. Restrained but never boring.
-- Grammatical, professional. Focus on flavor, format, and experience — not on guaranteed outcomes.
+- Show the difference between "ultra premium" and the rest of the shelf, with confidence and a wink.
+DO: clean grammar with personality, well-placed emojis, real product specifics, craft language with a sense of humor.
+DON'T: dry brand-deck copy, emoji-spam, slang stacked three deep, run-on chaos.`,
+  compliance: `VOICE: Compliance-Safe retail mode. Restrained on effects, but absolutely not boring.
+- Grammatical, professional, witty. Focus on flavor, format, and experience — not on guaranteed outcomes.
+- Emojis ok in moderation: 0–2 per caption, ideally tied to flavor or product (🍋 🍇 🛸 ✨). Optional, not required.
+- Wit, confidence, and a little fun are welcome around flavor, hardware, and brand identity. Just keep effect language hedged.
 - Use weasel words around effect claims: "many users describe", "often reported as", "individual experience may vary".
-- Educational framing is welcome: how live resin differs from distillate, what a sativa/indica/hybrid actually means in terms of energy/wind-down/balance, what 4G vs 2G is for.
-- Adult enthusiasts only. Lead with flavor and experience, not effect.
-DO: weasel words around effects, educational angle, flavor and format facts.
-DON'T: medical phrasing, absolute effect claims, hype slang, caps storms.`,
+- Educational framing is welcome and should sound like a confident expert with a sense of humor — not a textbook.
+DO: weasel words around effects, educational angle delivered with personality, flavor and format facts, occasional emoji.
+DON'T: medical phrasing, absolute effect claims, dry textbook tone, slang pile-ups, caps storms.`,
 }
 
 // Curated few-shot exemplars per voice × pillar. These are the strongest lines
@@ -70,88 +72,89 @@ DON'T: medical phrasing, absolute effect claims, hype slang, caps storms.`,
 const FEW_SHOTS: Record<VoiceMode, Record<string, string[]>> = {
   raw: {
     Lifestyle: [
-      "Future cool hits different when the flavor's this loud.",
-      "We don't chase vibes we set them.",
-      "This is the crossover nobody saw coming.",
-      "When the playlist and the pull hit at the same time.",
+      "future cool hits DIFFERENT when the flavor's this loud 🛸",
+      "we did not chase the vibe. the vibe filed an application. we approved it. ✨",
+      "main character energy powered by live resin and questionable decisions 🤌",
+      "when the playlist hits AND the pull hits ON THE SAME BEAT 🎧🍊 don't talk to me",
     ],
     Entertainment: [
-      "The internet wasn't ready but we posted it anyway.",
-      "Zero regrets maximum chaos let's go.",
-      "We're legally required to be this unhinged.",
-      "No thoughts just vibes and live resin.",
+      "internet wasn't ready but here we are anyway 💀 we apologize for nothing",
+      "every hour is friday hour at the space ape office. it's a problem. it's our brand. 🚀",
+      "we're legally required to be this unhinged. it's in the deck. 📑",
+      "no thoughts. just vibes. just live resin. 🛸 just being kinda weird about it.",
     ],
     'Product Centric': [
-      "You asked. We delivered. Now zoom in on that hardware.",
-      "The 2G that's outselling everything in the game.",
-      "Built different and we have the hardware to prove it.",
+      "Tang Exotic 4G just dropped 🍊 sativa hours, all day, every day. zoom in on the hardware while you're here.",
+      "you asked. we delivered. now please zoom in on that hardware so we feel validated 🤌",
+      "the 2G that's quietly outselling everything else on the shelf. it's not even a fight anymore 💀",
+      "water resistant ✅ fast charging ✅ kinda cute ✅ tastes like ACTUAL fruit ✅ — questions? 🚀",
     ],
     'Brand Building': [
-      "We didn't start this to blend in.",
-      "From a group chat to the best hardware in the game.",
-      "Built on late nights bold calls and better flavors.",
+      "we didn't start space ape to blend in 🛸 we started it to be the brand on the shelf you can't stop staring at",
+      "from a group chat to the best hardware in the game. the group chat is still wild btw 💬💀",
+      "built on late nights, bold calls, and one founder who refuses to ship anything mid 🫡",
     ],
     'Social Proof': [
-      "Real ones recognize real ones.",
-      "The DMs we wake up to every single morning.",
-      "Proof is in the pull. Literally.",
+      "the DMs we wake up to are unreal 📩 real ones recognize real ones",
+      "we didn't pay for this review and it shows 💀 (in a good way)",
+      "proof is in the pull. literally. ☁️ tag a real one.",
     ],
     Education: [
-      "Live resin vs distillate — here's why it matters.",
-      "Sativa vs Indica vs Hybrid — the real breakdown.",
-      "2G vs 4G — which one is right for you.",
+      "live resin vs distillate — let's settle this 🛸 (spoiler: it's not close)",
+      "sativa, indica, hybrid — which one are you today? we'll wait 🍋🍇🍒",
+      "2G vs 4G is basically 'pocket size' vs 'don't reup for a week' 🚀 pick your fighter",
     ],
   },
   polished: {
     Lifestyle: [
-      "Somewhere between golden hour and great flavor there's a whole lifestyle. Welcome to it.",
-      "Clean, intentional, effortless. That's the Space Ape lifestyle and we're not gatekeeping it.",
-      "When the setting matches the strain and the strain matches the mood. That's the sweet spot right there.",
+      "Somewhere between golden hour and great flavor there's a whole lifestyle 🌅 — and yeah, we live there now.",
+      "Clean, intentional, effortless. That's the Space Ape lifestyle, and we're not exactly gatekeeping it.",
+      "When the setting matches the strain and the strain matches the mood — that's the sweet spot. ✨",
     ],
     'Product Centric': [
-      "Battery variable mode. Water resistant. Fast charging. And it tastes like actual fruit.",
-      "Ultra premium live resin isn't marketing. It's a standard we refuse to lower.",
-      "We don't cut corners. Every Space Ape that ships has been tested, retested, and tested again.",
+      "Variable voltage. Water-resistant. Fast charging. Oh, and it tastes like actual fruit 🍊 — try not to flex it immediately.",
+      "Ultra premium live resin isn't a marketing line — it's a standard we refuse to lower. ✨",
+      "Every Space Ape that ships has been tested, retested, and tested again. The hardware is half the story. 💎",
     ],
     'Brand Building': [
-      "We're not here to play it safe. Bold ideas, real quality, and a community that keeps us honest.",
-      "Ten plus years combined experience in cannabis. The knowledge went into every flavor, every device, every detail.",
-      "We didn't start Space Ape to be another brand on the shelf. We started it to set a new standard.",
+      "We're not here to play it safe. Bold ideas, real quality, and a community that keeps us honest 🛸 — that's the playbook.",
+      "Ten-plus years combined experience in cannabis went into every flavor, every device, every detail. We're proud of that.",
+      "We didn't start Space Ape to be another brand on the shelf. We started it to be the one you can't stop talking about.",
     ],
     'Social Proof': [
-      "Real people. Real pulls. Real reactions. We didn't script this.",
+      "Real people. Real pulls. Real reactions. We didn't script this — it just keeps happening. ✨",
       "The best marketing is when a customer won't stop texting their friends about you. This is that energy.",
     ],
     Entertainment: [
-      "We were going to post something professional. Then this happened.",
-      "Hot take incoming. We stand by it.",
+      "We were going to post something professional. Then this happened. 💀 Anyway, hi.",
+      "Hot take incoming, we stand by it, the comments are going to be wild and we're bringing snacks. 🍿",
     ],
     Education: [
-      "Live resin keeps the full terpene profile intact. Distillate strips it out and adds it back artificially. That's the difference you taste.",
-      "Three battery modes — low for flavor chasers, medium for everyday, high for when you mean business.",
+      "Live resin keeps the full terpene profile intact. Distillate strips it out and adds it back artificially. That's the difference you taste — and yeah, you taste it. ✨",
+      "Three battery modes: low for flavor chasers, medium for everyday, high for when you mean business. ⚡",
     ],
   },
   compliance: {
     Education: [
-      "Live resin starts with flash-frozen flower harvested at peak — nothing gets lost in the process. That's why many users describe the flavor as fuller and more true to the strain.",
-      "Sativa for the daytime, indica for the wind-down, hybrid for in-between — pick the one that matches your moment.",
-      "Third-party lab testing isn't optional. Every batch gets tested for potency, purity, and consistency before it ships.",
+      "Live resin starts with flash-frozen flower harvested at peak — nothing gets lost in the process 🛸 — which is why many users describe the flavor as fuller and more true to the strain.",
+      "Sativa for the daytime 🍋, indica for the wind-down 🍇, hybrid for in-between 🍒 — pick the one that matches your moment.",
+      "Third-party lab testing isn't optional. Every batch gets tested for potency, purity, and consistency before it ships. ✨",
     ],
     'Product Centric': [
-      "Water-resistant doesn't mean waterproof — but it means your device survives the everyday stuff that ends a lot of pens early.",
+      "Water-resistant doesn't mean waterproof — but it does mean your device survives the everyday stuff that ends a lot of pens early. 💧",
       "Variable voltage lets you dial the experience in. Lower for flavor-forward sessions, higher when you want more impact.",
     ],
     Lifestyle: [
-      "Premium hardware, flavor-forward live resin, designed for adult enthusiasts who already know what they like.",
+      "Premium hardware, flavor-forward live resin, designed for adult enthusiasts who already know what they like. ✨",
     ],
     'Brand Building': [
-      "Built by a team that's been in cannabis for over a decade — that knowledge shows up in every flavor and every device.",
+      "Built by a team that's been in cannabis for over a decade — that knowledge shows up in every flavor and every device. 🛸",
     ],
     'Social Proof': [
       "Customer feedback is the only review that matters. Many users describe Space Ape as smooth, flavor-forward, and easy to come back to.",
     ],
     Entertainment: [
-      "A lighter take on what we usually post — flavor and craft are still the point.",
+      "A lighter take on what we usually post — flavor and craft are still the point. ✨",
     ],
   },
 }
@@ -217,20 +220,20 @@ export function buildCaptionMessages(input: BuildCaptionInput): BuildOutput {
     lines.push(`}`)
     lines.push('')
     lines.push(
-      `RULES: name a real strain or format detail when it serves the line — do not force it. The archetype determines the angle: Hot Take = confident opinion, Drop Announce = launch/restock energy, Hook = grabber, Question = open invitation to reply, Shoutout = thanks, Meme Line = group-chat one-liner.`,
+      `RULES: name a real strain or format detail when it serves the line — do not force it. Emojis are welcome (1–4, used like punchlines, never carpet-bombed). The archetype determines the angle: Hot Take = confident opinion, Drop Announce = launch/restock energy, Hook = grabber, Question = open invitation to reply, Shoutout = thanks, Meme Line = group-chat one-liner.`,
     )
   } else {
     lines.push(
       `OUTPUT FORMAT — return only valid JSON with this exact shape (no markdown fences, no commentary):`,
     )
     lines.push(`{`)
-    lines.push(`  "hook": "<one short, scroll-stopping line, ~6-14 words; refer to the flavor or strain when it fits the pillar>",`)
-    lines.push(`  "caption": "<2-4 sentences in the voice above. Reference the flavor by name where it earns the line. Mention strain type or format when it adds substance — never as filler. No emojis. No hashtags inline.>",`)
+    lines.push(`  "hook": "<one short, scroll-stopping line, ~6-14 words; refer to the flavor or strain when it fits the pillar; emojis welcome where they punchline>",`)
+    lines.push(`  "caption": "<2-4 sentences in the voice above. Reference the flavor by name where it earns the line. Mention strain type or format when it adds substance — never as filler. Emojis welcome — pick the right ones, don't carpet-bomb. No hashtags inline.>",`)
     lines.push(`  "hashtags": ["#spaceape", "#liveresin", "<3 more pillar-relevant tags, lowercase, no spaces>"]`)
     lines.push(`}`)
     lines.push('')
     lines.push(
-      `RULES: the caption MUST sound product-aware (mention the flavor by name, and surface the strain type or format when it serves the message — especially for Product Centric, Education, and 'New Drop Reveal' or 'Flavor Breakdown' subcategories). Do not stuff every product fact into one caption — pick what earns its place.`,
+      `RULES: the caption MUST sound product-aware (mention the flavor by name, and surface the strain type or format when it serves the message — especially for Product Centric, Education, and 'New Drop Reveal' or 'Flavor Breakdown' subcategories). Do not stuff every product fact into one caption — pick what earns its place. Emoji count comes from the voice mode above; respect it.`,
     )
   }
 
