@@ -358,6 +358,72 @@ const subcategoryCaptions: Record<string, string[]> = {
   ],
 }
 
+// ─── LLM caption fetch ───
+//
+// Captions are written by /api/generate-caption (Anthropic). This gives every
+// post real product awareness — flavor name, strain type, format — and the
+// right voice for the pillar. The static pools below remain as a fallback
+// when the API is unavailable (no key set, network error, etc.).
+
+interface FetchCaptionInput {
+  pillar: string
+  subcategory: string
+  flavor: string
+  platform?: 'IG' | 'X' | 'Threads' | 'TikTok' | 'YouTube Shorts'
+  archetype?: string
+}
+
+interface FetchCaptionResult {
+  hook: string
+  caption: string
+  hashtags: string[]
+}
+
+function pillarFallback(pillar: string, subcategory: string): FetchCaptionResult {
+  const hookPool = subcategoryHooks[subcategory] || hooks[pillar] || hooks['Lifestyle']
+  const captionPool = subcategoryCaptions[subcategory] || captions[pillar] || captions['Lifestyle']
+  const hashtagPool = hashtagSets[pillar] || hashtagSets['Lifestyle']
+  return {
+    hook: hookPool[Math.floor(Math.random() * hookPool.length)],
+    caption: captionPool[Math.floor(Math.random() * captionPool.length)],
+    hashtags: hashtagPool[Math.floor(Math.random() * hashtagPool.length)],
+  }
+}
+
+export async function fetchCaption(input: FetchCaptionInput): Promise<FetchCaptionResult> {
+  try {
+    const resp = await fetch('/api/generate-caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pillar: input.pillar,
+        subcategory: input.subcategory,
+        flavor: input.flavor,
+        platform: input.platform || 'IG',
+        archetype: input.archetype,
+      }),
+    })
+    if (!resp.ok) throw new Error(`/api/generate-caption ${resp.status}`)
+    const data = (await resp.json()) as Partial<FetchCaptionResult> & { error?: string }
+    if (data.error) throw new Error(data.error)
+    if (!data.hook && !data.caption) throw new Error('caption response missing fields')
+    // Hashtags: fall back to pillar pool if the LLM returned an empty array on
+    // a long-form (IG) post — IG posts read better with a tag set.
+    let hashtags = Array.isArray(data.hashtags) ? data.hashtags : []
+    if (input.platform !== 'X' && input.platform !== 'Threads' && hashtags.length === 0) {
+      hashtags = pillarFallback(input.pillar, input.subcategory).hashtags
+    }
+    return {
+      hook: data.hook ?? data.caption ?? '',
+      caption: data.caption ?? data.hook ?? '',
+      hashtags,
+    }
+  } catch (err) {
+    console.warn('[fetchCaption] falling back to static pool —', err)
+    return pillarFallback(input.pillar, input.subcategory)
+  }
+}
+
 export function generateContentForPost(item: ContentItem): ContentItem {
   const titleParts = item.title.split(' — ')
   const format = titleParts[0]?.trim() || 'Single Image'
@@ -386,6 +452,57 @@ export function generateContentForPost(item: ContentItem): ContentItem {
 
   // Single Image: pick a visual shot template (recipe) from src/data/shotTemplates.ts.
   // Carousel/Reel: keep the legacy numeric layoutTemplate variant system.
+  const shotTemplateId = format === 'Single Image'
+    ? pickShotTemplate(pillar, subcategory).id
+    : undefined
+  const layoutTemplate = format === 'Carousel'
+    ? Math.floor(Math.random() * 8) + 1
+    : format === 'Reel'
+    ? Math.floor(Math.random() * 6) + 1
+    : undefined
+  const slideCount = format === 'Carousel'
+    ? Math.floor(Math.random() * 6) + 5
+    : undefined
+
+  return {
+    ...item,
+    description: generatedDescription,
+    generated: true,
+    generatedVisual: {
+      hook,
+      caption,
+      hashtags: selectedHashtags,
+      pillar,
+      subcategory,
+      format: format as InstagramFormat,
+      flavor,
+      ...(layoutTemplate !== undefined && { layoutTemplate }),
+      ...(shotTemplateId !== undefined && { shotTemplateId }),
+      ...(slideCount !== undefined && { slideCount }),
+    },
+  }
+}
+
+// Async LLM-backed variant of generateContentForPost. Used by ImageLab to get
+// captions that are flavor- and strain-aware. Falls back to the static pool
+// inside fetchCaption when the API is unavailable.
+export async function generateContentForPostAsync(item: ContentItem): Promise<ContentItem> {
+  const titleParts = item.title.split(' — ')
+  const format = titleParts[0]?.trim() || 'Single Image'
+  const pillarSubcat = titleParts[1] || ''
+  const pillar = pillarSubcat.split(':')[0]?.trim() || 'Lifestyle'
+  const subcategory = pillarSubcat.split(':')[1]?.trim() || ''
+
+  const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
+  const { hook, caption, hashtags: selectedHashtags } = await fetchCaption({
+    pillar,
+    subcategory,
+    flavor,
+    platform: 'IG',
+  })
+
+  const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
+
   const shotTemplateId = format === 'Single Image'
     ? pickShotTemplate(pillar, subcategory).id
     : undefined
@@ -461,6 +578,44 @@ export function generateCarouselLoungePost(item: ContentItem, arcId?: string): C
   }
 }
 
+export async function generateCarouselLoungePostAsync(item: ContentItem, arcId?: string): Promise<ContentItem> {
+  const titleParts = item.title.split(' — ')
+  const pillarSubcat = titleParts[1] || ''
+  const pillar = pillarSubcat.split(':')[0]?.trim() || 'Product Centric'
+  const subcategory = pillarSubcat.split(':')[1]?.trim() || ''
+
+  const arc = (arcId && getCarouselArc(arcId)) || pickCarouselArc(pillar, subcategory)
+  const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
+  const carouselSeed = Math.floor(Math.random() * 100_000)
+
+  const { hook, caption, hashtags: selectedHashtags } = await fetchCaption({
+    pillar,
+    subcategory,
+    flavor,
+    platform: 'IG',
+  })
+
+  const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
+
+  return {
+    ...item,
+    description: generatedDescription,
+    generated: true,
+    generatedVisual: {
+      hook,
+      caption,
+      hashtags: selectedHashtags,
+      pillar,
+      subcategory,
+      format: 'Carousel' as InstagramFormat,
+      flavor,
+      slideCount: arc.slides.length,
+      arcId: arc.id,
+      carouselSeed,
+    },
+  }
+}
+
 // Reel Lounge variant: produces an AI-video Reel via Veo. Presence of
 // generatedVisual.reelArcId switches ContentCard's Reel rendering to
 // ReelLoungeVisual instead of the Remotion template.
@@ -482,6 +637,44 @@ export function generateReelLoungePost(item: ContentItem, reelArcId?: string): C
 
   const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
   const reelSeed = Math.floor(Math.random() * 100_000)
+
+  const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
+
+  return {
+    ...item,
+    description: generatedDescription,
+    generated: true,
+    generatedVisual: {
+      hook,
+      caption,
+      hashtags: selectedHashtags,
+      pillar,
+      subcategory,
+      format: 'Reel' as InstagramFormat,
+      flavor,
+      reelArcId: arc.id,
+      reelSeed,
+      durationSeconds: arc.durationSeconds,
+    },
+  }
+}
+
+export async function generateReelLoungePostAsync(item: ContentItem, reelArcId?: string): Promise<ContentItem> {
+  const titleParts = item.title.split(' — ')
+  const pillarSubcat = titleParts[1] || ''
+  const pillar = pillarSubcat.split(':')[0]?.trim() || 'Lifestyle'
+  const subcategory = pillarSubcat.split(':')[1]?.trim() || ''
+
+  const arc = (reelArcId && getReelArc(reelArcId)) || pickReelArc(pillar)
+  const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
+  const reelSeed = Math.floor(Math.random() * 100_000)
+
+  const { hook, caption, hashtags: selectedHashtags } = await fetchCaption({
+    pillar,
+    subcategory,
+    flavor,
+    platform: 'IG',
+  })
 
   const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
 

@@ -28,6 +28,8 @@ export interface FlavorTheme {
   accentColor: string
   textColor: string
   strainType: 'Sativa' | 'Hybrid' | 'Indica' | ''
+  format: '2G' | '4G'
+  flavorNotes?: string[] // a few sensory anchors (e.g. ['citrus','tart','tropical']) used by the caption LLM
   productImages: string[] // filenames in public/products/
 }
 

@@ -4,7 +4,7 @@ import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
 import PostConfirmModal from '../PostConfirmModal'
 import type { ContentItem, ContentPillar, PostDestination } from '../../types'
-import { generateContentForPost } from '../../data/instagramContentTemplates'
+import { generateContentForPostAsync } from '../../data/instagramContentTemplates'
 import { getShotTemplate } from '../../data/shotTemplates'
 import { usePersistedState } from '../../utils/persistedState'
 import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
@@ -128,13 +128,11 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.generatedVisual?.caption, selectedPlatforms.join('|')])
 
-  const handleGenerate = () => {
-    setItem((cur) => {
-      const seedIdx = findPillarSeedIdxFromTitle(SEED_PREFIX, cur.title)
-      const generated = generateContentForPost(cur)
-      const seedTitle = formatPillarSeedTitle(SEED_PREFIX, PILLAR_IMAGE_SEEDS[seedIdx])
-      return decorateTitle(generated, seedTitle)
-    })
+  const handleGenerate = async () => {
+    const seedIdxAtClick = findPillarSeedIdxFromTitle(SEED_PREFIX, item.title)
+    const generated = await generateContentForPostAsync(item)
+    const seedTitle = formatPillarSeedTitle(SEED_PREFIX, PILLAR_IMAGE_SEEDS[seedIdxAtClick])
+    setItem(decorateTitle(generated, seedTitle))
     // Clear cached non-IG variants so they re-tune off the new caption.
     setVariants({})
   }

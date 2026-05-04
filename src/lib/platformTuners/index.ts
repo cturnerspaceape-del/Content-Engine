@@ -31,3 +31,39 @@ export const FORMAT_PLATFORM_COMPAT: Record<
 export function tuneFor(platform: TunerPlatform, source: TunerSource): PlatformVariant {
   return TUNERS[platform](source)
 }
+
+// Async variant. For text-only X/Threads posts we call /api/generate-caption so
+// the line is product-aware and on-voice. For everything else we fall through
+// to the synchronous tuner (IG image cross-posts, video, carousel, etc.).
+export async function tuneForAsync(
+  platform: TunerPlatform,
+  source: TunerSource,
+): Promise<PlatformVariant> {
+  if (source.format === 'text' && (platform === 'X' || platform === 'Threads')) {
+    try {
+      const charLimit = platform === 'X' ? 280 : 500
+      const resp = await fetch('/api/generate-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pillar: 'Lifestyle', // not used by Raw voice — kept for API contract
+          subcategory: source.archetype || '',
+          flavor: 'Tang Exotic', // any flavor — LLM picks how much to surface
+          platform,
+          archetype: source.archetype,
+        }),
+      })
+      if (!resp.ok) throw new Error(`/api/generate-caption ${resp.status}`)
+      const data = (await resp.json()) as { caption?: string; hook?: string; error?: string }
+      if (data.error) throw new Error(data.error)
+      const text = (data.caption || data.hook || '').trim()
+      if (!text) throw new Error('empty caption')
+      const capped = text.length <= charLimit ? text : text.slice(0, charLimit - 1).trimEnd() + '…'
+      return { platform, caption: capped, hashtags: [], charLimit }
+    } catch (err) {
+      console.warn('[tuneForAsync] falling back to static pool —', err)
+      return TUNERS[platform](source)
+    }
+  }
+  return TUNERS[platform](source)
+}

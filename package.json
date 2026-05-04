@@ -20,6 +20,7 @@
     "derive-shots": "tsx server/deriveShotTemplates.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.92.0",
     "@google/genai": "^1.30.0",
     "@remotion/google-fonts": "^4.0.447",
     "@remotion/player": "^4.0.447",

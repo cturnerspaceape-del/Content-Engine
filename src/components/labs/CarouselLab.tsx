@@ -4,7 +4,7 @@ import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
 import PostConfirmModal from '../PostConfirmModal'
 import type { ContentItem, ContentPillar, PostDestination } from '../../types'
-import { generateCarouselLoungePost } from '../../data/instagramContentTemplates'
+import { generateCarouselLoungePostAsync } from '../../data/instagramContentTemplates'
 import { getCarouselArc } from '../../data/carouselArcs'
 import { usePersistedState } from '../../utils/persistedState'
 import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
@@ -122,13 +122,11 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.generatedVisual?.caption, selectedPlatforms.join('|')])
 
-  const handleGenerate = () => {
-    setItem((cur) => {
-      const seedIdx = findCarouselSeedIdxFromTitle(SEED_PREFIX, cur.title)
-      const seed = CAROUSEL_ARC_SEEDS[seedIdx]
-      const generated = generateCarouselLoungePost(cur, seed.arcId)
-      return decorateTitle(generated, formatCarouselSeedTitle(SEED_PREFIX, seed))
-    })
+  const handleGenerate = async () => {
+    const seedIdxAtClick = findCarouselSeedIdxFromTitle(SEED_PREFIX, item.title)
+    const seed = CAROUSEL_ARC_SEEDS[seedIdxAtClick]
+    const generated = await generateCarouselLoungePostAsync(item, seed.arcId)
+    setItem(decorateTitle(generated, formatCarouselSeedTitle(SEED_PREFIX, seed)))
     setVariants({})
   }
 

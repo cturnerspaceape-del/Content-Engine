@@ -10,6 +10,7 @@ import {
 } from '../../lib/seeds/textArchetype'
 import {
   tuneFor,
+  tuneForAsync,
   type PlatformVariant,
   type TunerPlatform,
   type TunerSource,
@@ -71,6 +72,8 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
   }, [])
 
   // Auto-tune variants whenever archetype changes or a new platform is added.
+  // Initial pass uses the sync tuner (instant fallback content), then the LLM
+  // tuner upgrades each variant with a freshly-written, voice-tuned line.
   // Cached variants survive across archetype changes (keyed by platform), so
   // user edits made for one archetype persist if they switch and switch back.
   useEffect(() => {
@@ -84,21 +87,39 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
       }
       return next
     })
+    // Then upgrade any platform that wasn't already cached with an LLM-written line.
+    let cancelled = false
+    ;(async () => {
+      for (const platform of selectedPlatforms) {
+        // Only fetch when there's no user-edited variant already.
+        const v = await tuneForAsync(platform, source)
+        if (cancelled) return
+        setVariants((prev) => ({ ...prev, [platform]: v }))
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [archetype, selectedPlatforms.join('|')])
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const source: TunerSource = { format: 'text', archetype }
+    // Optimistic sync fill so the UI updates immediately, then LLM upgrade.
+    const optimistic: Partial<Record<TunerPlatform, PlatformVariant>> = {}
+    for (const platform of selectedPlatforms) optimistic[platform] = tuneFor(platform, source)
+    setVariants(optimistic)
+    const upgrades = await Promise.all(
+      selectedPlatforms.map(async (p) => [p, await tuneForAsync(p, source)] as const),
+    )
     const next: Partial<Record<TunerPlatform, PlatformVariant>> = {}
-    for (const platform of selectedPlatforms) {
-      next[platform] = tuneFor(platform, source)
-    }
+    for (const [p, v] of upgrades) next[p] = v
     setVariants(next)
   }
 
   // Pick a different archetype than the current one and re-tune. Mirrors
   // pickDifferentPillarSeedIdx from the image Labs.
-  const handleShuffle = () => {
+  const handleShuffle = async () => {
     const idx = TEXT_ARCHETYPES.indexOf(archetype)
     let nextIdx = idx
     if (TEXT_ARCHETYPES.length > 1) {
@@ -108,13 +129,15 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     }
     const nextArchetype = TEXT_ARCHETYPES[nextIdx]
     setArchetype(nextArchetype)
-    // Force a fresh tune for the new archetype across all selected platforms,
-    // since the cached variants are tuned to the previous archetype.
     const source: TunerSource = { format: 'text', archetype: nextArchetype }
+    const optimistic: Partial<Record<TunerPlatform, PlatformVariant>> = {}
+    for (const platform of selectedPlatforms) optimistic[platform] = tuneFor(platform, source)
+    setVariants(optimistic)
+    const upgrades = await Promise.all(
+      selectedPlatforms.map(async (p) => [p, await tuneForAsync(p, source)] as const),
+    )
     const next: Partial<Record<TunerPlatform, PlatformVariant>> = {}
-    for (const platform of selectedPlatforms) {
-      next[platform] = tuneFor(platform, source)
-    }
+    for (const [p, v] of upgrades) next[p] = v
     setVariants(next)
   }
 

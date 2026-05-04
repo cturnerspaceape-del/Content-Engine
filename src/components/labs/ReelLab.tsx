@@ -4,7 +4,7 @@ import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
 import PostConfirmModal from '../PostConfirmModal'
 import type { ContentItem, ContentPillar, PostDestination } from '../../types'
-import { generateReelLoungePost } from '../../data/instagramContentTemplates'
+import { generateReelLoungePostAsync } from '../../data/instagramContentTemplates'
 import { getReelArc } from '../../data/reelArcs'
 import { usePersistedState } from '../../utils/persistedState'
 import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
@@ -117,13 +117,11 @@ export default function ReelLab({ onBack }: ReelLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.generatedVisual?.caption, selectedPlatforms.join('|')])
 
-  const handleGenerate = () => {
-    setItem((cur) => {
-      const seedIdx = findReelSeedIdxFromTitle(SEED_PREFIX, cur.title)
-      const seed = REEL_ARC_SEEDS[seedIdx]
-      const generated = generateReelLoungePost(cur, seed.arcId)
-      return decorateTitle(generated, formatReelSeedTitle(SEED_PREFIX, seed))
-    })
+  const handleGenerate = async () => {
+    const seedIdxAtClick = findReelSeedIdxFromTitle(SEED_PREFIX, item.title)
+    const seed = REEL_ARC_SEEDS[seedIdxAtClick]
+    const generated = await generateReelLoungePostAsync(item, seed.arcId)
+    setItem(decorateTitle(generated, formatReelSeedTitle(SEED_PREFIX, seed)))
     setVariants({})
   }
 
