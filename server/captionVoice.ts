@@ -228,12 +228,12 @@ export function buildCaptionMessages(input: BuildCaptionInput): BuildOutput {
     )
     lines.push(`{`)
     lines.push(`  "hook": "<one short, scroll-stopping line, ~6-14 words; refer to the flavor or strain when it fits the pillar; emojis welcome where they punchline>",`)
-    lines.push(`  "caption": "<2-4 sentences in the voice above. Reference the flavor by name where it earns the line. Mention strain type or format when it adds substance — never as filler. Emojis welcome — pick the right ones, don't carpet-bomb. No hashtags inline.>",`)
+    lines.push(`  "caption": "<1-2 sentences MAX. Heavy on emojis (3-6 per caption is great, used as visual punchlines and beats — not carpet-bombed across every word). Light on punctuation — drop commas/periods when the line still reads. all-lowercase often hits harder than sentence case. Short, loud, goofy, silly, hype. Reference the flavor by name when it earns the line. No hashtags inline.>",`)
     lines.push(`  "hashtags": ["#spaceape", "#liveresin", "<3 more pillar-relevant tags, lowercase, no spaces>"]`)
     lines.push(`}`)
     lines.push('')
     lines.push(
-      `RULES: the caption MUST sound product-aware (mention the flavor by name, and surface the strain type or format when it serves the message — especially for Product Centric, Education, and 'New Drop Reveal' or 'Flavor Breakdown' subcategories). Do not stuff every product fact into one caption — pick what earns its place. Emoji count comes from the voice mode above; respect it.`,
+      `RULES: 1-2 sentences is the ceiling — if you're writing a third sentence, cut. Hype + silly > polished. Mention the flavor by name when it serves the line; surface strain type or format only when it adds substance. Compliance voice still hedges effect language — for that mode, keep emojis tied to flavor/vibe (🍊 🍋 🛸 ✨), not effect claims.`,
     )
   }
 

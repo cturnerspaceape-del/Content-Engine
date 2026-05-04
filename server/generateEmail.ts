@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs'
 import { GoogleGenAI } from '@google/genai'
 import { cachePath, exists, hashKey } from './cache'
 import { buildEmailPrompt } from './emailPrompt'
+import { flavorThemes } from '../src/remotion/flavorThemes'
 
 interface GenerateEmailBody {
   emailType: string
@@ -18,7 +19,14 @@ interface GenerateEmailBody {
   variationSeed?: number
 }
 
-const CACHE_VERSION = 1
+const CACHE_VERSION = 2
+
+const FLAVOR_CATALOG = Object.entries(flavorThemes).map(([name, theme]) => ({
+  name,
+  strainType: theme.strainType,
+  format: theme.format,
+  flavorNotes: theme.flavorNotes,
+}))
 
 let textClient: GoogleGenAI | null = null
 function getClient(): GoogleGenAI {
@@ -135,6 +143,7 @@ export async function generateEmailHandler(req: Request, res: Response): Promise
       defaultSections,
       flavorHint,
       campaignNote,
+      flavorCatalog: FLAVOR_CATALOG,
     })
 
     const model = process.env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash'
