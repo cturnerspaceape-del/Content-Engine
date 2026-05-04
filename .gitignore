@@ -32,6 +32,11 @@ public/references/_review/*
 !public/references/brand/.gitkeep
 !public/references/_review/.gitkeep
 
+# Local artifacts
+.phone-uploads/
+*.bak
+.claude/scheduled_tasks.lock
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

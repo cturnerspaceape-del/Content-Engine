@@ -124,7 +124,6 @@ export default function App() {
               onSchedule={handleSchedulePost}
               onUpdateSchedule={handleUpdateSchedule}
               onUnschedule={handleUnschedulePost}
-              onOpenLab={(lab) => switchView(lab)}
             />
           </div>
         )}
