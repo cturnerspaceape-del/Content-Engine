@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import HomeScreen from './components/HomeScreen'
 import WeeklyCalendar from './components/WeeklyCalendar'
+import Scheduler from './components/Scheduler'
 import StrategyDashboard from './components/StrategyDashboard'
 import PostLog from './components/PostLog'
 import ImageLab from './components/labs/ImageLab'
@@ -58,6 +59,7 @@ export default function App() {
           <div className="fade-in">
             <HomeScreen
               onPostLog={() => switchView('postlog')}
+              onScheduler={() => switchView('scheduler')}
               onImageLab={() => switchView('image-lab')}
               onReelLab={() => switchView('reel-lab')}
               onTextPostLab={() => switchView('text-post-lab')}
@@ -74,6 +76,14 @@ export default function App() {
               onLogPost={handleLogPost}
               onViewLog={() => switchView('postlog')}
               loggedCount={loggedPosts.length}
+            />
+          </div>
+        )}
+        {view === 'scheduler' && (
+          <div className="fade-in">
+            <Scheduler
+              onBack={() => switchView('home')}
+              loggedPosts={loggedPosts}
             />
           </div>
         )}

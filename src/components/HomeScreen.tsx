@@ -1,5 +1,6 @@
 interface HomeScreenProps {
   onPostLog: () => void
+  onScheduler: () => void
   onImageLab: () => void
   onReelLab: () => void
   onTextPostLab: () => void
@@ -10,6 +11,7 @@ interface HomeScreenProps {
 
 export default function HomeScreen({
   onPostLog,
+  onScheduler,
   onImageLab,
   onReelLab,
   onTextPostLab,
@@ -46,6 +48,21 @@ export default function HomeScreen({
           </div>
 
           <div className="space-y-4">
+            <button
+              onClick={onScheduler}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(184,164,255,.20), rgba(124,210,255,.14))',
+                border: '2px solid #b8a4ff',
+                boxShadow: 'var(--shadow-md)',
+                color: '#b8a4ff',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">📅</span>
+                <span>Scheduler</span>
+              </div>
+            </button>
             <button
               onClick={onImageLab}
               className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
