@@ -119,7 +119,9 @@ export default function Scheduler({ onBack, loggedPosts }: SchedulerProps) {
   const today = startOfDay(new Date())
   const postsByDate = useMemo(() => groupPostsByDate(loggedPosts), [loggedPosts])
 
-  const weekStart = startOfWeek(anchor)
+  // Week view is a rolling 7-day window starting at the anchor (defaults to today).
+  // Calendar-grid alignment (Mon-first) is only used inside the month view.
+  const weekStart = anchor
   const weekDates = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
 
   const monthDates = useMemo(() => monthMatrix(anchor), [anchor])
@@ -214,7 +216,7 @@ export default function Scheduler({ onBack, loggedPosts }: SchedulerProps) {
               border: '1px solid var(--border)',
             }}
           >
-            Today
+            {mode === 'week' ? 'This Week' : 'This Month'}
           </button>
           <NavButton onClick={stepForward} label="›" />
         </div>
