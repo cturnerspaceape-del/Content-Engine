@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import HomeScreen from './components/HomeScreen'
 import WeeklyCalendar from './components/WeeklyCalendar'
 import Scheduler from './components/Scheduler'
+import DayDetail from './components/DayDetail'
 import StrategyDashboard from './components/StrategyDashboard'
 import PostLog from './components/PostLog'
 import ImageLab from './components/labs/ImageLab'
@@ -10,7 +11,7 @@ import TextPostLab from './components/labs/TextPostLab'
 import CarouselLab from './components/labs/CarouselLab'
 import EmailLab from './components/labs/EmailLab'
 import { usePersistedState } from './utils/persistedState'
-import type { ViewState, LoggedPost } from './types'
+import type { ViewState, LoggedPost, ScheduledPost } from './types'
 
 // Migrate persisted view names from the legacy Lab routes (sil-lab,
 // x-post-lab, reel-lounge, etc.) to the new format-based Labs.
@@ -26,6 +27,27 @@ export default function App() {
   const [view, setView] = usePersistedState<ViewState>('sl:view', 'home')
   const [animating, setAnimating] = useState(false)
   const [loggedPosts, setLoggedPosts] = usePersistedState<LoggedPost[]>('sl:loggedPosts', [])
+  const [scheduledPosts, setScheduledPosts] = usePersistedState<ScheduledPost[]>('sl:scheduledPosts', [])
+  const [selectedDate, setSelectedDate] = usePersistedState<string | null>('sl:selectedDate', null)
+
+  const handleSchedulePost = (post: ScheduledPost) => {
+    setScheduledPosts((prev) => [...prev, post])
+  }
+  const handleUnschedulePost = (id: string) => {
+    setScheduledPosts((prev) => prev.filter((p) => p.id !== id))
+  }
+  const openDay = (d: Date) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    setSelectedDate(`${y}-${m}-${day}`)
+    switchView('day-detail')
+  }
+  const parseSelectedDate = (): Date => {
+    if (!selectedDate) return new Date()
+    const [y, m, d] = selectedDate.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
 
   // Run migration once on mount: if the user was last on a deleted route,
   // bounce them to the corresponding new Lab.
@@ -84,6 +106,21 @@ export default function App() {
             <Scheduler
               onBack={() => switchView('home')}
               loggedPosts={loggedPosts}
+              scheduledPosts={scheduledPosts}
+              onOpenDay={openDay}
+            />
+          </div>
+        )}
+        {view === 'day-detail' && (
+          <div className="fade-in">
+            <DayDetail
+              date={parseSelectedDate()}
+              onBack={() => switchView('scheduler')}
+              loggedPosts={loggedPosts}
+              scheduledPosts={scheduledPosts}
+              onSchedule={handleSchedulePost}
+              onUnschedule={handleUnschedulePost}
+              onOpenLab={(lab) => switchView(lab)}
             />
           </div>
         )}

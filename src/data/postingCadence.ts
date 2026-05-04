@@ -82,3 +82,28 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
 export function totalDemandForDay(day: DayOfWeek): number {
   return WEEKLY_CADENCE[day].reduce((sum, e) => sum + e.count, 0)
 }
+
+// Recommended posting times in local 24h "HH:mm" — one entry per demanded slot
+// where order matches typical engagement peaks for that platform.
+export const TIME_RECOMMENDATIONS: Record<Platform, string[]> = {
+  Instagram: ['11:00', '13:00', '19:00'],
+  Facebook: ['13:00', '15:00'],
+  Threads: ['10:00', '20:00'],
+  X: ['09:00', '15:00', '21:00'],
+  Email: ['10:00'],
+  'YouTube Shorts': ['17:00', '20:00'],
+  TikTok: ['18:00', '21:00'],
+  'Blog Post': ['09:00'],
+}
+
+// Editorial themes by day-of-week — sourced from instagramContentGenerator.ts
+// to keep DayDetail aligned with the existing IG planner copy.
+export const DAY_THEMES: Record<DayOfWeek, string> = {
+  Monday: 'Fresh Start',
+  Tuesday: 'Engage & Educate',
+  Wednesday: 'Mid-Week Push',
+  Thursday: 'Throwback / Proof',
+  Friday: 'Fun & Relatable',
+  Saturday: 'Showcase',
+  Sunday: 'Reflect & Plan',
+}

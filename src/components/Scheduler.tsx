@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { DayOfWeek, LoggedPost, Platform } from '../types'
+import type { DayOfWeek, LoggedPost, Platform, ScheduledPost } from '../types'
 import {
   WEEKLY_CADENCE,
   PLATFORM_EMOJI,
@@ -22,6 +22,8 @@ type Mode = 'week' | 'month'
 interface SchedulerProps {
   onBack: () => void
   loggedPosts: LoggedPost[]
+  scheduledPosts: ScheduledPost[]
+  onOpenDay: (date: Date) => void
 }
 
 function startOfDay(d: Date): Date {
@@ -112,12 +114,17 @@ function countByPlatform(posts: LoggedPost[]): Map<Platform, number> {
   return m
 }
 
-export default function Scheduler({ onBack, loggedPosts }: SchedulerProps) {
+export default function Scheduler({ onBack, loggedPosts, scheduledPosts, onOpenDay }: SchedulerProps) {
   const [mode, setMode] = useState<Mode>('week')
   const [anchor, setAnchor] = useState<Date>(() => startOfDay(new Date()))
 
   const today = startOfDay(new Date())
   const postsByDate = useMemo(() => groupPostsByDate(loggedPosts), [loggedPosts])
+  const scheduledByDate = useMemo(() => {
+    const m: Record<string, ScheduledPost[]> = {}
+    for (const s of scheduledPosts) (m[s.date] ||= []).push(s)
+    return m
+  }, [scheduledPosts])
 
   // Week view is a rolling 7-day window starting at the anchor (defaults to today).
   // Calendar-grid alignment (Mon-first) is only used inside the month view.
@@ -229,6 +236,8 @@ export default function Scheduler({ onBack, loggedPosts }: SchedulerProps) {
             weekDates={weekDates}
             today={today}
             postsByDate={postsByDate}
+            scheduledByDate={scheduledByDate}
+            onOpenDay={onOpenDay}
           />
         ) : (
           <MonthView
@@ -236,6 +245,7 @@ export default function Scheduler({ onBack, loggedPosts }: SchedulerProps) {
             anchorMonth={anchor.getMonth()}
             today={today}
             postsByDate={postsByDate}
+            scheduledByDate={scheduledByDate}
             onPickDay={(d) => { setAnchor(d); setMode('week') }}
           />
         )}
@@ -291,26 +301,32 @@ interface WeekViewProps {
   weekDates: Date[]
   today: Date
   postsByDate: PostsByDate
+  scheduledByDate: Record<string, ScheduledPost[]>
+  onOpenDay: (date: Date) => void
 }
 
-function WeekView({ weekDates, today, postsByDate }: WeekViewProps) {
+function WeekView({ weekDates, today, postsByDate, scheduledByDate, onOpenDay }: WeekViewProps) {
   return (
     <div className="grid gap-3 grid-cols-1 md:grid-cols-7">
       {weekDates.map((d) => {
         const dow = dayOfWeekName(d)
         const cadence = WEEKLY_CADENCE[dow]
         const posts = postsByDate[isoDate(d)] ?? []
+        const scheduled = scheduledByDate[isoDate(d)] ?? []
         const counts = countByPlatform(posts)
         const isToday = sameDay(d, today)
         return (
-          <section
+          <button
             key={isoDate(d)}
-            className="glass-panel card-enter"
+            onClick={() => onOpenDay(d)}
+            className="glass-panel card-enter text-left transition-transform duration-150 hover:scale-[1.01]"
             style={{
               padding: 12,
               borderColor: isToday ? '#b8a4ff' : undefined,
               borderWidth: isToday ? 2 : undefined,
+              cursor: 'pointer',
             }}
+            aria-label={`Open ${d.toLocaleDateString()}`}
           >
             <DayHeader date={d} isToday={isToday} />
             <div className="flex flex-row flex-wrap md:flex-col gap-1.5 mt-2">
@@ -343,12 +359,39 @@ function WeekView({ weekDates, today, postsByDate }: WeekViewProps) {
                 )
               })}
             </div>
+            {scheduled.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {scheduled
+                  .slice()
+                  .sort((a, b) => a.time.localeCompare(b.time))
+                  .map((s) => (
+                    <span
+                      key={s.id}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                      style={{
+                        background: 'rgba(184,164,255,.18)',
+                        color: '#7c5fff',
+                        border: '1px solid #b8a4ff55',
+                      }}
+                    >
+                      🕒 {fmtTime12(s.time)}
+                    </span>
+                  ))}
+              </div>
+            )}
             <DayFooter cadence={cadence} posts={posts} />
-          </section>
+          </button>
         )
       })}
     </div>
   )
+}
+
+function fmtTime12(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number)
+  const period = h >= 12 ? 'pm' : 'am'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return `${h12}:${String(m).padStart(2, '0')}${period}`
 }
 
 function DayHeader({ date, isToday }: { date: Date; isToday: boolean }) {
@@ -451,10 +494,11 @@ interface MonthViewProps {
   anchorMonth: number
   today: Date
   postsByDate: PostsByDate
+  scheduledByDate: Record<string, ScheduledPost[]>
   onPickDay: (d: Date) => void
 }
 
-function MonthView({ weeks, anchorMonth, today, postsByDate, onPickDay }: MonthViewProps) {
+function MonthView({ weeks, anchorMonth, today, postsByDate, scheduledByDate, onPickDay }: MonthViewProps) {
   return (
     <div>
       <div
@@ -514,8 +558,13 @@ function MonthView({ weeks, anchorMonth, today, postsByDate, onPickDay }: MonthV
               </div>
               {inMonth && (
                 <>
-                  <div className="text-[10px] mt-1 font-bold" style={{ color: 'var(--muted)' }}>
-                    {done}/{demanded}
+                  <div className="text-[10px] mt-1 font-bold flex items-center justify-between" style={{ color: 'var(--muted)' }}>
+                    <span>{done}/{demanded}</span>
+                    {(scheduledByDate[isoDate(d)]?.length ?? 0) > 0 && (
+                      <span style={{ color: '#7c5fff' }}>
+                        🕒 {scheduledByDate[isoDate(d)].length}
+                      </span>
+                    )}
                   </div>
                   <div
                     className="mt-1 rounded-full overflow-hidden"

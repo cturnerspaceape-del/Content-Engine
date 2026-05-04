@@ -111,6 +111,7 @@ export type ViewState =
   | 'home'
   | 'calendar'
   | 'scheduler'
+  | 'day-detail'
   | 'strategy'
   | 'postlog'
   | 'image-lab'
@@ -118,6 +119,16 @@ export type ViewState =
   | 'text-post-lab'
   | 'carousel-lab'
   | 'email-lab'
+
+export interface ScheduledPost {
+  id: string
+  date: string // YYYY-MM-DD (local)
+  time: string // HH:mm 24h
+  platform: Platform
+  format?: string
+  idea?: string
+  createdAt: string
+}
 
 export type InstagramFormat = 'Carousel' | 'Reel' | 'Single Image'
 
