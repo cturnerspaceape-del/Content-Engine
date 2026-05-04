@@ -4,6 +4,9 @@ import { generatePrintImage } from '../../lib/print/api'
 import type { PrintCampaign, PrintPiece, TrifoldPiece } from '../../lib/print/types'
 import type { PrintFormat } from '../../types'
 import { downloadPrintPdf } from '../../lib/print/pdf'
+import ResearchButton from '../ResearchButton'
+import { useResearch } from '../../lib/research/useResearch'
+import type { ResearchedSeed } from '../../lib/research/types'
 
 interface PrintLabProps {
   onBack: () => void
@@ -52,9 +55,63 @@ export default function PrintLab({ onBack }: PrintLabProps) {
     () => DEFAULT_CAMPAIGN,
   )
 
+  const [researchSeeds, setResearchSeeds] = usePersistedState<ResearchedSeed[]>(
+    'sl:printLab:researchSeeds',
+    () => [],
+  )
+  const [activeResearchIdx, setActiveResearchIdx] = usePersistedState<number>(
+    'sl:printLab:activeResearchIdx',
+    0,
+  )
+  const {
+    result: researchResult,
+    loading: researchLoading,
+    error: researchError,
+    fetchTrends: fetchResearchTrends,
+    clear: clearResearch,
+  } = useResearch('print')
+
+  const inResearchMode = researchSeeds.length > 0
+  const activeResearchSeed = inResearchMode
+    ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    : null
+
   const setFormat = (next: PrintFormat) => {
     setCampaign((cur) => ({ ...cur, activeFormat: next }))
   }
+
+  // Augment the per-format default brief with the researched trend angle.
+  // The PieceEditor seeds its prompt textarea from this on mount and on key
+  // change, so picking a different research candidate refreshes the brief.
+  const briefForFormat = (format: PrintFormat): string => {
+    const base = DEFAULT_PROMPTS[format]
+    if (!activeResearchSeed) return base
+    return `${base}\n\nTrend angle: ${activeResearchSeed.angle}${
+      activeResearchSeed.sourceNotes ? `\nSignal: ${activeResearchSeed.sourceNotes}` : ''
+    }`
+  }
+
+  const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
+    setResearchSeeds([rec, ...candidates])
+    setActiveResearchIdx(0)
+  }
+
+  const handleClearResearch = () => {
+    setResearchSeeds([])
+    setActiveResearchIdx(0)
+    clearResearch()
+  }
+
+  const handlePickResearchSeed = (idx: number) => {
+    setActiveResearchIdx(idx)
+  }
+
+  // Including the active researched subcategory in the PieceEditor key forces
+  // a remount when the user picks a different research candidate, so its
+  // internal prompt textarea reseeds from the augmented brief.
+  const editorKey = activeResearchSeed
+    ? `r:${activeResearchSeed.subcategory}:${activeResearchIdx}`
+    : 'static'
 
   const accent = '#0ea5e9'
 
@@ -92,6 +149,52 @@ export default function PrintLab({ onBack }: PrintLabProps) {
           </p>
         </div>
 
+        <div className="flex justify-center mb-3">
+          <ResearchButton
+            loading={researchLoading}
+            error={researchError}
+            result={researchResult}
+            onResearched={handleResearched}
+            fetchTrends={fetchResearchTrends}
+            label="Research print trends"
+          />
+        </div>
+
+        {inResearchMode && (
+          <div className="flex flex-wrap justify-center gap-2 mb-3">
+            {researchSeeds.map((seed, idx) => {
+              const active = idx === activeResearchIdx
+              return (
+                <button
+                  key={seed.subcategory + idx}
+                  onClick={() => handlePickResearchSeed(idx)}
+                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+                  style={{
+                    background: active ? 'rgba(236,72,153,.18)' : 'var(--panel-2)',
+                    color: active ? '#ec4899' : 'var(--muted)',
+                    border: `1px solid ${active ? '#ec4899' : 'var(--border)'}`,
+                  }}
+                  title={seed.angle}
+                >
+                  {seed.subcategory}
+                </button>
+              )
+            })}
+            <button
+              onClick={handleClearResearch}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+              style={{
+                background: 'transparent',
+                color: 'var(--muted)',
+                border: '1px dashed var(--border)',
+              }}
+              title="Clear the trend brief and use the default prompts"
+            >
+              ✕ Use templates
+            </button>
+          </div>
+        )}
+
         {/* Format picker */}
         <div className="flex flex-wrap justify-center gap-2 mb-6">
           {FORMATS.map((f) => {
@@ -118,23 +221,29 @@ export default function PrintLab({ onBack }: PrintLabProps) {
 
         {campaign.activeFormat === 'Poster' && (
           <SinglePanel
+            key={`poster:${editorKey}`}
             label="Poster"
             pieceType="poster"
             piece={campaign.poster}
+            defaultPromptOverride={briefForFormat('Poster')}
             onChange={(p) => setCampaign((cur) => ({ ...cur, poster: p }))}
           />
         )}
         {campaign.activeFormat === 'Sticker' && (
           <SinglePanel
+            key={`sticker:${editorKey}`}
             label="Sticker"
             pieceType="sticker"
             piece={campaign.sticker}
+            defaultPromptOverride={briefForFormat('Sticker')}
             onChange={(p) => setCampaign((cur) => ({ ...cur, sticker: p }))}
           />
         )}
         {campaign.activeFormat === 'Trifold' && (
           <TrifoldEditor
+            key={`trifold:${editorKey}`}
             piece={campaign.trifold}
+            trifoldDefaultBrief={briefForFormat('Trifold')}
             onChange={(p) => setCampaign((cur) => ({ ...cur, trifold: p }))}
           />
         )}
@@ -176,16 +285,22 @@ interface SinglePanelProps {
   label: string
   pieceType: 'poster' | 'sticker'
   piece: PrintPiece | null
+  // Optional override that replaces the static DEFAULT_PROMPT — used when a
+  // researched trend angle is active so the brief textarea seeds with the
+  // augmented brief on mount.
+  defaultPromptOverride?: string
   onChange: (p: PrintPiece) => void
 }
 
-function SinglePanel({ label, pieceType, piece, onChange }: SinglePanelProps) {
+function SinglePanel({ label, pieceType, piece, defaultPromptOverride, onChange }: SinglePanelProps) {
   return (
     <PieceEditor
       title={label}
       pieceType={pieceType}
       piece={piece}
-      defaultPrompt={DEFAULT_PROMPTS[pieceType === 'poster' ? 'Poster' : 'Sticker']}
+      defaultPrompt={
+        defaultPromptOverride ?? DEFAULT_PROMPTS[pieceType === 'poster' ? 'Poster' : 'Sticker']
+      }
       aspectStyle={
         pieceType === 'poster'
           ? { aspectRatio: '13 / 19', maxWidth: 360 }
@@ -198,12 +313,16 @@ function SinglePanel({ label, pieceType, piece, onChange }: SinglePanelProps) {
 
 interface TrifoldEditorProps {
   piece: TrifoldPiece | null
+  // Optional override applied to both panels' default briefs (each panel
+  // appends its own outside/inside specifier on top).
+  trifoldDefaultBrief?: string
   onChange: (p: TrifoldPiece) => void
 }
 
-function TrifoldEditor({ piece, onChange }: TrifoldEditorProps) {
+function TrifoldEditor({ piece, trifoldDefaultBrief, onChange }: TrifoldEditorProps) {
   const outside = piece?.outsidePanel ?? null
   const inside = piece?.insidePanel ?? null
+  const baseBrief = trifoldDefaultBrief ?? DEFAULT_PROMPTS.Trifold
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <PieceEditor
@@ -211,7 +330,7 @@ function TrifoldEditor({ piece, onChange }: TrifoldEditorProps) {
         subtitle="Cover face — what someone sees stacked face-up"
         pieceType="trifold-panel"
         piece={outside}
-        defaultPrompt={DEFAULT_PROMPTS.Trifold + ' Outside / cover face — strongest hero, big headline.'}
+        defaultPrompt={baseBrief + ' Outside / cover face — strongest hero, big headline.'}
         aspectStyle={{ aspectRatio: '6.33 / 11', maxWidth: 220 }}
         onChange={(p) => onChange({ outsidePanel: p, insidePanel: inside })}
       />
@@ -220,7 +339,7 @@ function TrifoldEditor({ piece, onChange }: TrifoldEditorProps) {
         subtitle="Body face — opens to reveal this"
         pieceType="trifold-panel"
         piece={inside}
-        defaultPrompt={DEFAULT_PROMPTS.Trifold + ' Inside / body face — denser content, secondary product shots, body copy block.'}
+        defaultPrompt={baseBrief + ' Inside / body face — denser content, secondary product shots, body copy block.'}
         aspectStyle={{ aspectRatio: '6.33 / 11', maxWidth: 220 }}
         onChange={(p) => onChange({ outsidePanel: outside, insidePanel: p })}
       />

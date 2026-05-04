@@ -15,6 +15,10 @@ import {
   findCarouselSeedIdxFromTitle,
   pickDifferentCarouselSeedIdx,
 } from '../../lib/seeds/carouselArc'
+import ResearchButton from '../ResearchButton'
+import { useResearch } from '../../lib/research/useResearch'
+import { toCarouselArcSeed } from '../../lib/research/researchedSeed'
+import type { ResearchedSeed } from '../../lib/research/types'
 import {
   tuneFor,
   type PlatformVariant,
@@ -82,6 +86,27 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     () => ({}),
   )
 
+  const [researchSeeds, setResearchSeeds] = usePersistedState<ResearchedSeed[]>(
+    'sl:carouselLab:researchSeeds',
+    () => [],
+  )
+  const [activeResearchIdx, setActiveResearchIdx] = usePersistedState<number>(
+    'sl:carouselLab:activeResearchIdx',
+    0,
+  )
+  const {
+    result: researchResult,
+    loading: researchLoading,
+    error: researchError,
+    fetchTrends: fetchResearchTrends,
+    clear: clearResearch,
+  } = useResearch('carousel')
+
+  const inResearchMode = researchSeeds.length > 0
+  const activeResearchSeed = inResearchMode
+    ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    : null
+
   // Migrate older persisted selections that still hold 'Instagram' /
   // 'Facebook' / 'Email' as separate strings — collapse Meta to a
   // single 'IG/FB' chip and strip Email entirely.
@@ -123,20 +148,60 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
   }, [item.generatedVisual?.caption, selectedPlatforms.join('|')])
 
   const handleGenerate = async () => {
-    const seedIdxAtClick = findCarouselSeedIdxFromTitle(SEED_PREFIX, item.title)
-    const seed = CAROUSEL_ARC_SEEDS[seedIdxAtClick]
-    const generated = await generateCarouselLoungePostAsync(item, seed.arcId)
+    const research = activeResearchSeed
+      ? { angle: activeResearchSeed.angle, notes: activeResearchSeed.sourceNotes }
+      : undefined
+    const seed = inResearchMode && activeResearchSeed
+      ? toCarouselArcSeed(activeResearchSeed)
+      : CAROUSEL_ARC_SEEDS[findCarouselSeedIdxFromTitle(SEED_PREFIX, item.title)]
+    const generated = await generateCarouselLoungePostAsync(item, seed.arcId, research)
     setItem(decorateTitle(generated, formatCarouselSeedTitle(SEED_PREFIX, seed)))
     setVariants({})
   }
 
   const handleShuffle = () => {
+    if (inResearchMode) {
+      const cur = activeResearchIdx
+      let next = cur
+      if (researchSeeds.length > 1) {
+        while (next === cur) next = Math.floor(Math.random() * researchSeeds.length)
+      } else {
+        next = 0
+      }
+      setActiveResearchIdx(next)
+      const seed = toCarouselArcSeed(researchSeeds[next])
+      setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, seed)))
+      setVariants({})
+      return
+    }
     setItem((cur) => {
       const nextIdx = pickDifferentCarouselSeedIdx(
         findCarouselSeedIdxFromTitle(SEED_PREFIX, cur.title),
       )
       return makeSeed(formatCarouselSeedTitle(SEED_PREFIX, CAROUSEL_ARC_SEEDS[nextIdx]))
     })
+    setVariants({})
+  }
+
+  const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
+    const seeds = [rec, ...candidates]
+    setResearchSeeds(seeds)
+    setActiveResearchIdx(0)
+    setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, toCarouselArcSeed(rec))))
+    setVariants({})
+  }
+
+  const handleClearResearch = () => {
+    setResearchSeeds([])
+    setActiveResearchIdx(0)
+    clearResearch()
+    setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, CAROUSEL_ARC_SEEDS[0])))
+    setVariants({})
+  }
+
+  const handlePickResearchSeed = (idx: number) => {
+    setActiveResearchIdx(idx)
+    setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, toCarouselArcSeed(researchSeeds[idx]))))
     setVariants({})
   }
 
@@ -333,25 +398,58 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
         </div>
 
         <div className="flex flex-wrap justify-center gap-2 mb-3">
-          {CAROUSEL_ARC_SEEDS.map((seed, idx) => {
-            const active = idx === activeSeedIdx
-            const arcName = getCarouselArc(seed.arcId)?.name ?? seed.subcategory
-            return (
-              <button
-                key={seed.arcId}
-                onClick={() => handlePickSeed(idx)}
-                className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: active ? 'rgba(6,182,212,.15)' : 'var(--panel-2)',
-                  color: active ? '#06b6d4' : 'var(--muted)',
-                  border: `1px solid ${active ? '#06b6d4' : 'var(--border)'}`,
-                }}
-                title={arcName}
-              >
-                {seed.pillar}: {seed.subcategory}
-              </button>
-            )
-          })}
+          {inResearchMode
+            ? researchSeeds.map((seed, idx) => {
+                const active = idx === activeResearchIdx
+                return (
+                  <button
+                    key={seed.subcategory + idx}
+                    onClick={() => handlePickResearchSeed(idx)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+                    style={{
+                      background: active ? 'rgba(236,72,153,.18)' : 'var(--panel-2)',
+                      color: active ? '#ec4899' : 'var(--muted)',
+                      border: `1px solid ${active ? '#ec4899' : 'var(--border)'}`,
+                    }}
+                    title={seed.angle}
+                  >
+                    {seed.pillar}: {seed.subcategory}
+                  </button>
+                )
+              })
+            : CAROUSEL_ARC_SEEDS.map((seed, idx) => {
+                const active = idx === activeSeedIdx
+                const arcName = getCarouselArc(seed.arcId)?.name ?? seed.subcategory
+                return (
+                  <button
+                    key={seed.arcId}
+                    onClick={() => handlePickSeed(idx)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+                    style={{
+                      background: active ? 'rgba(6,182,212,.15)' : 'var(--panel-2)',
+                      color: active ? '#06b6d4' : 'var(--muted)',
+                      border: `1px solid ${active ? '#06b6d4' : 'var(--border)'}`,
+                    }}
+                    title={arcName}
+                  >
+                    {seed.pillar}: {seed.subcategory}
+                  </button>
+                )
+              })}
+          {inResearchMode && (
+            <button
+              onClick={handleClearResearch}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+              style={{
+                background: 'transparent',
+                color: 'var(--muted)',
+                border: '1px dashed var(--border)',
+              }}
+              title="Switch back to the static template seeds"
+            >
+              ✕ Use templates
+            </button>
+          )}
         </div>
 
         <PlatformPicker
@@ -386,7 +484,14 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
 
         {selectedPlatforms.length > 0 && (
           <div className="flex flex-col items-center gap-3 mt-4">
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2 items-start">
+              <ResearchButton
+                loading={researchLoading}
+                error={researchError}
+                result={researchResult}
+                onResearched={handleResearched}
+                fetchTrends={fetchResearchTrends}
+              />
               <button
                 onClick={handleShuffle}
                 className="text-sm font-bold px-5 py-3 rounded-xl"

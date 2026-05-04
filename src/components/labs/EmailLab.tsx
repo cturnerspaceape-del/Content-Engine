@@ -16,6 +16,10 @@ import type {
   HeroSectionData,
   ProductSectionData,
 } from '../../lib/email/types'
+import ResearchButton from '../ResearchButton'
+import { useResearch } from '../../lib/research/useResearch'
+import { toEmailType } from '../../lib/research/researchedSeed'
+import type { ResearchedSeed } from '../../lib/research/types'
 
 interface EmailLabProps {
   onBack: () => void
@@ -55,6 +59,27 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     null,
   )
 
+  const [researchSeeds, setResearchSeeds] = usePersistedState<ResearchedSeed[]>(
+    'sl:emailLab:researchSeeds',
+    () => [],
+  )
+  const [activeResearchIdx, setActiveResearchIdx] = usePersistedState<number>(
+    'sl:emailLab:activeResearchIdx',
+    0,
+  )
+  const {
+    result: researchResult,
+    loading: researchLoading,
+    error: researchError,
+    fetchTrends: fetchResearchTrends,
+    clear: clearResearch,
+  } = useResearch('email')
+
+  const inResearchMode = researchSeeds.length > 0
+  const activeResearchSeed = inResearchMode
+    ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    : null
+
   const html = useMemo(() => (campaign.email ? composeHtml(campaign.email) : ''), [campaign.email])
 
   const cachedAudiences: AudienceType[] = []
@@ -82,10 +107,16 @@ export default function EmailLab({ onBack }: EmailLabProps) {
         return
       }
       const variationSeed = force ? Math.floor(Math.random() * 1e9) : undefined
+      const campaignNote = activeResearchSeed
+        ? `Trend angle: ${activeResearchSeed.angle}${
+            activeResearchSeed.sourceNotes ? ` (signal: ${activeResearchSeed.sourceNotes})` : ''
+          }`
+        : undefined
       const { email } = await generateEmail({
         emailType,
         audience,
         variationSeed,
+        campaignNote,
       })
       const hydrated = await hydrateImages(email)
       setCampaign((cur) => ({
@@ -117,6 +148,30 @@ export default function EmailLab({ onBack }: EmailLabProps) {
 
   const handleGenerate = () => {
     void runGenerate(campaign.audienceType, campaign.emailType, true)
+  }
+
+  const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
+    const seeds = [rec, ...candidates]
+    setResearchSeeds(seeds)
+    setActiveResearchIdx(0)
+    const next = toEmailType(rec)
+    // Switching email type invalidates the cached email; the trend angle
+    // would otherwise produce a stale-but-cached body.
+    setCampaign((cur) => ({ ...cur, emailType: next, email: null, cache: {} }))
+  }
+
+  const handleClearResearch = () => {
+    setResearchSeeds([])
+    setActiveResearchIdx(0)
+    clearResearch()
+  }
+
+  const handlePickResearchSeed = (idx: number) => {
+    setActiveResearchIdx(idx)
+    const next = toEmailType(researchSeeds[idx])
+    setCampaign((cur) =>
+      cur.emailType === next ? cur : { ...cur, emailType: next, email: null, cache: {} },
+    )
   }
 
   // Splits comma- / space- / newline-separated input into clean addresses.
@@ -304,7 +359,42 @@ export default function EmailLab({ onBack }: EmailLabProps) {
           </p>
         </div>
 
-        <EmailTypePicker value={campaign.emailType} onChange={handleEmailTypeChange} />
+        {inResearchMode ? (
+          <div className="flex flex-wrap justify-center gap-2 mb-3">
+            {researchSeeds.map((seed, idx) => {
+              const active = idx === activeResearchIdx
+              return (
+                <button
+                  key={seed.subcategory + idx}
+                  onClick={() => handlePickResearchSeed(idx)}
+                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+                  style={{
+                    background: active ? 'rgba(236,72,153,.18)' : 'var(--panel-2)',
+                    color: active ? '#ec4899' : 'var(--muted)',
+                    border: `1px solid ${active ? '#ec4899' : 'var(--border)'}`,
+                  }}
+                  title={seed.angle}
+                >
+                  {seed.subcategory}
+                </button>
+              )
+            })}
+            <button
+              onClick={handleClearResearch}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+              style={{
+                background: 'transparent',
+                color: 'var(--muted)',
+                border: '1px dashed var(--border)',
+              }}
+              title="Switch back to manual email type selection"
+            >
+              ✕ Use templates
+            </button>
+          </div>
+        ) : (
+          <EmailTypePicker value={campaign.emailType} onChange={handleEmailTypeChange} />
+        )}
         <AudienceToggle
           value={campaign.audienceType}
           onChange={handleAudienceChange}
@@ -416,7 +506,15 @@ export default function EmailLab({ onBack }: EmailLabProps) {
               )}
             </div>
           )}
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2 items-start">
+            <ResearchButton
+              loading={researchLoading}
+              error={researchError}
+              result={researchResult}
+              onResearched={handleResearched}
+              fetchTrends={fetchResearchTrends}
+              label="Research email trends"
+            />
             <button
               onClick={handleGenerate}
               disabled={busy || sendBusy}

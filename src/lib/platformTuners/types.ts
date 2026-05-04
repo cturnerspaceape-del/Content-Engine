@@ -27,6 +27,9 @@ export interface TunerSource {
   baseHashtags?: string[]
   // Multi-slide bodies (carousel) — used for X-thread variant.
   slideBriefs?: string[]
+  // Optional creative direction from the Research button.
+  researchAngle?: string
+  researchNotes?: string
 }
 
 export interface PlatformVariant {

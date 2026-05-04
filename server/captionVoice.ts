@@ -16,6 +16,11 @@ export interface BuildCaptionInput {
   flavorNotes?: string[]
   platform: CaptionPlatform
   archetype?: string // X/Threads text-only posts
+  // Optional creative direction supplied by the Research button. When present,
+  // the LLM is asked to anchor the caption to this angle rather than picking
+  // a generic take for the pillar/subcategory.
+  researchAngle?: string
+  researchNotes?: string
 }
 
 const BRAND_BIBLE = `SPACE APE — BRAND BIBLE (caption voice).
@@ -199,6 +204,12 @@ export function buildCaptionMessages(input: BuildCaptionInput): BuildOutput {
   if (input.subcategory) lines.push(`Subcategory: ${input.subcategory}`)
   lines.push(`Platform: ${input.platform}`)
   if (input.archetype) lines.push(`Archetype (X/Threads only): ${input.archetype}`)
+  if (input.researchAngle) {
+    lines.push('')
+    lines.push(`Creative direction (from trend research — anchor the caption to this):`)
+    lines.push(`- Angle: ${input.researchAngle}`)
+    if (input.researchNotes) lines.push(`- Trend signal: ${input.researchNotes}`)
+  }
   lines.push('')
   lines.push(`Product on screen:`)
   lines.push(`- Flavor: Space Ape ${input.flavor}`)

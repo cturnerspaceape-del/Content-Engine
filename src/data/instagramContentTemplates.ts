@@ -369,6 +369,8 @@ interface FetchCaptionInput {
   pillar: string
   subcategory: string
   flavor: string
+  researchAngle?: string
+  researchNotes?: string
   platform?: 'IG' | 'X' | 'Threads' | 'TikTok' | 'YouTube Shorts'
   archetype?: string
 }
@@ -401,6 +403,8 @@ export async function fetchCaption(input: FetchCaptionInput): Promise<FetchCapti
         flavor: input.flavor,
         platform: input.platform || 'IG',
         archetype: input.archetype,
+        researchAngle: input.researchAngle,
+        researchNotes: input.researchNotes,
       }),
     })
     if (!resp.ok) throw new Error(`/api/generate-caption ${resp.status}`)
@@ -486,7 +490,15 @@ export function generateContentForPost(item: ContentItem): ContentItem {
 // Async LLM-backed variant of generateContentForPost. Used by ImageLab to get
 // captions that are flavor- and strain-aware. Falls back to the static pool
 // inside fetchCaption when the API is unavailable.
-export async function generateContentForPostAsync(item: ContentItem): Promise<ContentItem> {
+export interface ResearchContext {
+  angle?: string
+  notes?: string
+}
+
+export async function generateContentForPostAsync(
+  item: ContentItem,
+  research?: ResearchContext,
+): Promise<ContentItem> {
   const titleParts = item.title.split(' — ')
   const format = titleParts[0]?.trim() || 'Single Image'
   const pillarSubcat = titleParts[1] || ''
@@ -499,6 +511,8 @@ export async function generateContentForPostAsync(item: ContentItem): Promise<Co
     subcategory,
     flavor,
     platform: 'IG',
+    researchAngle: research?.angle,
+    researchNotes: research?.notes,
   })
 
   const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
@@ -578,7 +592,11 @@ export function generateCarouselLoungePost(item: ContentItem, arcId?: string): C
   }
 }
 
-export async function generateCarouselLoungePostAsync(item: ContentItem, arcId?: string): Promise<ContentItem> {
+export async function generateCarouselLoungePostAsync(
+  item: ContentItem,
+  arcId?: string,
+  research?: ResearchContext,
+): Promise<ContentItem> {
   const titleParts = item.title.split(' — ')
   const pillarSubcat = titleParts[1] || ''
   const pillar = pillarSubcat.split(':')[0]?.trim() || 'Product Centric'
@@ -593,6 +611,8 @@ export async function generateCarouselLoungePostAsync(item: ContentItem, arcId?:
     subcategory,
     flavor,
     platform: 'IG',
+    researchAngle: research?.angle,
+    researchNotes: research?.notes,
   })
 
   const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')

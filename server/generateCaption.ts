@@ -9,6 +9,8 @@ interface GenerateCaptionBody {
   flavor?: string
   platform?: CaptionPlatform
   archetype?: string
+  researchAngle?: string
+  researchNotes?: string
 }
 
 interface CaptionResult {
@@ -35,7 +37,14 @@ type Pending = { promise: Promise<CaptionResult>; expires: number }
 const pending = new Map<string, Pending>()
 
 function dedupeKey(b: GenerateCaptionBody): string {
-  return [b.pillar, b.subcategory, b.flavor, b.platform, b.archetype ?? ''].join('|')
+  return [
+    b.pillar,
+    b.subcategory,
+    b.flavor,
+    b.platform,
+    b.archetype ?? '',
+    b.researchAngle ?? '',
+  ].join('|')
 }
 
 function extractJson(raw: string): unknown {
@@ -74,6 +83,8 @@ async function callAnthropic(body: GenerateCaptionBody, retryReason?: string): P
     flavorNotes: product.flavorNotes,
     platform: body.platform || 'IG',
     archetype: body.archetype,
+    researchAngle: body.researchAngle,
+    researchNotes: body.researchNotes,
   })
 
   const userText = retryReason

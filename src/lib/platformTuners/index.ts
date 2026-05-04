@@ -51,6 +51,8 @@ export async function tuneForAsync(
           flavor: 'Tang Exotic', // any flavor — LLM picks how much to surface
           platform,
           archetype: source.archetype,
+          researchAngle: source.researchAngle,
+          researchNotes: source.researchNotes,
         }),
       })
       if (!resp.ok) throw new Error(`/api/generate-caption ${resp.status}`)

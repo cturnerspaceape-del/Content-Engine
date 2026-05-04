@@ -15,6 +15,10 @@ import {
   findPillarSeedIdxFromTitle,
   pickDifferentPillarSeedIdx,
 } from '../../lib/seeds/pillarImage'
+import ResearchButton from '../ResearchButton'
+import { useResearch } from '../../lib/research/useResearch'
+import { toPillarImageSeed } from '../../lib/research/researchedSeed'
+import type { ResearchedSeed } from '../../lib/research/types'
 import {
   tuneFor,
   type PlatformVariant,
@@ -82,6 +86,31 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     () => ({}),
   )
 
+  // Research mode — when researchSeeds is non-empty, the chip row shows
+  // researched candidates instead of PILLAR_IMAGE_SEEDS, and Shuffle picks
+  // among them. activeResearchIdx tracks which one is currently selected so
+  // Generate can pass its angle + notes through to the caption LLM.
+  const [researchSeeds, setResearchSeeds] = usePersistedState<ResearchedSeed[]>(
+    'sl:imageLab:researchSeeds',
+    () => [],
+  )
+  const [activeResearchIdx, setActiveResearchIdx] = usePersistedState<number>(
+    'sl:imageLab:activeResearchIdx',
+    0,
+  )
+  const {
+    result: researchResult,
+    loading: researchLoading,
+    error: researchError,
+    fetchTrends: fetchResearchTrends,
+    clear: clearResearch,
+  } = useResearch('image')
+
+  const inResearchMode = researchSeeds.length > 0
+  const activeResearchSeed = inResearchMode
+    ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    : null
+
   // Migrate older persisted selections that still hold 'Instagram' /
   // 'Facebook' as separate strings, or stale 'Email' / 'TikTok' /
   // 'YouTube Shorts' values that no longer apply to the image format.
@@ -129,21 +158,66 @@ export default function ImageLab({ onBack }: ImageLabProps) {
   }, [item.generatedVisual?.caption, selectedPlatforms.join('|')])
 
   const handleGenerate = async () => {
-    const seedIdxAtClick = findPillarSeedIdxFromTitle(SEED_PREFIX, item.title)
-    const generated = await generateContentForPostAsync(item)
-    const seedTitle = formatPillarSeedTitle(SEED_PREFIX, PILLAR_IMAGE_SEEDS[seedIdxAtClick])
+    const research = activeResearchSeed
+      ? { angle: activeResearchSeed.angle, notes: activeResearchSeed.sourceNotes }
+      : undefined
+    const generated = await generateContentForPostAsync(item, research)
+    const seedTitle = inResearchMode && activeResearchSeed
+      ? formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(activeResearchSeed))
+      : formatPillarSeedTitle(
+          SEED_PREFIX,
+          PILLAR_IMAGE_SEEDS[findPillarSeedIdxFromTitle(SEED_PREFIX, item.title)],
+        )
     setItem(decorateTitle(generated, seedTitle))
     // Clear cached non-IG variants so they re-tune off the new caption.
     setVariants({})
   }
 
   const handleShuffle = () => {
+    if (inResearchMode) {
+      const cur = activeResearchIdx
+      let next = cur
+      if (researchSeeds.length > 1) {
+        while (next === cur) next = Math.floor(Math.random() * researchSeeds.length)
+      } else {
+        next = 0
+      }
+      setActiveResearchIdx(next)
+      const seed = toPillarImageSeed(researchSeeds[next])
+      setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, seed)))
+      setVariants({})
+      return
+    }
     setItem((cur) => {
       const nextIdx = pickDifferentPillarSeedIdx(
         findPillarSeedIdxFromTitle(SEED_PREFIX, cur.title),
       )
       return makeSeed(formatPillarSeedTitle(SEED_PREFIX, PILLAR_IMAGE_SEEDS[nextIdx]))
     })
+    setVariants({})
+  }
+
+  const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
+    const seeds = [rec, ...candidates]
+    setResearchSeeds(seeds)
+    setActiveResearchIdx(0)
+    const seed = toPillarImageSeed(rec)
+    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, seed)))
+    setVariants({})
+  }
+
+  const handleClearResearch = () => {
+    setResearchSeeds([])
+    setActiveResearchIdx(0)
+    clearResearch()
+    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, PILLAR_IMAGE_SEEDS[0])))
+    setVariants({})
+  }
+
+  const handlePickResearchSeed = (idx: number) => {
+    setActiveResearchIdx(idx)
+    const seed = toPillarImageSeed(researchSeeds[idx])
+    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, seed)))
     setVariants({})
   }
 
@@ -341,23 +415,56 @@ export default function ImageLab({ onBack }: ImageLabProps) {
         </div>
 
         <div className="flex flex-wrap justify-center gap-2 mb-3">
-          {PILLAR_IMAGE_SEEDS.map((seed, idx) => {
-            const active = idx === activeSeedIdx
-            return (
-              <button
-                key={seed.pillar + seed.subcategory}
-                onClick={() => handlePickSeed(idx)}
-                className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: active ? 'rgba(245,158,11,.15)' : 'var(--panel-2)',
-                  color: active ? '#f59e0b' : 'var(--muted)',
-                  border: `1px solid ${active ? '#f59e0b' : 'var(--border)'}`,
-                }}
-              >
-                {seed.pillar}: {seed.subcategory}
-              </button>
-            )
-          })}
+          {inResearchMode
+            ? researchSeeds.map((seed, idx) => {
+                const active = idx === activeResearchIdx
+                return (
+                  <button
+                    key={seed.subcategory + idx}
+                    onClick={() => handlePickResearchSeed(idx)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+                    style={{
+                      background: active ? 'rgba(236,72,153,.18)' : 'var(--panel-2)',
+                      color: active ? '#ec4899' : 'var(--muted)',
+                      border: `1px solid ${active ? '#ec4899' : 'var(--border)'}`,
+                    }}
+                    title={seed.angle}
+                  >
+                    {seed.pillar}: {seed.subcategory}
+                  </button>
+                )
+              })
+            : PILLAR_IMAGE_SEEDS.map((seed, idx) => {
+                const active = idx === activeSeedIdx
+                return (
+                  <button
+                    key={seed.pillar + seed.subcategory}
+                    onClick={() => handlePickSeed(idx)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+                    style={{
+                      background: active ? 'rgba(245,158,11,.15)' : 'var(--panel-2)',
+                      color: active ? '#f59e0b' : 'var(--muted)',
+                      border: `1px solid ${active ? '#f59e0b' : 'var(--border)'}`,
+                    }}
+                  >
+                    {seed.pillar}: {seed.subcategory}
+                  </button>
+                )
+              })}
+          {inResearchMode && (
+            <button
+              onClick={handleClearResearch}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
+              style={{
+                background: 'transparent',
+                color: 'var(--muted)',
+                border: '1px dashed var(--border)',
+              }}
+              title="Switch back to the static template seeds"
+            >
+              ✕ Use templates
+            </button>
+          )}
         </div>
 
         <PlatformPicker
@@ -393,7 +500,14 @@ export default function ImageLab({ onBack }: ImageLabProps) {
         {/* Unified bottom action row: Shuffle / Regenerate / Post. */}
         {selectedPlatforms.length > 0 && (
           <div className="flex flex-col items-center gap-3 mt-4">
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2 items-start">
+              <ResearchButton
+                loading={researchLoading}
+                error={researchError}
+                result={researchResult}
+                onResearched={handleResearched}
+                fetchTrends={fetchResearchTrends}
+              />
               <button
                 onClick={handleShuffle}
                 className="text-sm font-bold px-5 py-3 rounded-xl"
