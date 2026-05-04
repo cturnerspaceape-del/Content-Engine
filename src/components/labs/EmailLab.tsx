@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import EmailTypePicker from '../email/EmailTypePicker'
 import AudienceToggle from '../email/AudienceToggle'
 import EmailPreview from '../email/EmailPreview'
@@ -16,9 +16,8 @@ import type {
   HeroSectionData,
   ProductSectionData,
 } from '../../lib/email/types'
-import ResearchButton from '../ResearchButton'
+import ResearchPanel from '../ResearchPanel'
 import { useResearch } from '../../lib/research/useResearch'
-import { toEmailType } from '../../lib/research/researchedSeed'
 import type { ResearchedSeed } from '../../lib/research/types'
 
 interface EmailLabProps {
@@ -31,6 +30,25 @@ const DEFAULT_CAMPAIGN: EmailCampaign = {
   audienceType: 'existing',
   email: null,
   cache: {},
+}
+
+// Derive a short style anchor the research prompt can use to keep its
+// recommendations grounded in the brand's existing voice — last few generated
+// subjects + section kinds are enough; we don't need full bodies.
+function buildHistoricalContext(campaign: EmailCampaign): string | undefined {
+  const items: string[] = []
+  for (const audience of ['existing', 'inactive'] as const) {
+    const cached = campaign.cache[audience]
+    if (!cached) continue
+    const subject = cached.subject?.trim()
+    const sections = cached.sections.map((s) => s.kind).join(', ')
+    if (subject || sections) {
+      items.push(
+        `(${audience}) subject: ${subject || '—'} · sections: ${sections || '—'}`,
+      )
+    }
+  }
+  return items.length > 0 ? items.join('\n') : undefined
 }
 
 export default function EmailLab({ onBack }: EmailLabProps) {
@@ -54,31 +72,36 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     '',
   )
   const [sendBusy, setSendBusy] = useState(false)
-  // 'sent' shows for 3s then auto-clears; 'error: ...' persists until next send.
   const [sendStatus, setSendStatus] = useState<{ kind: 'sent' | 'error'; text: string } | null>(
     null,
   )
 
-  const [researchSeeds, setResearchSeeds] = usePersistedState<ResearchedSeed[]>(
-    'sl:emailLab:researchSeeds',
-    () => [],
-  )
-  const [activeResearchIdx, setActiveResearchIdx] = usePersistedState<number>(
-    'sl:emailLab:activeResearchIdx',
-    0,
-  )
+  // Active research seed index — reset to 0 whenever the user changes
+  // emailType (since research is scoped to the type and switching slots in
+  // a different cached set).
+  const [activeResearchIdx, setActiveResearchIdx] = useState(0)
+
+  const historicalContext = useMemo(() => buildHistoricalContext(campaign), [campaign])
+
   const {
     result: researchResult,
     loading: researchLoading,
     error: researchError,
     fetchTrends: fetchResearchTrends,
-    clear: clearResearch,
-  } = useResearch('email')
+  } = useResearch('email', { emailType: campaign.emailType, historicalContext })
 
-  const inResearchMode = researchSeeds.length > 0
-  const activeResearchSeed = inResearchMode
-    ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
-    : null
+  // Reset active idx when the type-scoped result switches under us.
+  useEffect(() => {
+    setActiveResearchIdx(0)
+  }, [campaign.emailType])
+
+  const researchSeeds: ResearchedSeed[] = researchResult
+    ? [researchResult.recommendation, ...researchResult.candidates].slice(0, 3)
+    : []
+  const activeResearchSeed: ResearchedSeed | null =
+    researchSeeds.length > 0
+      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+      : null
 
   const html = useMemo(() => (campaign.email ? composeHtml(campaign.email) : ''), [campaign.email])
 
@@ -87,13 +110,13 @@ export default function EmailLab({ onBack }: EmailLabProps) {
   if (campaign.cache.inactive) cachedAudiences.push('inactive')
 
   const handleEmailTypeChange = (next: EmailType) => {
-    // Switching email type invalidates the cached versions — different sections.
     setCampaign((cur) => ({
       ...cur,
       emailType: next,
       email: null,
       cache: {},
     }))
+    setActiveResearchIdx(0)
   }
 
   const runGenerate = async (audience: AudienceType, emailType: EmailType, force: boolean) => {
@@ -138,8 +161,6 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     if (cached) {
       setCampaign((cur) => ({ ...cur, audienceType: next, email: cached }))
     } else if (campaign.email) {
-      // Auto-generate the alternate audience version once the user has at
-      // least generated something — avoids surprise empty preview.
       void runGenerate(next, campaign.emailType, false)
     } else {
       setCampaign((cur) => ({ ...cur, audienceType: next }))
@@ -150,33 +171,16 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     void runGenerate(campaign.audienceType, campaign.emailType, true)
   }
 
-  const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
-    const seeds = [rec, ...candidates]
-    setResearchSeeds(seeds)
+  const handleResearched = () => {
+    // Reset active idx so the recommendation is highlighted; the seeds are
+    // sourced from researchResult, so no local copy needed.
     setActiveResearchIdx(0)
-    const next = toEmailType(rec)
-    // Switching email type invalidates the cached email; the trend angle
-    // would otherwise produce a stale-but-cached body.
-    setCampaign((cur) => ({ ...cur, emailType: next, email: null, cache: {} }))
   }
 
-  const handleClearResearch = () => {
-    setResearchSeeds([])
-    setActiveResearchIdx(0)
-    clearResearch()
-  }
-
-  const handlePickResearchSeed = (idx: number) => {
+  const handlePickSeed = (idx: number) => {
     setActiveResearchIdx(idx)
-    const next = toEmailType(researchSeeds[idx])
-    setCampaign((cur) =>
-      cur.emailType === next ? cur : { ...cur, emailType: next, email: null, cache: {} },
-    )
   }
 
-  // Splits comma- / space- / newline-separated input into clean addresses.
-  // Mirrors the parsing used in PostConfirmModal.parseHashtagInput so the
-  // user can paste a list and it just works.
   const parseRecipients = (raw: string): string[] =>
     raw
       .split(/[\s,;]+/)
@@ -293,7 +297,6 @@ export default function EmailLab({ onBack }: EmailLabProps) {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
         setError(msg)
-        // Surface error inline on the slot too.
         setCampaign((curCampaign) => {
           if (!curCampaign.email) return curCampaign
           const sections = curCampaign.email.sections.map((s, i) => {
@@ -359,46 +362,25 @@ export default function EmailLab({ onBack }: EmailLabProps) {
           </p>
         </div>
 
-        {inResearchMode ? (
-          <div className="flex flex-wrap justify-center gap-2 mb-3">
-            {researchSeeds.map((seed, idx) => {
-              const active = idx === activeResearchIdx
-              return (
-                <button
-                  key={seed.subcategory + idx}
-                  onClick={() => handlePickResearchSeed(idx)}
-                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                  style={{
-                    background: active ? 'rgba(236,72,153,.18)' : 'var(--panel-2)',
-                    color: active ? '#ec4899' : 'var(--muted)',
-                    border: `1px solid ${active ? '#ec4899' : 'var(--border)'}`,
-                  }}
-                  title={seed.angle}
-                >
-                  {seed.subcategory}
-                </button>
-              )
-            })}
-            <button
-              onClick={handleClearResearch}
-              className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-              style={{
-                background: 'transparent',
-                color: 'var(--muted)',
-                border: '1px dashed var(--border)',
-              }}
-              title="Switch back to manual email type selection"
-            >
-              ✕ Use templates
-            </button>
-          </div>
-        ) : (
-          <EmailTypePicker value={campaign.emailType} onChange={handleEmailTypeChange} />
-        )}
+        <EmailTypePicker value={campaign.emailType} onChange={handleEmailTypeChange} />
         <AudienceToggle
           value={campaign.audienceType}
           onChange={handleAudienceChange}
           cachedAudiences={cachedAudiences}
+        />
+
+        <ResearchPanel
+          loading={researchLoading}
+          error={researchError}
+          result={researchResult}
+          activeIdx={activeResearchIdx}
+          onPickSeed={handlePickSeed}
+          onResearched={handleResearched}
+          fetchTrends={fetchResearchTrends}
+          fetchScope={{ emailType: campaign.emailType, historicalContext }}
+          idleTitle={`What's hot for ${campaign.emailType} emails?`}
+          idleHint="Scoped to this email type — pulls fresh signal from Supreme, Scotch and Soda, Chomps, and @starface, then tunes 3 angles to your brand's existing voice."
+          researchLabel={`Research ${campaign.emailType} trends`}
         />
 
         {/* Mobile-only Edit / Preview pill — desktop shows both panes side-by-side. */}
@@ -507,14 +489,6 @@ export default function EmailLab({ onBack }: EmailLabProps) {
             </div>
           )}
           <div className="flex flex-wrap justify-center gap-2 items-start">
-            <ResearchButton
-              loading={researchLoading}
-              error={researchError}
-              result={researchResult}
-              onResearched={handleResearched}
-              fetchTrends={fetchResearchTrends}
-              label="Research email trends"
-            />
             <button
               onClick={handleGenerate}
               disabled={busy || sendBusy}

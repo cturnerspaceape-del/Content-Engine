@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import ContentCard from '../ContentCard'
 import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
@@ -8,14 +8,8 @@ import { generateCarouselLoungePostAsync } from '../../data/instagramContentTemp
 import { getCarouselArc } from '../../data/carouselArcs'
 import { usePersistedState } from '../../utils/persistedState'
 import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
-import {
-  CAROUSEL_ARC_SEEDS,
-  formatCarouselSeedTitle,
-  carouselSeedTitles,
-  findCarouselSeedIdxFromTitle,
-  pickDifferentCarouselSeedIdx,
-} from '../../lib/seeds/carouselArc'
-import ResearchButton from '../ResearchButton'
+import { formatCarouselSeedTitle } from '../../lib/seeds/carouselArc'
+import ResearchPanel from '../ResearchPanel'
 import { useResearch } from '../../lib/research/useResearch'
 import { toCarouselArcSeed } from '../../lib/research/researchedSeed'
 import type { ResearchedSeed } from '../../lib/research/types'
@@ -70,10 +64,12 @@ function tunerSourceFromItem(item: ContentItem): TunerSource {
   }
 }
 
+const PLACEHOLDER_TITLE = `${SEED_PREFIX} — awaiting research`
+
 export default function CarouselLab({ onBack }: CarouselLabProps) {
   const [item, setItem] = usePersistedState<ContentItem>(
     'sl:carouselLab:item',
-    () => makeSeed(formatCarouselSeedTitle(SEED_PREFIX, CAROUSEL_ARC_SEEDS[0])),
+    () => makeSeed(PLACEHOLDER_TITLE),
   )
 
   const [selectedPlatforms, setSelectedPlatforms] = usePersistedState<TunerPlatform[]>(
@@ -99,17 +95,13 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     loading: researchLoading,
     error: researchError,
     fetchTrends: fetchResearchTrends,
-    clear: clearResearch,
   } = useResearch('carousel')
 
-  const inResearchMode = researchSeeds.length > 0
-  const activeResearchSeed = inResearchMode
-    ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
-    : null
+  const activeResearchSeed: ResearchedSeed | null =
+    researchSeeds.length > 0
+      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+      : null
 
-  // Migrate older persisted selections that still hold 'Instagram' /
-  // 'Facebook' / 'Email' as separate strings — collapse Meta to a
-  // single 'IG/FB' chip and strip Email entirely.
   useEffect(() => {
     setSelectedPlatforms((prev) => {
       const stale = prev as ReadonlyArray<string>
@@ -129,8 +121,6 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Re-tune all selected non-IG/FB platforms whenever IG caption changes
-  // or a newly-added platform has no cached variant yet.
   useEffect(() => {
     if (!item.generatedVisual) return
     const source = tunerSourceFromItem(item)
@@ -147,61 +137,26 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.generatedVisual?.caption, selectedPlatforms.join('|')])
 
-  const handleGenerate = async () => {
-    const research = activeResearchSeed
-      ? { angle: activeResearchSeed.angle, notes: activeResearchSeed.sourceNotes }
-      : undefined
-    const seed = inResearchMode && activeResearchSeed
-      ? toCarouselArcSeed(activeResearchSeed)
-      : CAROUSEL_ARC_SEEDS[findCarouselSeedIdxFromTitle(SEED_PREFIX, item.title)]
-    const generated = await generateCarouselLoungePostAsync(item, seed.arcId, research)
-    setItem(decorateTitle(generated, formatCarouselSeedTitle(SEED_PREFIX, seed)))
-    setVariants({})
-  }
-
-  const handleShuffle = () => {
-    if (inResearchMode) {
-      const cur = activeResearchIdx
-      let next = cur
-      if (researchSeeds.length > 1) {
-        while (next === cur) next = Math.floor(Math.random() * researchSeeds.length)
-      } else {
-        next = 0
-      }
-      setActiveResearchIdx(next)
-      const seed = toCarouselArcSeed(researchSeeds[next])
-      setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, seed)))
-      setVariants({})
-      return
-    }
-    setItem((cur) => {
-      const nextIdx = pickDifferentCarouselSeedIdx(
-        findCarouselSeedIdxFromTitle(SEED_PREFIX, cur.title),
-      )
-      return makeSeed(formatCarouselSeedTitle(SEED_PREFIX, CAROUSEL_ARC_SEEDS[nextIdx]))
-    })
-    setVariants({})
-  }
-
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
-    const seeds = [rec, ...candidates]
+    const seeds = [rec, ...candidates].slice(0, 3)
     setResearchSeeds(seeds)
     setActiveResearchIdx(0)
     setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, toCarouselArcSeed(rec))))
     setVariants({})
   }
 
-  const handleClearResearch = () => {
-    setResearchSeeds([])
-    setActiveResearchIdx(0)
-    clearResearch()
-    setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, CAROUSEL_ARC_SEEDS[0])))
+  const handlePickSeed = (idx: number, seed: ResearchedSeed) => {
+    setActiveResearchIdx(idx)
+    setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, toCarouselArcSeed(seed))))
     setVariants({})
   }
 
-  const handlePickResearchSeed = (idx: number) => {
-    setActiveResearchIdx(idx)
-    setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, toCarouselArcSeed(researchSeeds[idx]))))
+  const handleGenerate = async () => {
+    if (!activeResearchSeed) return
+    const research = { angle: activeResearchSeed.angle, notes: activeResearchSeed.sourceNotes }
+    const seed = toCarouselArcSeed(activeResearchSeed)
+    const generated = await generateCarouselLoungePostAsync(item, seed.arcId, research)
+    setItem(decorateTitle(generated, formatCarouselSeedTitle(SEED_PREFIX, seed)))
     setVariants({})
   }
 
@@ -232,9 +187,6 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
           },
         }
       : item
-    // IG/FB chip is one Meta destination — selecting it implies cross-post
-    // to Facebook. The IG card's own alsoFacebook checkbox is still
-    // honored as an OR so both paths work.
     const alsoFacebook = opts.alsoFacebook || selectedPlatforms.includes('IG/FB')
     const result = await postItemToSocials(itemToPost, destination, {
       alsoFacebook,
@@ -265,8 +217,6 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     return result
   }
 
-  // Unified post flow state — owned by the lab page so the Post button can
-  // sit alongside Generate at the bottom and reflect ALL selected platforms.
   const [postConfirming, setPostConfirming] = useState(false)
   const [postBusy, setPostBusy] = useState(false)
   const [postError, setPostError] = useState<string | null>(null)
@@ -350,18 +300,11 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     }
   }
 
-  const seedTitles = useMemo(() => carouselSeedTitles(SEED_PREFIX), [])
-  const activeSeedIdx = findCarouselSeedIdxFromTitle(SEED_PREFIX, item.title)
-
-  const handlePickSeed = (idx: number) => {
-    setItem(() => makeSeed(seedTitles[idx]))
-    setVariants({})
-  }
-
-  // First slide acts as the cross-post hero image for X / Threads tabs.
   const heroSlideUrl = item.generatedVisual?.slideUrls?.find(
     (u): u is string => typeof u === 'string' && u.length > 0,
   )
+
+  const canGenerate = activeResearchSeed != null
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
@@ -397,60 +340,18 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-3">
-          {inResearchMode
-            ? researchSeeds.map((seed, idx) => {
-                const active = idx === activeResearchIdx
-                return (
-                  <button
-                    key={seed.subcategory + idx}
-                    onClick={() => handlePickResearchSeed(idx)}
-                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                    style={{
-                      background: active ? 'rgba(236,72,153,.18)' : 'var(--panel-2)',
-                      color: active ? '#ec4899' : 'var(--muted)',
-                      border: `1px solid ${active ? '#ec4899' : 'var(--border)'}`,
-                    }}
-                    title={seed.angle}
-                  >
-                    {seed.pillar}: {seed.subcategory}
-                  </button>
-                )
-              })
-            : CAROUSEL_ARC_SEEDS.map((seed, idx) => {
-                const active = idx === activeSeedIdx
-                const arcName = getCarouselArc(seed.arcId)?.name ?? seed.subcategory
-                return (
-                  <button
-                    key={seed.arcId}
-                    onClick={() => handlePickSeed(idx)}
-                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                    style={{
-                      background: active ? 'rgba(6,182,212,.15)' : 'var(--panel-2)',
-                      color: active ? '#06b6d4' : 'var(--muted)',
-                      border: `1px solid ${active ? '#06b6d4' : 'var(--border)'}`,
-                    }}
-                    title={arcName}
-                  >
-                    {seed.pillar}: {seed.subcategory}
-                  </button>
-                )
-              })}
-          {inResearchMode && (
-            <button
-              onClick={handleClearResearch}
-              className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-              style={{
-                background: 'transparent',
-                color: 'var(--muted)',
-                border: '1px dashed var(--border)',
-              }}
-              title="Switch back to the static template seeds"
-            >
-              ✕ Use templates
-            </button>
-          )}
-        </div>
+        <ResearchPanel
+          loading={researchLoading}
+          error={researchError}
+          result={researchResult}
+          activeIdx={activeResearchIdx}
+          onPickSeed={handlePickSeed}
+          onResearched={handleResearched}
+          fetchTrends={fetchResearchTrends}
+          idleTitle="What's hot for carousels?"
+          idleHint="Pulls fresh signal from Supreme, Scotch and Soda, Chomps, and @starface — then writes you 3 carousel arcs to ship next."
+          researchLabel="Research carousel trends"
+        />
 
         <PlatformPicker
           format="carousel"
@@ -468,7 +369,7 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
               <ContentCard
                 item={item}
                 index={0}
-                onShuffle={handleShuffle}
+                onShuffle={() => {}}
                 onGenerate={handleGenerate}
                 onLogPost={() => {}}
                 onPost={handlePost}
@@ -485,23 +386,11 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
         {selectedPlatforms.length > 0 && (
           <div className="flex flex-col items-center gap-3 mt-4">
             <div className="flex flex-wrap justify-center gap-2 items-start">
-              <ResearchButton
-                loading={researchLoading}
-                error={researchError}
-                result={researchResult}
-                onResearched={handleResearched}
-                fetchTrends={fetchResearchTrends}
-              />
-              <button
-                onClick={handleShuffle}
-                className="text-sm font-bold px-5 py-3 rounded-xl"
-                style={{ background: '#10b981', color: 'white' }}
-              >
-                🔀 Shuffle
-              </button>
               <button
                 onClick={handleGenerate}
-                className="text-sm font-bold px-6 py-3 rounded-xl"
+                disabled={!canGenerate}
+                title={canGenerate ? '' : 'Run Research first to pick an idea'}
+                className="text-sm font-bold px-6 py-3 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   background: platformColors.Instagram ?? '#a855f7',
                   color: 'white',

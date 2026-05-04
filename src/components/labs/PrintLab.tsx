@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePersistedState } from '../../utils/persistedState'
 import { generatePrintImage } from '../../lib/print/api'
 import type { PrintCampaign, PrintPiece, TrifoldPiece } from '../../lib/print/types'
 import type { PrintFormat } from '../../types'
 import { downloadPrintPdf } from '../../lib/print/pdf'
-import ResearchButton from '../ResearchButton'
+import ResearchPanel from '../ResearchPanel'
 import { useResearch } from '../../lib/research/useResearch'
 import type { ResearchedSeed } from '../../lib/research/types'
 
@@ -40,13 +40,17 @@ const FORMATS: { id: PrintFormat; emoji: string; tagline: string }[] = [
   { id: 'Sticker', emoji: '✨', tagline: '3×3 die-cut sticker' },
 ]
 
-const DEFAULT_PROMPTS: Record<PrintFormat, string> = {
+// Per-format compositional scaffold. Combined with the active research seed's
+// angle to produce the brief shown in the textarea — research is the only
+// source of creative direction; this just keeps the printed dimensions /
+// layout language consistent across runs.
+const FORMAT_SCAFFOLD: Record<PrintFormat, string> = {
   Poster:
-    'Hero product centered on a glossy gradient backdrop. Big confident headline space at top reading "STAY APE". Showroom-ready.',
+    '13×19 retail poster — hero product centered, generous headline space at top, clean composition that reads from across the room.',
   Trifold:
-    'Magazine-style brochure panel. Hero product on the left, flavor lockup and short tagline on the right with room for body copy.',
+    '6.33×11 brochure panel — hero product, flavor lockup, and short tagline with room for body copy.',
   Sticker:
-    'Sticker-pop badge with the product silhouette and a bold flavor word. Thick clean outline so it reads at 3 inches.',
+    '3×3 die-cut sticker — bold flavor word + product silhouette, thick clean outline so it reads at thumbnail size.',
 }
 
 export default function PrintLab({ onBack }: PrintLabProps) {
@@ -68,50 +72,37 @@ export default function PrintLab({ onBack }: PrintLabProps) {
     loading: researchLoading,
     error: researchError,
     fetchTrends: fetchResearchTrends,
-    clear: clearResearch,
   } = useResearch('print')
 
-  const inResearchMode = researchSeeds.length > 0
-  const activeResearchSeed = inResearchMode
-    ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
-    : null
+  const activeResearchSeed: ResearchedSeed | null =
+    researchSeeds.length > 0
+      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+      : null
 
   const setFormat = (next: PrintFormat) => {
     setCampaign((cur) => ({ ...cur, activeFormat: next }))
   }
 
-  // Augment the per-format default brief with the researched trend angle.
-  // The PieceEditor seeds its prompt textarea from this on mount and on key
-  // change, so picking a different research candidate refreshes the brief.
+  // Compose the brief = researched angle + format scaffold. The PieceEditor
+  // listens for changes to this value (via useEffect) and reseeds its prompt
+  // textarea whenever a different research candidate is picked, so switching
+  // candidates after a piece has been generated still updates the prompt.
   const briefForFormat = (format: PrintFormat): string => {
-    const base = DEFAULT_PROMPTS[format]
-    if (!activeResearchSeed) return base
-    return `${base}\n\nTrend angle: ${activeResearchSeed.angle}${
-      activeResearchSeed.sourceNotes ? `\nSignal: ${activeResearchSeed.sourceNotes}` : ''
-    }`
+    if (!activeResearchSeed) return FORMAT_SCAFFOLD[format]
+    const sig = activeResearchSeed.sourceNotes
+      ? `\nSignal: ${activeResearchSeed.sourceNotes}`
+      : ''
+    return `Trend angle: ${activeResearchSeed.angle}${sig}\n\nFormat: ${FORMAT_SCAFFOLD[format]}`
   }
 
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
-    setResearchSeeds([rec, ...candidates])
+    setResearchSeeds([rec, ...candidates].slice(0, 3))
     setActiveResearchIdx(0)
   }
 
-  const handleClearResearch = () => {
-    setResearchSeeds([])
-    setActiveResearchIdx(0)
-    clearResearch()
-  }
-
-  const handlePickResearchSeed = (idx: number) => {
+  const handlePickSeed = (idx: number) => {
     setActiveResearchIdx(idx)
   }
-
-  // Including the active researched subcategory in the PieceEditor key forces
-  // a remount when the user picks a different research candidate, so its
-  // internal prompt textarea reseeds from the augmented brief.
-  const editorKey = activeResearchSeed
-    ? `r:${activeResearchSeed.subcategory}:${activeResearchIdx}`
-    : 'static'
 
   const accent = '#0ea5e9'
 
@@ -149,51 +140,18 @@ export default function PrintLab({ onBack }: PrintLabProps) {
           </p>
         </div>
 
-        <div className="flex justify-center mb-3">
-          <ResearchButton
-            loading={researchLoading}
-            error={researchError}
-            result={researchResult}
-            onResearched={handleResearched}
-            fetchTrends={fetchResearchTrends}
-            label="Research print trends"
-          />
-        </div>
-
-        {inResearchMode && (
-          <div className="flex flex-wrap justify-center gap-2 mb-3">
-            {researchSeeds.map((seed, idx) => {
-              const active = idx === activeResearchIdx
-              return (
-                <button
-                  key={seed.subcategory + idx}
-                  onClick={() => handlePickResearchSeed(idx)}
-                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                  style={{
-                    background: active ? 'rgba(236,72,153,.18)' : 'var(--panel-2)',
-                    color: active ? '#ec4899' : 'var(--muted)',
-                    border: `1px solid ${active ? '#ec4899' : 'var(--border)'}`,
-                  }}
-                  title={seed.angle}
-                >
-                  {seed.subcategory}
-                </button>
-              )
-            })}
-            <button
-              onClick={handleClearResearch}
-              className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-              style={{
-                background: 'transparent',
-                color: 'var(--muted)',
-                border: '1px dashed var(--border)',
-              }}
-              title="Clear the trend brief and use the default prompts"
-            >
-              ✕ Use templates
-            </button>
-          </div>
-        )}
+        <ResearchPanel
+          loading={researchLoading}
+          error={researchError}
+          result={researchResult}
+          activeIdx={activeResearchIdx}
+          onPickSeed={handlePickSeed}
+          onResearched={handleResearched}
+          fetchTrends={fetchResearchTrends}
+          idleTitle="What's hot for print?"
+          idleHint="Pulls fresh signal from Supreme, Scotch and Soda, Chomps, and @starface — then writes you 3 print angles to ship next."
+          researchLabel="Research print trends"
+        />
 
         {/* Format picker */}
         <div className="flex flex-wrap justify-center gap-2 mb-6">
@@ -219,54 +177,71 @@ export default function PrintLab({ onBack }: PrintLabProps) {
           })}
         </div>
 
-        {campaign.activeFormat === 'Poster' && (
-          <SinglePanel
-            key={`poster:${editorKey}`}
-            label="Poster"
-            pieceType="poster"
-            piece={campaign.poster}
-            defaultPromptOverride={briefForFormat('Poster')}
-            onChange={(p) => setCampaign((cur) => ({ ...cur, poster: p }))}
-          />
-        )}
-        {campaign.activeFormat === 'Sticker' && (
-          <SinglePanel
-            key={`sticker:${editorKey}`}
-            label="Sticker"
-            pieceType="sticker"
-            piece={campaign.sticker}
-            defaultPromptOverride={briefForFormat('Sticker')}
-            onChange={(p) => setCampaign((cur) => ({ ...cur, sticker: p }))}
-          />
-        )}
-        {campaign.activeFormat === 'Trifold' && (
-          <TrifoldEditor
-            key={`trifold:${editorKey}`}
-            piece={campaign.trifold}
-            trifoldDefaultBrief={briefForFormat('Trifold')}
-            onChange={(p) => setCampaign((cur) => ({ ...cur, trifold: p }))}
-          />
-        )}
-
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={() => void downloadPrintPdf(campaign)}
-            disabled={!hasArtForActiveFormat(campaign)}
-            className="text-sm font-bold px-6 py-3 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        {!activeResearchSeed ? (
+          <div
+            className="text-center mx-auto"
             style={{
-              background: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
-              color: '#fff',
-              boxShadow: 'var(--shadow-md)',
+              maxWidth: 480,
+              padding: 32,
+              background: 'var(--panel)',
+              border: '1px dashed var(--border)',
+              borderRadius: 16,
+              color: 'var(--muted)',
+              fontSize: 13,
             }}
-            title={
-              hasArtForActiveFormat(campaign)
-                ? 'Compose 13×19 PDF (or 3×3 PDF for sticker) ready to send to a print shop'
-                : 'Generate art first'
-            }
           >
-            ⬇ Export print-ready PDF
-          </button>
-        </div>
+            Run Research above to pick a trend angle, then this lab will compose
+            your print brief automatically.
+          </div>
+        ) : (
+          <>
+            {campaign.activeFormat === 'Poster' && (
+              <SinglePanel
+                label="Poster"
+                pieceType="poster"
+                piece={campaign.poster}
+                brief={briefForFormat('Poster')}
+                onChange={(p) => setCampaign((cur) => ({ ...cur, poster: p }))}
+              />
+            )}
+            {campaign.activeFormat === 'Sticker' && (
+              <SinglePanel
+                label="Sticker"
+                pieceType="sticker"
+                piece={campaign.sticker}
+                brief={briefForFormat('Sticker')}
+                onChange={(p) => setCampaign((cur) => ({ ...cur, sticker: p }))}
+              />
+            )}
+            {campaign.activeFormat === 'Trifold' && (
+              <TrifoldEditor
+                piece={campaign.trifold}
+                brief={briefForFormat('Trifold')}
+                onChange={(p) => setCampaign((cur) => ({ ...cur, trifold: p }))}
+              />
+            )}
+
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => void downloadPrintPdf(campaign)}
+                disabled={!hasArtForActiveFormat(campaign)}
+                className="text-sm font-bold px-6 py-3 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
+                  color: '#fff',
+                  boxShadow: 'var(--shadow-md)',
+                }}
+                title={
+                  hasArtForActiveFormat(campaign)
+                    ? 'Compose 13×19 PDF (or 3×3 PDF for sticker) ready to send to a print shop'
+                    : 'Generate art first'
+                }
+              >
+                ⬇ Export print-ready PDF
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -285,22 +260,17 @@ interface SinglePanelProps {
   label: string
   pieceType: 'poster' | 'sticker'
   piece: PrintPiece | null
-  // Optional override that replaces the static DEFAULT_PROMPT — used when a
-  // researched trend angle is active so the brief textarea seeds with the
-  // augmented brief on mount.
-  defaultPromptOverride?: string
+  brief: string
   onChange: (p: PrintPiece) => void
 }
 
-function SinglePanel({ label, pieceType, piece, defaultPromptOverride, onChange }: SinglePanelProps) {
+function SinglePanel({ label, pieceType, piece, brief, onChange }: SinglePanelProps) {
   return (
     <PieceEditor
       title={label}
       pieceType={pieceType}
       piece={piece}
-      defaultPrompt={
-        defaultPromptOverride ?? DEFAULT_PROMPTS[pieceType === 'poster' ? 'Poster' : 'Sticker']
-      }
+      brief={brief}
       aspectStyle={
         pieceType === 'poster'
           ? { aspectRatio: '13 / 19', maxWidth: 360 }
@@ -313,16 +283,13 @@ function SinglePanel({ label, pieceType, piece, defaultPromptOverride, onChange 
 
 interface TrifoldEditorProps {
   piece: TrifoldPiece | null
-  // Optional override applied to both panels' default briefs (each panel
-  // appends its own outside/inside specifier on top).
-  trifoldDefaultBrief?: string
+  brief: string
   onChange: (p: TrifoldPiece) => void
 }
 
-function TrifoldEditor({ piece, trifoldDefaultBrief, onChange }: TrifoldEditorProps) {
+function TrifoldEditor({ piece, brief, onChange }: TrifoldEditorProps) {
   const outside = piece?.outsidePanel ?? null
   const inside = piece?.insidePanel ?? null
-  const baseBrief = trifoldDefaultBrief ?? DEFAULT_PROMPTS.Trifold
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <PieceEditor
@@ -330,7 +297,7 @@ function TrifoldEditor({ piece, trifoldDefaultBrief, onChange }: TrifoldEditorPr
         subtitle="Cover face — what someone sees stacked face-up"
         pieceType="trifold-panel"
         piece={outside}
-        defaultPrompt={baseBrief + ' Outside / cover face — strongest hero, big headline.'}
+        brief={brief + '\n\nThis panel: outside / cover face — strongest hero, big headline.'}
         aspectStyle={{ aspectRatio: '6.33 / 11', maxWidth: 220 }}
         onChange={(p) => onChange({ outsidePanel: p, insidePanel: inside })}
       />
@@ -339,7 +306,7 @@ function TrifoldEditor({ piece, trifoldDefaultBrief, onChange }: TrifoldEditorPr
         subtitle="Body face — opens to reveal this"
         pieceType="trifold-panel"
         piece={inside}
-        defaultPrompt={baseBrief + ' Inside / body face — denser content, secondary product shots, body copy block.'}
+        brief={brief + '\n\nThis panel: inside / body face — denser content, secondary product shots, body copy block.'}
         aspectStyle={{ aspectRatio: '6.33 / 11', maxWidth: 220 }}
         onChange={(p) => onChange({ outsidePanel: outside, insidePanel: p })}
       />
@@ -352,7 +319,10 @@ interface PieceEditorProps {
   subtitle?: string
   pieceType: 'poster' | 'trifold-panel' | 'sticker'
   piece: PrintPiece | null
-  defaultPrompt: string
+  // Composed brief from PrintLab — research angle + format scaffold. Changes
+  // when the user picks a different research candidate; useEffect below
+  // reseeds the textarea so the new brief takes effect on the next Generate.
+  brief: string
   aspectStyle: React.CSSProperties
   onChange: (p: PrintPiece) => void
 }
@@ -362,14 +332,22 @@ function PieceEditor({
   subtitle,
   pieceType,
   piece,
-  defaultPrompt,
+  brief,
   aspectStyle,
   onChange,
 }: PieceEditorProps) {
-  const [prompt, setPrompt] = useState<string>(piece?.imagePrompt ?? defaultPrompt)
+  const [prompt, setPrompt] = useState<string>(piece?.imagePrompt ?? brief)
   const [flavor, setFlavor] = useState<string>(piece?.flavor ?? FLAVORS[0])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // When the parent's composed brief changes (user picked a different
+  // research candidate), reseed the textarea. Without this, switching
+  // candidates after a piece was generated would keep showing the old
+  // imagePrompt because useState only initializes once.
+  useEffect(() => {
+    setPrompt(brief)
+  }, [brief])
 
   const run = async (force: boolean) => {
     if (busy) return
@@ -409,7 +387,6 @@ function PieceEditor({
         )}
       </div>
 
-      {/* Image preview */}
       <div
         className="rounded-xl overflow-hidden mx-auto w-full"
         style={{
@@ -434,7 +411,6 @@ function PieceEditor({
         )}
       </div>
 
-      {/* Controls */}
       <div className="flex flex-col gap-2">
         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>
           Brief
@@ -498,7 +474,7 @@ function PieceEditor({
                 border: '1px solid var(--border)',
               }}
             >
-              🔀 Shuffle
+              🔀 New variation
             </button>
           )}
         </div>

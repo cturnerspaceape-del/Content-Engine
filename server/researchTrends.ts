@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express'
+import { createHash } from 'node:crypto'
 import Anthropic from '@anthropic-ai/sdk'
 import { RELATED_BRANDS } from '../src/config/relatedBrands'
 import type { ResearchedSeed, ResearchResult, ResearchFormat } from '../src/lib/research/types'
@@ -27,6 +28,11 @@ const FORMAT_HINTS: Record<ResearchFormat, string> = {
     'Physical print collateral — poster, brochure, sticker. Look for retail/IRL activations, lookbook drops, sticker-pop visual treatments.',
 }
 
+interface ScopeArgs {
+  emailType?: string
+  historicalContext?: string
+}
+
 let client: Anthropic | null = null
 function getClient(): Anthropic {
   if (client) return client
@@ -36,22 +42,39 @@ function getClient(): Anthropic {
   return client
 }
 
-// In-memory cache keyed by format + UTC day bucket. Research signal is fresh
-// at the day granularity — running it more than once a day per format burns
-// API budget for no gain.
+// In-memory cache keyed by format + scope + UTC day bucket. Research signal
+// is fresh at the day granularity. Email research is scoped by email type +
+// the brand's historical-context hash so a 'promo' run and a 'newsletter'
+// run don't collide, and changing past-sends history busts the cache.
 type CacheEntry = { day: string; result: ResearchResult }
-const cache = new Map<ResearchFormat, CacheEntry>()
+const cache = new Map<string, CacheEntry>()
 
 function dayBucket(now = Date.now()): string {
   return new Date(now).toISOString().slice(0, 10) // YYYY-MM-DD UTC
+}
+
+function cacheKey(format: ResearchFormat, scope: ScopeArgs): string {
+  const histHash = scope.historicalContext
+    ? createHash('sha256').update(scope.historicalContext).digest('hex').slice(0, 8)
+    : ''
+  return `${format}|${scope.emailType ?? ''}|${histHash}`
 }
 
 function isResearchFormat(s: unknown): s is ResearchFormat {
   return typeof s === 'string' && (FORMATS as readonly string[]).includes(s)
 }
 
-function buildPrompt(format: ResearchFormat): string {
+function buildPrompt(format: ResearchFormat, scope: ScopeArgs): string {
   const brandList = RELATED_BRANDS.map((b) => `- ${b.handle} (${b.why})`).join('\n')
+
+  const formatLine =
+    format === 'email' && scope.emailType
+      ? `Format being planned: ${format} (specifically a **${scope.emailType}** email — scope your research to what's working for ${scope.emailType} emails specifically; do not return ideas that fit a different email type) — ${FORMAT_HINTS[format]}`
+      : `Format being planned: ${format} — ${FORMAT_HINTS[format]}`
+
+  const historyBlock = scope.historicalContext
+    ? `\n\nPast sends from this brand (style/voice anchor — match the brand's existing flavor, do not repeat the same angle they've already shipped):\n${scope.historicalContext}`
+    : ''
 
   return `You're researching trend signals for Space Ape, an ultra-premium cannabis live-resin vape brand. Their voice is "cool Charlie Sheen" — confident, fun, cosmic, sticker-pop. Founder admires these brands as creative references:
 
@@ -59,9 +82,9 @@ ${brandList}
 
 Your job: use web_search to find what these brands have actually been doing in the last 14 days — drops, campaigns, copywriting moves, visual treatments, social activations, collabs. Focus on signal that translates into a content idea Space Ape could remix.
 
-Format being planned: ${format} — ${FORMAT_HINTS[format]}
+${formatLine}${historyBlock}
 
-Output exactly 5 trend-driven content seeds Space Ape could ship next week, ordered with the strongest first.
+Output exactly 3 trend-driven content seeds Space Ape could ship next week, ordered with the strongest first. The first seed is your top recommendation.
 
 Each seed must map onto Space Ape's existing content pillar taxonomy. Pillar MUST be exactly one of: Lifestyle, Product Centric, Education, Entertainment, Brand Building, Social Proof. Subcategory is a short noun phrase (3-6 words) describing the angle (e.g. "Drop Hype Snippet", "Day-to-Night Edit", "Founder Hot Take").
 
@@ -115,7 +138,7 @@ function normalizeSeed(raw: RawSeed): ResearchedSeed | null {
   return { pillar, subcategory, angle, sourceBrands, sourceNotes }
 }
 
-async function callAnthropic(format: ResearchFormat): Promise<ResearchResult> {
+async function callAnthropic(format: ResearchFormat, scope: ScopeArgs): Promise<ResearchResult> {
   const ai = getClient()
   const resp = await ai.messages.create({
     model: MODEL,
@@ -128,7 +151,7 @@ async function callAnthropic(format: ResearchFormat): Promise<ResearchResult> {
         max_uses: 6,
       },
     ],
-    messages: [{ role: 'user', content: buildPrompt(format) }],
+    messages: [{ role: 'user', content: buildPrompt(format, scope) }],
   })
 
   // Final text block holds the JSON. Earlier blocks may be tool_use /
@@ -154,20 +177,32 @@ async function callAnthropic(format: ResearchFormat): Promise<ResearchResult> {
 
 export async function researchTrendsHandler(req: Request, res: Response): Promise<void> {
   try {
-    const body = (req.body ?? {}) as { format?: unknown }
+    const body = (req.body ?? {}) as {
+      format?: unknown
+      emailType?: unknown
+      historicalContext?: unknown
+    }
     if (!isResearchFormat(body.format)) {
       res.status(400).json({ error: `format must be one of ${FORMATS.join(', ')}` })
       return
     }
     const format = body.format
+    const scope: ScopeArgs = {
+      emailType: typeof body.emailType === 'string' ? body.emailType : undefined,
+      historicalContext:
+        typeof body.historicalContext === 'string' && body.historicalContext.trim().length > 0
+          ? body.historicalContext
+          : undefined,
+    }
     const today = dayBucket()
-    const cached = cache.get(format)
+    const key = cacheKey(format, scope)
+    const cached = cache.get(key)
     if (cached && cached.day === today) {
       res.json({ ...cached.result, cached: true })
       return
     }
-    const result = await callAnthropic(format)
-    cache.set(format, { day: today, result })
+    const result = await callAnthropic(format, scope)
+    cache.set(key, { day: today, result })
     res.json(result)
   } catch (err) {
     console.error('[research-trends]', err)

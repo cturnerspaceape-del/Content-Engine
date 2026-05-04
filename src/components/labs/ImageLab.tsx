@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import ContentCard from '../ContentCard'
 import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
@@ -8,14 +8,8 @@ import { generateContentForPostAsync } from '../../data/instagramContentTemplate
 import { getShotTemplate } from '../../data/shotTemplates'
 import { usePersistedState } from '../../utils/persistedState'
 import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
-import {
-  PILLAR_IMAGE_SEEDS,
-  formatPillarSeedTitle,
-  pillarSeedTitles,
-  findPillarSeedIdxFromTitle,
-  pickDifferentPillarSeedIdx,
-} from '../../lib/seeds/pillarImage'
-import ResearchButton from '../ResearchButton'
+import { formatPillarSeedTitle } from '../../lib/seeds/pillarImage'
+import ResearchPanel from '../ResearchPanel'
 import { useResearch } from '../../lib/research/useResearch'
 import { toPillarImageSeed } from '../../lib/research/researchedSeed'
 import type { ResearchedSeed } from '../../lib/research/types'
@@ -70,10 +64,12 @@ function tunerSourceFromItem(item: ContentItem): TunerSource {
   }
 }
 
+const PLACEHOLDER_TITLE = `${SEED_PREFIX} — awaiting research`
+
 export default function ImageLab({ onBack }: ImageLabProps) {
   const [item, setItem] = usePersistedState<ContentItem>(
     'sl:imageLab:item',
-    () => makeSeed(formatPillarSeedTitle(SEED_PREFIX, PILLAR_IMAGE_SEEDS[0])),
+    () => makeSeed(PLACEHOLDER_TITLE),
   )
 
   const [selectedPlatforms, setSelectedPlatforms] = usePersistedState<TunerPlatform[]>(
@@ -86,10 +82,9 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     () => ({}),
   )
 
-  // Research mode — when researchSeeds is non-empty, the chip row shows
-  // researched candidates instead of PILLAR_IMAGE_SEEDS, and Shuffle picks
-  // among them. activeResearchIdx tracks which one is currently selected so
-  // Generate can pass its angle + notes through to the caption LLM.
+  // Research is the source of truth — there are no static template seeds.
+  // researchSeeds holds the 3 ideas from the most recent /api/research-trends
+  // call; activeResearchIdx tracks which one is currently picked.
   const [researchSeeds, setResearchSeeds] = usePersistedState<ResearchedSeed[]>(
     'sl:imageLab:researchSeeds',
     () => [],
@@ -103,17 +98,14 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     loading: researchLoading,
     error: researchError,
     fetchTrends: fetchResearchTrends,
-    clear: clearResearch,
   } = useResearch('image')
 
-  const inResearchMode = researchSeeds.length > 0
-  const activeResearchSeed = inResearchMode
-    ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
-    : null
+  const activeResearchSeed: ResearchedSeed | null =
+    researchSeeds.length > 0
+      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+      : null
 
-  // Migrate older persisted selections that still hold 'Instagram' /
-  // 'Facebook' as separate strings, or stale 'Email' / 'TikTok' /
-  // 'YouTube Shorts' values that no longer apply to the image format.
+  // Migrate older persisted selections that still hold legacy platform names.
   useEffect(() => {
     setSelectedPlatforms((prev) => {
       const stale = prev as ReadonlyArray<string>
@@ -139,8 +131,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
 
   // Re-tune all selected non-IG/FB platforms whenever the IG item is
   // regenerated (caption changes) or a new platform is added without a
-  // cached variant. The IG/FB tab uses the existing ContentCard via
-  // customRender, so it doesn't need a stored variant.
+  // cached variant.
   useEffect(() => {
     if (!item.generatedVisual) return
     const source = tunerSourceFromItem(item)
@@ -157,67 +148,26 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.generatedVisual?.caption, selectedPlatforms.join('|')])
 
-  const handleGenerate = async () => {
-    const research = activeResearchSeed
-      ? { angle: activeResearchSeed.angle, notes: activeResearchSeed.sourceNotes }
-      : undefined
-    const generated = await generateContentForPostAsync(item, research)
-    const seedTitle = inResearchMode && activeResearchSeed
-      ? formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(activeResearchSeed))
-      : formatPillarSeedTitle(
-          SEED_PREFIX,
-          PILLAR_IMAGE_SEEDS[findPillarSeedIdxFromTitle(SEED_PREFIX, item.title)],
-        )
-    setItem(decorateTitle(generated, seedTitle))
-    // Clear cached non-IG variants so they re-tune off the new caption.
-    setVariants({})
-  }
-
-  const handleShuffle = () => {
-    if (inResearchMode) {
-      const cur = activeResearchIdx
-      let next = cur
-      if (researchSeeds.length > 1) {
-        while (next === cur) next = Math.floor(Math.random() * researchSeeds.length)
-      } else {
-        next = 0
-      }
-      setActiveResearchIdx(next)
-      const seed = toPillarImageSeed(researchSeeds[next])
-      setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, seed)))
-      setVariants({})
-      return
-    }
-    setItem((cur) => {
-      const nextIdx = pickDifferentPillarSeedIdx(
-        findPillarSeedIdxFromTitle(SEED_PREFIX, cur.title),
-      )
-      return makeSeed(formatPillarSeedTitle(SEED_PREFIX, PILLAR_IMAGE_SEEDS[nextIdx]))
-    })
-    setVariants({})
-  }
-
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
-    const seeds = [rec, ...candidates]
+    const seeds = [rec, ...candidates].slice(0, 3)
     setResearchSeeds(seeds)
     setActiveResearchIdx(0)
-    const seed = toPillarImageSeed(rec)
-    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, seed)))
+    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(rec))))
     setVariants({})
   }
 
-  const handleClearResearch = () => {
-    setResearchSeeds([])
-    setActiveResearchIdx(0)
-    clearResearch()
-    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, PILLAR_IMAGE_SEEDS[0])))
-    setVariants({})
-  }
-
-  const handlePickResearchSeed = (idx: number) => {
+  const handlePickSeed = (idx: number, seed: ResearchedSeed) => {
     setActiveResearchIdx(idx)
-    const seed = toPillarImageSeed(researchSeeds[idx])
-    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, seed)))
+    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(seed))))
+    setVariants({})
+  }
+
+  const handleGenerate = async () => {
+    if (!activeResearchSeed) return
+    const research = { angle: activeResearchSeed.angle, notes: activeResearchSeed.sourceNotes }
+    const generated = await generateContentForPostAsync(item, research)
+    const seedTitle = formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(activeResearchSeed))
+    setItem(decorateTitle(generated, seedTitle))
     setVariants({})
   }
 
@@ -248,9 +198,6 @@ export default function ImageLab({ onBack }: ImageLabProps) {
           },
         }
       : item
-    // IG/FB chip is one Meta destination — selecting it implies cross-post
-    // to Facebook. The IG card's own alsoFacebook checkbox is still
-    // honored as an OR so both paths work.
     const alsoFacebook = opts.alsoFacebook || selectedPlatforms.includes('IG/FB')
     const result = await postItemToSocials(itemToPost, destination, {
       alsoFacebook,
@@ -281,8 +228,6 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     return result
   }
 
-  // Unified post flow state — owned by the lab page so the Post button can
-  // sit alongside Generate at the bottom and reflect ALL selected platforms.
   const [postConfirming, setPostConfirming] = useState(false)
   const [postBusy, setPostBusy] = useState(false)
   const [postError, setPostError] = useState<string | null>(null)
@@ -329,7 +274,6 @@ export default function ImageLab({ onBack }: ImageLabProps) {
       setPostConfirming(true)
       return
     }
-    // X/Threads only — clipboard-only path.
     const copied = await copyNonIgVariantsToClipboard()
     if (copied) {
       const labels = nonIgSelected.map((p) => PLATFORM_LABELS[p]).join(' & ')
@@ -349,9 +293,6 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     setPostError(null)
     try {
       const result = await handlePost(destination, opts, edits, selectedCrossPosts)
-      // Only platforms we DON'T post via API still need clipboard copy
-      // (X, TikTok). Threads + YouTube Shorts are now real API posts when
-      // checked, so exclude them from the clipboard.
       const apiHandled = new Set<TunerPlatform>(['Threads', 'YouTube Shorts'])
       const clipboardPlatforms = nonIgSelected.filter((p) => !apiHandled.has(p))
       const copied = clipboardPlatforms.length > 0 ? await copyNonIgVariantsToClipboard() : false
@@ -370,15 +311,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     }
   }
 
-  // Pillar seed picker — small chip row above the platform picker so the
-  // user can switch pillars without shuffling.
-  const seedTitles = useMemo(() => pillarSeedTitles(SEED_PREFIX), [])
-  const activeSeedIdx = findPillarSeedIdxFromTitle(SEED_PREFIX, item.title)
-
-  const handlePickSeed = (idx: number) => {
-    setItem(() => makeSeed(seedTitles[idx]))
-    setVariants({})
-  }
+  const canGenerate = activeResearchSeed != null
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', padding: '32px 24px' }}>
@@ -414,58 +347,18 @@ export default function ImageLab({ onBack }: ImageLabProps) {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-3">
-          {inResearchMode
-            ? researchSeeds.map((seed, idx) => {
-                const active = idx === activeResearchIdx
-                return (
-                  <button
-                    key={seed.subcategory + idx}
-                    onClick={() => handlePickResearchSeed(idx)}
-                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                    style={{
-                      background: active ? 'rgba(236,72,153,.18)' : 'var(--panel-2)',
-                      color: active ? '#ec4899' : 'var(--muted)',
-                      border: `1px solid ${active ? '#ec4899' : 'var(--border)'}`,
-                    }}
-                    title={seed.angle}
-                  >
-                    {seed.pillar}: {seed.subcategory}
-                  </button>
-                )
-              })
-            : PILLAR_IMAGE_SEEDS.map((seed, idx) => {
-                const active = idx === activeSeedIdx
-                return (
-                  <button
-                    key={seed.pillar + seed.subcategory}
-                    onClick={() => handlePickSeed(idx)}
-                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                    style={{
-                      background: active ? 'rgba(245,158,11,.15)' : 'var(--panel-2)',
-                      color: active ? '#f59e0b' : 'var(--muted)',
-                      border: `1px solid ${active ? '#f59e0b' : 'var(--border)'}`,
-                    }}
-                  >
-                    {seed.pillar}: {seed.subcategory}
-                  </button>
-                )
-              })}
-          {inResearchMode && (
-            <button
-              onClick={handleClearResearch}
-              className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-              style={{
-                background: 'transparent',
-                color: 'var(--muted)',
-                border: '1px dashed var(--border)',
-              }}
-              title="Switch back to the static template seeds"
-            >
-              ✕ Use templates
-            </button>
-          )}
-        </div>
+        <ResearchPanel
+          loading={researchLoading}
+          error={researchError}
+          result={researchResult}
+          activeIdx={activeResearchIdx}
+          onPickSeed={handlePickSeed}
+          onResearched={handleResearched}
+          fetchTrends={fetchResearchTrends}
+          idleTitle="What's hot for image posts?"
+          idleHint="Pulls fresh signal from Supreme, Scotch and Soda, Chomps, and @starface — then writes you 3 image angles to ship next."
+          researchLabel="Research image trends"
+        />
 
         <PlatformPicker
           format="image"
@@ -483,7 +376,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
               <ContentCard
                 item={item}
                 index={0}
-                onShuffle={handleShuffle}
+                onShuffle={() => {}}
                 onGenerate={handleGenerate}
                 onLogPost={() => {}}
                 onPost={handlePost}
@@ -497,27 +390,14 @@ export default function ImageLab({ onBack }: ImageLabProps) {
           }}
         />
 
-        {/* Unified bottom action row: Shuffle / Regenerate / Post. */}
         {selectedPlatforms.length > 0 && (
           <div className="flex flex-col items-center gap-3 mt-4">
             <div className="flex flex-wrap justify-center gap-2 items-start">
-              <ResearchButton
-                loading={researchLoading}
-                error={researchError}
-                result={researchResult}
-                onResearched={handleResearched}
-                fetchTrends={fetchResearchTrends}
-              />
-              <button
-                onClick={handleShuffle}
-                className="text-sm font-bold px-5 py-3 rounded-xl"
-                style={{ background: '#10b981', color: 'white' }}
-              >
-                🔀 Shuffle
-              </button>
               <button
                 onClick={handleGenerate}
-                className="text-sm font-bold px-6 py-3 rounded-xl"
+                disabled={!canGenerate}
+                title={canGenerate ? '' : 'Run Research first to pick an idea'}
+                className="text-sm font-bold px-6 py-3 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   background: platformColors.Instagram ?? '#a855f7',
                   color: 'white',
