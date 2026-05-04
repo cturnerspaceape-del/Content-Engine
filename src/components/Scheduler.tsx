@@ -4,6 +4,7 @@ import {
   WEEKLY_CADENCE,
   PLATFORM_EMOJI,
   PLATFORM_COLOR,
+  PLATFORM_LABEL,
   totalDemandForDay,
   type CadenceEntry,
 } from '../data/postingCadence'
@@ -292,7 +293,7 @@ interface WeekViewProps {
 
 function WeekView({ weekDates, today, postsByDate }: WeekViewProps) {
   return (
-    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
+    <div className="grid gap-3 grid-cols-1 md:grid-cols-7">
       {weekDates.map((d) => {
         const dow = dayOfWeekName(d)
         const cadence = WEEKLY_CADENCE[dow]
@@ -310,7 +311,7 @@ function WeekView({ weekDates, today, postsByDate }: WeekViewProps) {
             }}
           >
             <DayHeader date={d} isToday={isToday} />
-            <div className="flex flex-col gap-1.5 mt-2">
+            <div className="flex flex-row flex-wrap md:flex-col gap-1.5 mt-2">
               {cadence.map((entry, i) => (
                 <DemandPill
                   key={`${entry.platform}-${entry.format ?? ''}-${i}`}
@@ -350,14 +351,23 @@ function WeekView({ weekDates, today, postsByDate }: WeekViewProps) {
 
 function DayHeader({ date, isToday }: { date: Date; isToday: boolean }) {
   const dow = dayOfWeekName(date)
+  const fullDay = date.toLocaleDateString('en-US', { weekday: 'long' })
   return (
-    <div className="flex items-baseline justify-between" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 6 }}>
-      <div>
-        <div className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--muted)' }}>
-          {DAY_SHORT[dow].toUpperCase()}
+    <div
+      className="flex items-center justify-between gap-2"
+      style={{ borderBottom: '1px solid var(--border)', paddingBottom: 6 }}
+    >
+      {/* Mobile: inline day name + date. Desktop: stacked short label + big date. */}
+      <div className="flex items-baseline gap-2 md:block">
+        <div
+          className="text-sm md:text-[11px] font-bold tracking-wide"
+          style={{ color: 'var(--muted)' }}
+        >
+          <span className="md:hidden">{fullDay}</span>
+          <span className="hidden md:inline">{DAY_SHORT[dow].toUpperCase()}</span>
         </div>
         <div
-          className="text-2xl font-extrabold leading-none"
+          className="text-xl md:text-2xl font-extrabold leading-none"
           style={{ color: isToday ? '#b8a4ff' : 'var(--text)' }}
         >
           {date.getDate()}
@@ -365,7 +375,7 @@ function DayHeader({ date, isToday }: { date: Date; isToday: boolean }) {
       </div>
       {isToday && (
         <span
-          className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+          className="text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
           style={{ background: '#b8a4ff', color: '#fff' }}
         >
           TODAY
@@ -387,7 +397,7 @@ function DemandPill({ entry, loggedCount, pillIndex }: DemandPillProps) {
   const color = PLATFORM_COLOR[entry.platform]
   return (
     <div
-      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold"
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs md:text-[11px] font-bold whitespace-nowrap"
       style={{
         background: done ? 'rgba(16,185,129,.10)' : `${color}1a`,
         color: done ? '#10b981' : color,
@@ -395,13 +405,13 @@ function DemandPill({ entry, loggedCount, pillIndex }: DemandPillProps) {
         opacity: done ? 0.85 : 1,
       }}
     >
-      <span style={{ fontSize: 12 }}>{PLATFORM_EMOJI[entry.platform]}</span>
+      <span style={{ fontSize: 14 }}>{PLATFORM_EMOJI[entry.platform]}</span>
       <span style={{ textDecoration: done ? 'line-through' : undefined }}>
-        {entry.platform}
+        {PLATFORM_LABEL[entry.platform]}
         {entry.count > 1 ? ` ×${entry.count}` : ''}
         {entry.format ? ` · ${entry.format}` : ''}
       </span>
-      {done && <span style={{ marginLeft: 'auto' }}>✓</span>}
+      {done && <span style={{ marginLeft: 4 }}>✓</span>}
     </div>
   )
 }
@@ -409,16 +419,16 @@ function DemandPill({ entry, loggedCount, pillIndex }: DemandPillProps) {
 function BonusPill({ platform, count, unplanned }: { platform: Platform; count: number; unplanned?: boolean }) {
   return (
     <div
-      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold"
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs md:text-[11px] font-bold whitespace-nowrap"
       style={{
         background: 'rgba(16,185,129,.06)',
         color: '#10b981',
         border: '1px dashed #10b98166',
       }}
     >
-      <span style={{ fontSize: 12 }}>{PLATFORM_EMOJI[platform]}</span>
+      <span style={{ fontSize: 14 }}>{PLATFORM_EMOJI[platform]}</span>
       <span>
-        {unplanned ? `${platform} ×${count} (extra)` : `+${count} bonus ${platform}`}
+        {unplanned ? `${PLATFORM_LABEL[platform]} ×${count} (extra)` : `+${count} bonus ${PLATFORM_LABEL[platform]}`}
       </span>
     </div>
   )
@@ -529,7 +539,7 @@ function MonthView({ weeks, anchorMonth, today, postsByDate, onPickDay }: MonthV
 }
 
 function Legend() {
-  const platforms: Platform[] = ['Instagram', 'Email', 'X', 'Threads']
+  const platforms: Platform[] = ['Instagram', 'Facebook', 'Threads', 'X', 'Email']
   return (
     <div
       className="mt-6 glass-panel p-3 flex flex-wrap items-center gap-x-4 gap-y-2 justify-center"
@@ -539,7 +549,7 @@ function Legend() {
       {platforms.map((p) => (
         <span key={p} className="flex items-center gap-1">
           <span>{PLATFORM_EMOJI[p]}</span>
-          <span style={{ color: PLATFORM_COLOR[p], fontWeight: 700 }}>{p}</span>
+          <span style={{ color: PLATFORM_COLOR[p], fontWeight: 700 }}>{PLATFORM_LABEL[p]}</span>
         </span>
       ))}
       <span className="flex items-center gap-1">
