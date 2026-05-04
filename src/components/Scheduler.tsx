@@ -76,6 +76,33 @@ function weekRangeLabel(weekStart: Date): string {
   return `${startStr} – ${endStr}`
 }
 
+function diffDays(a: Date, b: Date): number {
+  return Math.round((a.getTime() - b.getTime()) / 86_400_000)
+}
+
+function diffMonths(a: Date, b: Date): number {
+  return (a.getFullYear() - b.getFullYear()) * 12 + (a.getMonth() - b.getMonth())
+}
+
+function weekResetLabel(weekStart: Date, today: Date): string {
+  const d = diffDays(weekStart, today)
+  // Rolling 7-day window starting at anchor; "this week" only when anchor === today.
+  if (d === 0) return 'This Week'
+  if (d === -7) return 'Last Week'
+  if (d === 7) return 'Next Week'
+  if (d < 0) return `${Math.round(Math.abs(d) / 7)}w Ago`
+  return `In ${Math.round(d / 7)}w`
+}
+
+function monthResetLabel(anchor: Date, today: Date): string {
+  const d = diffMonths(anchor, today)
+  if (d === 0) return 'This Month'
+  if (d === -1) return 'Last Month'
+  if (d === 1) return 'Next Month'
+  if (d < 0) return `${Math.abs(d)}mo Ago`
+  return `In ${d}mo`
+}
+
 function monthMatrix(anchor: Date): Date[][] {
   const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1)
   const gridStart = startOfWeek(first)
@@ -158,6 +185,7 @@ export default function Scheduler({ onBack, loggedPosts, scheduledPosts, onOpenD
   const goToday = () => setAnchor(startOfDay(new Date()))
 
   const headerLabel = mode === 'week' ? weekRangeLabel(weekStart) : monthLabel(anchor)
+  const resetLabel = mode === 'week' ? weekResetLabel(weekStart, today) : monthResetLabel(anchor, today)
 
   return (
     <div className="min-h-screen bg-app-gradient">
@@ -223,7 +251,7 @@ export default function Scheduler({ onBack, loggedPosts, scheduledPosts, onOpenD
               border: '1px solid var(--border)',
             }}
           >
-            {mode === 'week' ? 'This Week' : 'This Month'}
+            {resetLabel}
           </button>
           <NavButton onClick={stepForward} label="›" />
         </div>

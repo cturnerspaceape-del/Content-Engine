@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { DayOfWeek, LoggedPost, Platform, ScheduledPost, ViewState } from '../types'
+import type { ContentItem, DayOfWeek, InstagramFormat, LoggedPost, Platform, ScheduledPost, ViewState } from '../types'
 import {
   WEEKLY_CADENCE,
   PLATFORM_EMOJI,
@@ -9,6 +9,7 @@ import {
   DAY_THEMES,
   type CadenceEntry,
 } from '../data/postingCadence'
+import IGSlotPanel from './scheduler/IGSlotPanel'
 
 const DAY_ORDER: DayOfWeek[] = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
@@ -20,6 +21,7 @@ interface DayDetailProps {
   loggedPosts: LoggedPost[]
   scheduledPosts: ScheduledPost[]
   onSchedule: (post: ScheduledPost) => void
+  onUpdateSchedule: (post: ScheduledPost) => void
   onUnschedule: (id: string) => void
   onOpenLab: (lab: ViewState) => void
 }
@@ -59,6 +61,7 @@ export default function DayDetail({
   loggedPosts,
   scheduledPosts,
   onSchedule,
+  onUpdateSchedule,
   onUnschedule,
   onOpenLab,
 }: DayDetailProps) {
@@ -184,6 +187,7 @@ export default function DayDetail({
               done={isDone}
               scheduled={matchedScheduled}
               onSchedule={onSchedule}
+              onUpdateSchedule={onUpdateSchedule}
               onUnschedule={onUnschedule}
               onOpenLab={onOpenLab}
             />
@@ -220,32 +224,102 @@ interface CadenceCardProps {
   done: boolean
   scheduled?: ScheduledPost
   onSchedule: (post: ScheduledPost) => void
+  onUpdateSchedule: (post: ScheduledPost) => void
   onUnschedule: (id: string) => void
   onOpenLab: (lab: ViewState) => void
 }
 
 function CadenceCard({
-  entry, slotIndex, dateKey, done, scheduled, onSchedule, onUnschedule, onOpenLab,
+  entry, slotIndex, dateKey, done, scheduled, onSchedule, onUpdateSchedule, onUnschedule, onOpenLab,
 }: CadenceCardProps) {
   const recs = TIME_RECOMMENDATIONS[entry.platform] ?? []
   const defaultTime = recs[slotIndex] ?? recs[0] ?? '10:00'
   const [time, setTime] = useState<string>(scheduled?.time ?? defaultTime)
   const [showSchedule, setShowSchedule] = useState(false)
+  const [showGenerator, setShowGenerator] = useState(Boolean(scheduled?.item))
   const color = PLATFORM_COLOR[entry.platform]
   const labRoute = platformToLab(entry.platform, entry.format)
+  const isIG = entry.platform === 'Instagram'
+  const igFormat: InstagramFormat | undefined = isIG
+    ? (entry.format === 'Carousel' || entry.format === 'Reel' ? entry.format : 'Single Image')
+    : undefined
 
-  const submitSchedule = () => {
-    if (scheduled) onUnschedule(scheduled.id)
-    onSchedule({
+  // Ensures a ScheduledPost exists so generated content can persist. Returns the live record.
+  const ensureSchedule = (): ScheduledPost => {
+    if (scheduled) return scheduled
+    const fresh: ScheduledPost = {
       id: `${dateKey}-${entry.platform}-${entry.format ?? ''}-${Date.now()}`,
       date: dateKey,
       time,
       platform: entry.platform,
       format: entry.format,
+      status: 'pending',
       createdAt: new Date().toISOString(),
+    }
+    onSchedule(fresh)
+    return fresh
+  }
+
+  const handleItemChange = (item: ContentItem) => {
+    const target = ensureSchedule()
+    const wasPosted = !!item.postedToInstagram
+    onUpdateSchedule({
+      ...target,
+      item,
+      status: wasPosted ? 'posted' : target.status ?? 'pending',
+      postedAt: wasPosted ? new Date().toISOString() : target.postedAt,
     })
+  }
+
+  const submitSchedule = () => {
+    if (scheduled) {
+      onUpdateSchedule({ ...scheduled, time })
+    } else {
+      onSchedule({
+        id: `${dateKey}-${entry.platform}-${entry.format ?? ''}-${Date.now()}`,
+        date: dateKey,
+        time,
+        platform: entry.platform,
+        format: entry.format,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      })
+    }
     setShowSchedule(false)
   }
+
+  const statusPill = (() => {
+    if (done) return null
+    if (scheduled?.status === 'posted') {
+      return (
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,.12)', color: '#10b981' }}>
+          ✓ Posted
+        </span>
+      )
+    }
+    if (scheduled?.status === 'failed') {
+      return (
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--danger)' }}>
+          ⚠ Failed
+        </span>
+      )
+    }
+    if (scheduled?.item?.generatedVisual) {
+      return (
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(184,164,255,.18)', color: '#7c5fff' }}>
+          📦 Ready · auto-post {fmtTime12(scheduled.time)}
+        </span>
+      )
+    }
+    if (scheduled) {
+      return (
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(184,164,255,.10)', color: '#7c5fff' }}>
+          🕒 Scheduled · needs content
+        </span>
+      )
+    }
+    return null
+  })()
 
   return (
     <section
@@ -295,6 +369,7 @@ function CadenceCard({
                   ✓ Posted
                 </span>
               )}
+              {statusPill}
             </div>
             <div className="text-[11px] mt-1" style={{ color: 'var(--muted)' }}>
               Recommended: {recs.length > 0 ? recs.map(fmtTime12).join(' · ') : 'flexible'}
@@ -336,7 +411,25 @@ function CadenceCard({
               {scheduled ? 'Edit time' : 'Schedule'}
             </button>
           )}
-          {labRoute && !done && (
+          {isIG && !done && (
+            <button
+              onClick={() => setShowGenerator((v) => !v)}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:scale-105"
+              style={{
+                background: showGenerator ? 'var(--panel-2)' : color,
+                color: showGenerator ? color : '#fff',
+                border: showGenerator ? `1px solid ${color}55` : 'none',
+                boxShadow: showGenerator ? 'none' : 'var(--shadow-sm)',
+              }}
+            >
+              {showGenerator
+                ? 'Hide'
+                : scheduled?.item?.generatedVisual
+                ? 'Edit content'
+                : '✨ Generate'}
+            </button>
+          )}
+          {!isIG && labRoute && !done && (
             <button
               onClick={() => onOpenLab(labRoute)}
               className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:scale-105"
@@ -347,7 +440,7 @@ function CadenceCard({
                 boxShadow: 'var(--shadow-sm)',
               }}
             >
-              Generate ↗
+              Open Lab ↗
             </button>
           )}
         </div>
@@ -404,9 +497,23 @@ function CadenceCard({
         </div>
       )}
 
-      {!labRoute && !done && (
+      {/* Inline IG generator panel */}
+      {isIG && igFormat && showGenerator && !done && (
+        <IGSlotPanel
+          format={igFormat}
+          item={scheduled?.item}
+          onChange={handleItemChange}
+        />
+      )}
+
+      {!isIG && !labRoute && !done && (
         <p className="mt-3 text-[11px] italic" style={{ color: 'var(--muted)' }}>
           No generator wired for this channel yet — schedule the slot and post manually.
+        </p>
+      )}
+      {!isIG && labRoute && !done && (
+        <p className="mt-3 text-[11px] italic" style={{ color: 'var(--muted)' }}>
+          Inline generator coming soon for this channel — open the Lab to compose, then return to schedule.
         </p>
       )}
     </section>

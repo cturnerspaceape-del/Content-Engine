@@ -120,6 +120,8 @@ export type ViewState =
   | 'carousel-lab'
   | 'email-lab'
 
+export type ScheduleStatus = 'pending' | 'posted' | 'failed'
+
 export interface ScheduledPost {
   id: string
   date: string // YYYY-MM-DD (local)
@@ -127,6 +129,15 @@ export interface ScheduledPost {
   platform: Platform
   format?: string
   idea?: string
+  // Generated content snapshot. Format determines which payload is populated.
+  // IG (Image/Reel/Carousel) and similar visual posts use `item` (ContentItem).
+  // Email posts use `email` (GeneratedEmail). Text-only posts use `textVariants`.
+  item?: ContentItem
+  email?: import('../lib/email/types').GeneratedEmail
+  textVariants?: Record<string, { caption: string; hashtags?: string[] }>
+  status?: ScheduleStatus
+  postedAt?: string
+  postError?: string
   createdAt: string
 }
 

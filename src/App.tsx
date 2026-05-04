@@ -33,6 +33,9 @@ export default function App() {
   const handleSchedulePost = (post: ScheduledPost) => {
     setScheduledPosts((prev) => [...prev, post])
   }
+  const handleUpdateSchedule = (post: ScheduledPost) => {
+    setScheduledPosts((prev) => prev.map((p) => (p.id === post.id ? post : p)))
+  }
   const handleUnschedulePost = (id: string) => {
     setScheduledPosts((prev) => prev.filter((p) => p.id !== id))
   }
@@ -119,6 +122,7 @@ export default function App() {
               loggedPosts={loggedPosts}
               scheduledPosts={scheduledPosts}
               onSchedule={handleSchedulePost}
+              onUpdateSchedule={handleUpdateSchedule}
               onUnschedule={handleUnschedulePost}
               onOpenLab={(lab) => switchView(lab)}
             />
