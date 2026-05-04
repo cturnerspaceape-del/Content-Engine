@@ -8,14 +8,17 @@ export function escapeHtml(input: unknown): string {
     .replace(/'/g, '&#39;')
 }
 
+// Palette mirrors thespaceape.com light surfaces with the brand blue
+// (#0D7FF7) as the primary accent and cosmic indigo as the body ink.
 export const PALETTE = {
-  bg: '#0b0b0c',
-  panel: '#161618',
-  panelAlt: '#1f2024',
-  border: '#2a2b30',
-  accent: '#f59e0b',
-  accentSoft: '#d97706',
-  text: '#e5e7eb',
-  muted: '#94a3b8',
-  divider: '#27282d',
+  bg: '#F7F8F8',
+  panel: '#FFFFFF',
+  panelAlt: '#EEF4FF',
+  border: '#D8E2EE',
+  accent: '#0D7FF7',
+  accentSoft: '#0A5FBF',
+  text: '#1E1B4B',
+  muted: '#6B7280',
+  divider: '#E5EAF2',
+  onAccent: '#FFFFFF',
 }

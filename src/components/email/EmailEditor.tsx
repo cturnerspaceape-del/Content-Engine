@@ -278,7 +278,7 @@ function SectionEditor({
             value={hero.subhead ?? ''}
             onChange={(e) => onPatch({ subhead: e.target.value })}
             style={{ ...inputStyle, minHeight: 60, marginBottom: 8 }}
-            placeholder="Subhead (optional)"
+            placeholder="Subhead / hero caption (optional)"
           />
           <input
             value={hero.imagePrompt ?? ''}
@@ -291,9 +291,19 @@ function SectionEditor({
     }
     case 'product': {
       const product = section.data as ProductSectionData
+      const updateCell = (idx: number, patch: Partial<ProductCellData>) => {
+        const nextCells = product.cells.map((c, i) => (i === idx ? { ...c, ...patch } : c))
+        onPatch({ cells: nextCells })
+      }
       return (
         <div>
           {heading}
+          <input
+            value={product.title ?? ''}
+            onChange={(e) => onPatch({ title: e.target.value })}
+            style={{ ...inputStyle, marginBottom: 10 }}
+            placeholder="Section title (optional, e.g. THE DROP)"
+          />
           {product.cells.length === 0 ? (
             <div
               style={{
@@ -312,7 +322,7 @@ function SectionEditor({
             product.cells.map((cell: ProductCellData, cellIdx: number) => {
               const busy = busyKeys?.has(reRollKey({ sectionIdx, cellIdx })) ?? false
               return (
-                <div key={cellIdx} style={{ marginBottom: 6 }}>
+                <div key={cellIdx} style={{ marginBottom: 10 }}>
                   <ImageRow
                     imageUrl={cell.imageUrl}
                     imageError={cell.imageError}
@@ -325,18 +335,24 @@ function SectionEditor({
                     label={cell.name}
                   />
                   <input
+                    value={cell.name ?? ''}
+                    onChange={(e) => updateCell(cellIdx, { name: e.target.value })}
+                    style={{ ...inputStyle, marginBottom: 6, fontWeight: 700 }}
+                    placeholder="Product name"
+                  />
+                  <textarea
+                    value={cell.blurb ?? ''}
+                    onChange={(e) => updateCell(cellIdx, { blurb: e.target.value })}
+                    style={{ ...inputStyle, minHeight: 50, marginBottom: 6 }}
+                    placeholder="Photo caption (shown under the image)"
+                  />
+                  <input
                     value={cell.imagePrompt ?? ''}
-                    onChange={(e) => {
-                      const nextCells = product.cells.map((c, i) =>
-                        i === cellIdx ? { ...c, imagePrompt: e.target.value } : c,
-                      )
-                      onPatch({ cells: nextCells })
-                    }}
+                    onChange={(e) => updateCell(cellIdx, { imagePrompt: e.target.value })}
                     style={{
                       ...inputStyle,
                       fontSize: 12,
                       color: 'var(--muted)',
-                      marginTop: -2,
                     }}
                     placeholder="Image prompt for this cell"
                   />

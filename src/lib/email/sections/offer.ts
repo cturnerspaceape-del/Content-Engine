@@ -10,7 +10,7 @@ export function renderOffer(data: OfferSectionData): string {
             <td style="padding:28px 28px 26px;font-family:Helvetica,Arial,sans-serif;text-align:center;">
               ${
                 data.badge
-                  ? `<div style="display:inline-block;background:${PALETTE.accent};color:${PALETTE.bg};font-size:11px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:14px;">${escapeHtml(data.badge)}</div>`
+                  ? `<div style="display:inline-block;background:${PALETTE.accent};color:${PALETTE.onAccent};font-size:11px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:14px;">${escapeHtml(data.badge)}</div>`
                   : ''
               }
               <div style="font-size:24px;font-weight:800;color:${PALETTE.text};line-height:1.2;">${escapeHtml(data.title)}</div>
