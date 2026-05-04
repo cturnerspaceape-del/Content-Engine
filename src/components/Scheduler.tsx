@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react'
 import type { DayOfWeek, LoggedPost, Platform, ScheduledPost } from '../types'
 import {
-  WEEKLY_CADENCE,
   PLATFORM_EMOJI,
   PLATFORM_COLOR,
   PLATFORM_LABEL,
-  totalDemandForDay,
   type CadenceEntry,
 } from '../data/postingCadence'
+import { cadenceForDate, totalDemandForDate } from '../data/printCadence'
 
 const DAY_ORDER: DayOfWeek[] = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
@@ -167,7 +166,7 @@ export default function Scheduler({ onBack, loggedPosts, scheduledPosts, onOpenD
     let demanded = 0
     let completed = 0
     for (const d of dates) {
-      demanded += totalDemandForDay(dayOfWeekName(d))
+      demanded += totalDemandForDate(d)
       const posts = postsByDate[isoDate(d)] ?? []
       completed += posts.length
     }
@@ -337,8 +336,7 @@ function WeekView({ weekDates, today, postsByDate, scheduledByDate, onOpenDay }:
   return (
     <div className="grid gap-3 grid-cols-1 md:grid-cols-7">
       {weekDates.map((d) => {
-        const dow = dayOfWeekName(d)
-        const cadence = WEEKLY_CADENCE[dow]
+        const cadence = cadenceForDate(d)
         const posts = postsByDate[isoDate(d)] ?? []
         const scheduled = scheduledByDate[isoDate(d)] ?? []
         const counts = countByPlatform(posts)
@@ -549,8 +547,7 @@ function MonthView({ weeks, anchorMonth, today, postsByDate, scheduledByDate, on
       >
         {weeks.flat().map((d) => {
           const inMonth = d.getMonth() === anchorMonth
-          const dow = dayOfWeekName(d)
-          const demanded = totalDemandForDay(dow)
+          const demanded = totalDemandForDate(d)
           const posts = postsByDate[isoDate(d)] ?? []
           const done = posts.length
           const isToday = sameDay(d, today)

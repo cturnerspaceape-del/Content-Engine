@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ContentItem, DayOfWeek, InstagramFormat, LoggedPost, Platform, ScheduledPost } from '../types'
 import {
-  WEEKLY_CADENCE,
   PLATFORM_EMOJI,
   PLATFORM_COLOR,
   PLATFORM_LABEL,
@@ -13,7 +12,7 @@ import IGSlotPanel from './scheduler/IGSlotPanel'
 import TextPostSlotPanel from './scheduler/TextPostSlotPanel'
 import EmailSlotPanel from './scheduler/EmailSlotPanel'
 import PrintSlotPanel from './scheduler/PrintSlotPanel'
-import { monthlyEntriesFor } from '../data/printCadence'
+import { cadenceForDate } from '../data/printCadence'
 
 const DAY_ORDER: DayOfWeek[] = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
@@ -59,10 +58,7 @@ export default function DayDetail({
   onOpenPrintLab,
 }: DayDetailProps) {
   const dow = dayOfWeekName(date)
-  const cadence = useMemo(
-    () => [...WEEKLY_CADENCE[dow], ...monthlyEntriesFor(date)],
-    [dow, date],
-  )
+  const cadence = useMemo(() => cadenceForDate(date), [date])
   const dateKey = isoDate(date)
   const theme = DAY_THEMES[dow]
 

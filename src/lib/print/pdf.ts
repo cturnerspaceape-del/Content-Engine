@@ -8,8 +8,6 @@ const SHEET_H = 19 * IN
 const PANEL_W = 6.33 * IN
 const PANEL_H = 11 * IN
 const STICKER = 3 * IN
-const STICKER_GAP = 0.25 * IN
-const STICKER_MARGIN = 0.5 * IN
 
 export async function downloadPrintPdf(c: PrintCampaign): Promise<void> {
   const { bytes, filename } = await composePrintPdf(c)
@@ -25,7 +23,7 @@ export async function composePrintPdf(
   }
   if (c.activeFormat === 'Sticker') {
     if (!c.sticker?.imageUrl) throw new Error('No sticker art generated yet')
-    return { bytes: await composeStickerSheetPdf(c.sticker), filename: stamp('stickers') }
+    return { bytes: await composeStickerPdf(c.sticker), filename: stamp('sticker') }
   }
   if (c.activeFormat === 'Trifold') {
     if (!c.trifold?.outsidePanel?.imageUrl || !c.trifold?.insidePanel?.imageUrl) {
@@ -44,29 +42,11 @@ async function composePosterPdf(piece: PrintPiece): Promise<Uint8Array> {
   return doc.save()
 }
 
-async function composeStickerSheetPdf(piece: PrintPiece): Promise<Uint8Array> {
+async function composeStickerPdf(piece: PrintPiece): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
-  const page = doc.addPage([SHEET_W, SHEET_H])
+  const page = doc.addPage([STICKER, STICKER])
   const img = await embedPiece(doc, piece)
-
-  const cellW = STICKER + STICKER_GAP
-  const cellH = STICKER + STICKER_GAP
-  const cols = Math.floor((SHEET_W - 2 * STICKER_MARGIN + STICKER_GAP) / cellW)
-  const rows = Math.floor((SHEET_H - 2 * STICKER_MARGIN + STICKER_GAP) / cellH)
-  const usedW = cols * cellW - STICKER_GAP
-  const usedH = rows * cellH - STICKER_GAP
-  const startX = (SHEET_W - usedW) / 2
-  const startY = (SHEET_H - usedH) / 2
-
-  for (let r = 0; r < rows; r++) {
-    for (let col = 0; col < cols; col++) {
-      const x = startX + col * cellW
-      // PDF y-axis grows upward; lay top-down for readability.
-      const y = SHEET_H - startY - STICKER - r * cellH
-      page.drawImage(img, { x, y, width: STICKER, height: STICKER })
-      drawCutMarks(page, x, y, STICKER, STICKER)
-    }
-  }
+  page.drawImage(img, { x: 0, y: 0, width: STICKER, height: STICKER })
   return doc.save()
 }
 
@@ -147,20 +127,6 @@ function drawPanelGuides(
       thickness: 0.5,
     })
   }
-}
-
-function drawCutMarks(page: PDFPage, x: number, y: number, w: number, h: number): void {
-  const len = 0.1 * IN
-  const t = 0.4
-  // Four corner marks.
-  page.drawLine({ start: { x: x - len, y }, end: { x, y }, thickness: t })
-  page.drawLine({ start: { x, y: y - len }, end: { x, y }, thickness: t })
-  page.drawLine({ start: { x: x + w, y }, end: { x: x + w + len, y }, thickness: t })
-  page.drawLine({ start: { x: x + w, y: y - len }, end: { x: x + w, y }, thickness: t })
-  page.drawLine({ start: { x: x - len, y: y + h }, end: { x, y: y + h }, thickness: t })
-  page.drawLine({ start: { x, y: y + h }, end: { x, y: y + h + len }, thickness: t })
-  page.drawLine({ start: { x: x + w, y: y + h }, end: { x: x + w + len, y: y + h }, thickness: t })
-  page.drawLine({ start: { x: x + w, y: y + h }, end: { x: x + w, y: y + h + len }, thickness: t })
 }
 
 async function embedPiece(doc: PDFDocument, piece: PrintPiece): Promise<PDFImage> {
