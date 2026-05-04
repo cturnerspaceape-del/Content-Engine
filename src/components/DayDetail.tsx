@@ -12,6 +12,8 @@ import {
 import IGSlotPanel from './scheduler/IGSlotPanel'
 import TextPostSlotPanel from './scheduler/TextPostSlotPanel'
 import EmailSlotPanel from './scheduler/EmailSlotPanel'
+import PrintSlotPanel from './scheduler/PrintSlotPanel'
+import { monthlyEntriesFor } from '../data/printCadence'
 
 const DAY_ORDER: DayOfWeek[] = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
@@ -25,6 +27,7 @@ interface DayDetailProps {
   onSchedule: (post: ScheduledPost) => void
   onUpdateSchedule: (post: ScheduledPost) => void
   onUnschedule: (id: string) => void
+  onOpenPrintLab: () => void
 }
 
 function isoDate(d: Date): string {
@@ -53,9 +56,13 @@ export default function DayDetail({
   onSchedule,
   onUpdateSchedule,
   onUnschedule,
+  onOpenPrintLab,
 }: DayDetailProps) {
   const dow = dayOfWeekName(date)
-  const cadence = WEEKLY_CADENCE[dow]
+  const cadence = useMemo(
+    () => [...WEEKLY_CADENCE[dow], ...monthlyEntriesFor(date)],
+    [dow, date],
+  )
   const dateKey = isoDate(date)
   const theme = DAY_THEMES[dow]
 
@@ -178,6 +185,7 @@ export default function DayDetail({
               onSchedule={onSchedule}
               onUpdateSchedule={onUpdateSchedule}
               onUnschedule={onUnschedule}
+              onOpenPrintLab={onOpenPrintLab}
             />
           )
         })}
@@ -214,10 +222,11 @@ interface CadenceCardProps {
   onSchedule: (post: ScheduledPost) => void
   onUpdateSchedule: (post: ScheduledPost) => void
   onUnschedule: (id: string) => void
+  onOpenPrintLab: () => void
 }
 
 function CadenceCard({
-  entry, slotIndex, dateKey, done, scheduled, onSchedule, onUpdateSchedule, onUnschedule,
+  entry, slotIndex, dateKey, done, scheduled, onSchedule, onUpdateSchedule, onUnschedule, onOpenPrintLab,
 }: CadenceCardProps) {
   const recs = TIME_RECOMMENDATIONS[entry.platform] ?? []
   const recommendedTime = recs[slotIndex] ?? recs[0]
@@ -240,7 +249,8 @@ function CadenceCard({
     entry.platform === 'Email' ||
     entry.platform === 'X' ||
     entry.platform === 'Threads' ||
-    entry.platform === 'Facebook'
+    entry.platform === 'Facebook' ||
+    entry.platform === 'Print'
 
   // Ensures a ScheduledPost exists so generated content can persist. Returns the live record.
   const ensureSchedule = (): ScheduledPost => {
@@ -537,6 +547,18 @@ function CadenceCard({
               scheduled={scheduled}
               ensureSchedule={ensureSchedule}
               onChange={onUpdateSchedule}
+            />
+          )
+        }
+        if (entry.platform === 'Print') {
+          const fmt = (entry.format as 'Poster' | 'Trifold' | 'Sticker' | undefined) ?? 'Poster'
+          return (
+            <PrintSlotPanel
+              format={fmt}
+              scheduled={scheduled}
+              ensureSchedule={ensureSchedule}
+              onChange={onUpdateSchedule}
+              onOpenPrintLab={onOpenPrintLab}
             />
           )
         }

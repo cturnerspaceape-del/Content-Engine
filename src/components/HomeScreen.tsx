@@ -6,6 +6,7 @@ interface HomeScreenProps {
   onTextPostLab: () => void
   onCarouselLab: () => void
   onEmailLab: () => void
+  onPrintLab: () => void
   loggedCount: number
 }
 
@@ -17,6 +18,7 @@ export default function HomeScreen({
   onTextPostLab,
   onCarouselLab,
   onEmailLab,
+  onPrintLab,
   loggedCount,
 }: HomeScreenProps) {
   return (
@@ -136,6 +138,21 @@ export default function HomeScreen({
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">📧</span>
                 <span>Email Lab</span>
+              </div>
+            </button>
+            <button
+              onClick={onPrintLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(14,165,233,.18), rgba(99,102,241,.12))',
+                border: '2px solid #0ea5e9',
+                boxShadow: 'var(--shadow-md)',
+                color: '#0ea5e9',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🖨️</span>
+                <span>Print Lab</span>
               </div>
             </button>
             {loggedCount > 0 && (

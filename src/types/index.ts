@@ -7,6 +7,9 @@ export type Platform =
   | 'Threads'
   | 'YouTube Shorts'
   | 'Email'
+  | 'Print'
+
+export type PrintFormat = 'Poster' | 'Trifold' | 'Sticker'
 
 export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
 
@@ -119,6 +122,7 @@ export type ViewState =
   | 'text-post-lab'
   | 'carousel-lab'
   | 'email-lab'
+  | 'print-lab'
 
 export type ScheduleStatus = 'pending' | 'posted' | 'failed'
 
@@ -135,6 +139,9 @@ export interface ScheduledPost {
   item?: ContentItem
   email?: import('../lib/email/types').GeneratedEmail
   textVariants?: Record<string, { caption: string; hashtags?: string[] }>
+  // Print pieces — `format` field on ScheduledPost determines the shape.
+  // Poster/Sticker = single-image PrintPiece; Trifold = TrifoldPiece (2 panels).
+  print?: import('../lib/print/types').PrintPiece | import('../lib/print/types').TrifoldPiece
   status?: ScheduleStatus
   postedAt?: string
   postError?: string

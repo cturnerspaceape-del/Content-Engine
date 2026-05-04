@@ -53,6 +53,7 @@ export const PLATFORM_EMOJI: Record<Platform, string> = {
   'YouTube Shorts': '▶️',
   TikTok: '🎵',
   'Blog Post': '📝',
+  Print: '🖨️',
 }
 
 export const PLATFORM_COLOR: Record<Platform, string> = {
@@ -64,6 +65,7 @@ export const PLATFORM_COLOR: Record<Platform, string> = {
   'YouTube Shorts': '#ef4444',
   TikTok: '#111827',
   'Blog Post': '#6b7280',
+  Print: '#0ea5e9',
 }
 
 // Display label override — Facebook is shown as "Meta" since the brand
@@ -77,6 +79,7 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
   'YouTube Shorts': 'YouTube',
   TikTok: 'TikTok',
   'Blog Post': 'Blog',
+  Print: 'Print',
 }
 
 export function totalDemandForDay(day: DayOfWeek): number {
@@ -94,6 +97,7 @@ export const TIME_RECOMMENDATIONS: Record<Platform, string[]> = {
   'YouTube Shorts': ['17:00', '20:00'],
   TikTok: ['18:00', '21:00'],
   'Blog Post': ['09:00'],
+  Print: ['09:00'],
 }
 
 // Editorial themes by day-of-week — sourced from instagramContentGenerator.ts

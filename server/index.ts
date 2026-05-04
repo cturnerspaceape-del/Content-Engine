@@ -6,6 +6,7 @@ import { generateCarouselSlideHandler } from './generateCarouselSlide'
 import { generateReelHandler } from './generateReel'
 import { generateEmailHandler } from './generateEmail'
 import { generateEmailImageHandler } from './generateEmailImage'
+import { generatePrintImageHandler } from './generatePrintImage'
 import { generateCaptionHandler } from './generateCaption'
 import { publishToInstagramHandler, getInstagramAccountHandler } from './instagramHandler'
 import { getInstagramDebugHandler } from './instagramDebugHandler'
@@ -35,6 +36,7 @@ if (process.env.DISABLE_GENERATION === '1') {
   app.post('/api/generate-reel', deny)
   app.post('/api/generate-email', deny)
   app.post('/api/generate-email-image', deny)
+  app.post('/api/generate-print-image', deny)
   app.post('/api/generate-caption', deny)
   console.warn('[api] DISABLE_GENERATION=1 — all generate-* routes return 503')
 } else {
@@ -43,6 +45,7 @@ if (process.env.DISABLE_GENERATION === '1') {
   app.post('/api/generate-reel', generateReelHandler)
   app.post('/api/generate-email', generateEmailHandler)
   app.post('/api/generate-email-image', generateEmailImageHandler)
+  app.post('/api/generate-print-image', generatePrintImageHandler)
   app.post('/api/generate-caption', generateCaptionHandler)
 }
 
