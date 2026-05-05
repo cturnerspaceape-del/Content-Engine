@@ -38,7 +38,7 @@ interface GenerateBody {
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 7 // bumped for gpt-image-2 backend swap
+const CACHE_VERSION = 8 // bumped: research-brief path drops brand refs and slims brand bible
 
 export async function generateSingleImageHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -80,15 +80,32 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
         : pickShotTemplate(pillar, subcategory)
 
     const productFile = pickProductReference(flavor)
-    const [inspoKeys, brandKeys, researchInspo] = await Promise.all([
-      pickInspoRefs(shotTemplate, INSPO_REF_COUNT),
-      pickBrandRefs(shotTemplate, BRAND_REF_COUNT),
-      resolveResearchInspo({
-        sourceImageUrls: researchSourceImageUrls,
-        sourceUrls: researchSourceUrls,
-        max: INSPO_REF_COUNT,
-      }),
-    ])
+    // Research-brief path: skip the static inspo/brand-ref pools entirely.
+    // Those refs anchor the model to past Space Ape work and out-vote the
+    // brief's aesthetic when there's a contradiction (e.g. a "passport-booth
+    // / harsh flash" brief gets washed into editorial-glossy by the brand
+    // refs). We rely on the research-resolved sourceImageUrls instead; if
+    // those fail to fetch, we send no inspo refs at all — better to give the
+    // model a clean slate than the wrong moodboard.
+    const [inspoKeys, brandKeys, researchInspo] = hasResearchBrief
+      ? [
+          [] as string[],
+          [] as string[],
+          await resolveResearchInspo({
+            sourceImageUrls: researchSourceImageUrls,
+            sourceUrls: researchSourceUrls,
+            max: INSPO_REF_COUNT,
+          }),
+        ]
+      : await Promise.all([
+          pickInspoRefs(shotTemplate, INSPO_REF_COUNT),
+          pickBrandRefs(shotTemplate, BRAND_REF_COUNT),
+          resolveResearchInspo({
+            sourceImageUrls: researchSourceImageUrls,
+            sourceUrls: researchSourceUrls,
+            max: INSPO_REF_COUNT,
+          }),
+        ])
     const useResearchInspo = researchInspo.length > 0
 
     // variationSeed in the cache key only when set — keeps the default path cache-friendly.

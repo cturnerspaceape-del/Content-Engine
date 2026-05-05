@@ -49,6 +49,15 @@ const BRAND_BIBLE = `Space Ape is a premium cannabis live-resin vape brand. Ever
   - The product is always the unambiguous focal point; everything else supports it.
   - Confident, youthful, high-saturation, clean.`
 
+// Research-brief variant: keeps the identity rules (product fidelity, focal
+// point, brand-as-vape-brand context) but drops the lighting / camera /
+// palette directives so the brief is free to specify them. Used when a
+// picked research seed supplied a shotBrief — see prompt body below.
+const BRAND_BIBLE_RESEARCH = `Space Ape is a premium cannabis live-resin vape brand. Identity rules that hold across every image:
+  - The product is always the unambiguous focal point; everything else supports it.
+  - The product reference [1] is the real SKU — reproduce its shape, label, colorway, and proportions exactly. Do not stylize, redesign, or substitute.
+  - Lighting, camera, palette, and mood are dictated by the SHOT BRIEF below — not by any default Space Ape moodboard. Execute the brief faithfully even when it contradicts a typical brand look.`
+
 const HARD_CONSTRAINTS = [
   'Square 1:1 framing, 1080x1080, full bleed.',
   'NO text, NO words, NO letters, NO numbers, NO logos — except what is physically printed on the product itself.',
@@ -131,8 +140,16 @@ export function buildPrompt({
   // 2. REFERENCE KEY (front-loaded — most important thing Nano Banana needs to know)
   sections.push(`REFERENCE IMAGES ATTACHED (in order):\n${buildReferenceKey(inspoRefCount, brandRefCount)}`)
 
-  // 3. BRAND BIBLE (identical across every call — builds cross-post consistency)
-  sections.push(`BRAND BIBLE:\n${BRAND_BIBLE}`)
+  // 3. BRAND BIBLE — full version anchors to the editorial-glossy default
+  // Space Ape look. The slim research variant drops aesthetic directives so
+  // the SHOT BRIEF can specify them without contradiction.
+  const trimmedResearchBriefForBible =
+    typeof researchShotBrief === 'string' ? researchShotBrief.trim() : ''
+  sections.push(
+    `BRAND BIBLE:\n${
+      trimmedResearchBriefForBible.length > 0 ? BRAND_BIBLE_RESEARCH : BRAND_BIBLE
+    }`,
+  )
 
   // 4. TREND CONTEXT (picked research seed). Now placed BEFORE the shot
   // brief so the angle frames the brief instead of trailing it.
