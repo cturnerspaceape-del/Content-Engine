@@ -6,42 +6,28 @@ export interface CadenceEntry {
   format?: string
 }
 
-const everyDay: CadenceEntry[] = [
-  { platform: 'Instagram', count: 1, format: 'Carousel' },
-  { platform: 'Instagram', count: 1, format: 'Reel' },
+// Daily baseline runs every day: 1 IG Story, 1 Threads post, 2 X posts.
+// IG feed (Carousel/Reel) + Meta layer in on Mon/Wed/Fri/Sun (4/wk each).
+// Email moved to monthly cadence — see emailCadence.ts.
+const dailyBaseline: CadenceEntry[] = [
+  { platform: 'Instagram', count: 1, format: 'Story' },
+  { platform: 'Threads', count: 1 },
+  { platform: 'X', count: 2 },
+]
+
+const igFeedDay = (format: 'Carousel' | 'Reel'): CadenceEntry[] => [
+  { platform: 'Instagram', count: 1, format },
   { platform: 'Facebook', count: 1 },
 ]
 
 export const WEEKLY_CADENCE: Record<DayOfWeek, CadenceEntry[]> = {
-  Monday: [
-    ...everyDay,
-    { platform: 'X', count: 1 },
-    { platform: 'Threads', count: 1 },
-  ],
-  Tuesday: [
-    ...everyDay,
-    { platform: 'Email', count: 1 },
-  ],
-  Wednesday: [
-    ...everyDay,
-    { platform: 'X', count: 1 },
-    { platform: 'Threads', count: 1 },
-  ],
-  Thursday: [
-    ...everyDay,
-  ],
-  Friday: [
-    ...everyDay,
-    { platform: 'X', count: 1 },
-    { platform: 'Threads', count: 1 },
-  ],
-  Saturday: [
-    ...everyDay,
-    { platform: 'Email', count: 1 },
-  ],
-  Sunday: [
-    ...everyDay,
-  ],
+  Monday:    [...dailyBaseline, ...igFeedDay('Carousel')],
+  Tuesday:   [...dailyBaseline],
+  Wednesday: [...dailyBaseline, ...igFeedDay('Reel')],
+  Thursday:  [...dailyBaseline],
+  Friday:    [...dailyBaseline, ...igFeedDay('Carousel')],
+  Saturday:  [...dailyBaseline],
+  Sunday:    [...dailyBaseline, ...igFeedDay('Reel')],
 }
 
 export const PLATFORM_EMOJI: Record<Platform, string> = {
@@ -88,11 +74,14 @@ export function totalDemandForDay(day: DayOfWeek): number {
 
 // Recommended posting times in local 24h "HH:mm" — one entry per demanded slot
 // where order matches typical engagement peaks for that platform.
+// Slot order matches WEEKLY_CADENCE entry order per platform.
+// Instagram: [0]=Story (midday casual scroll), [1]=Feed (evening peak).
+// X: [0]=morning primary, [1]=optional 5pm.
 export const TIME_RECOMMENDATIONS: Record<Platform, string[]> = {
-  Instagram: ['11:00', '13:00', '19:00'],
-  Facebook: ['13:00', '15:00'],
-  Threads: ['10:00', '20:00'],
-  X: ['09:00', '15:00', '21:00'],
+  Instagram: ['12:00', '18:00'],
+  Facebook: ['13:00'],
+  Threads: ['09:00'],
+  X: ['09:00', '17:00'],
   Email: ['10:00'],
   'YouTube Shorts': ['17:00', '20:00'],
   TikTok: ['18:00', '21:00'],

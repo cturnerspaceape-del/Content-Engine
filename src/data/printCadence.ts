@@ -1,5 +1,6 @@
 import type { DayOfWeek } from '../types'
 import { WEEKLY_CADENCE, type CadenceEntry } from './postingCadence'
+import { monthlyEmailEntriesFor } from './emailCadence'
 
 // Print pieces aren't on a weekly rhythm — the user wants a fresh sticker,
 // poster, and foldable print prepped on the 1st of every month.
@@ -19,7 +20,11 @@ const DAY_ORDER: DayOfWeek[] = [
 
 export function cadenceForDate(date: Date): CadenceEntry[] {
   const dow = DAY_ORDER[(date.getDay() + 6) % 7]
-  return [...WEEKLY_CADENCE[dow], ...monthlyEntriesFor(date)]
+  return [
+    ...WEEKLY_CADENCE[dow],
+    ...monthlyEntriesFor(date),
+    ...monthlyEmailEntriesFor(date),
+  ]
 }
 
 export function totalDemandForDate(date: Date): number {
