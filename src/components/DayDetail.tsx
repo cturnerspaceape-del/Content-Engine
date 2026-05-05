@@ -13,7 +13,13 @@ import TextPostSlotPanel from './scheduler/TextPostSlotPanel'
 import EmailSlotPanel from './scheduler/EmailSlotPanel'
 import PrintSlotPanel from './scheduler/PrintSlotPanel'
 import SlotResearchButton from './scheduler/SlotResearchButton'
-import { loadSlotResearch, pickedSeed, slotKey as buildSlotKey } from '../lib/research/slotResearch'
+import {
+  loadSlotResearch,
+  pickedSeed,
+  slotKey as buildSlotKey,
+  loadSlotEmailType,
+  saveSlotEmailType,
+} from '../lib/research/slotResearch'
 import type { ResearchedSeed } from '../lib/research/types'
 import { cadenceForDate } from '../data/printCadence'
 
@@ -237,6 +243,18 @@ function CadenceCard({
   useEffect(() => {
     setSlotResearch(pickedSeed(loadSlotResearch(slotKey)))
   }, [slotKey])
+  const isEmail = entry.platform === 'Email'
+  const [emailType, setEmailType] = useState<string>(
+    () => (isEmail ? loadSlotEmailType(slotKey) ?? 'promo' : 'promo'),
+  )
+  useEffect(() => {
+    if (!isEmail) return
+    setEmailType(loadSlotEmailType(slotKey) ?? 'promo')
+  }, [slotKey, isEmail])
+  const handleEmailTypeChange = (next: string) => {
+    setEmailType(next)
+    saveSlotEmailType(slotKey, next)
+  }
   const recs = TIME_RECOMMENDATIONS[entry.platform] ?? []
   const recommendedTime = recs[slotIndex] ?? recs[0]
   const defaultTime = recommendedTime ?? '10:00'
@@ -422,8 +440,36 @@ function CadenceCard({
               </button>
             </div>
           )}
+          {!done && isEmail && (
+            <select
+              value={emailType}
+              onChange={(e) => handleEmailTypeChange(e.target.value)}
+              aria-label="Email type"
+              className="text-xs font-bold px-2 py-1.5 rounded-lg"
+              style={{
+                background: 'var(--panel-2)',
+                color: 'var(--text)',
+                border: '1px solid var(--border)',
+                fontFamily: 'inherit',
+              }}
+              title="Scope research to a specific email type"
+            >
+              <option value="welcome">Welcome</option>
+              <option value="education">Education</option>
+              <option value="newsletter">Newsletter</option>
+              <option value="replenishment">Replenishment</option>
+              <option value="promo">Promo</option>
+              <option value="transactional">Transactional</option>
+              <option value="reengagement">Re-engagement</option>
+            </select>
+          )}
           {!done && (
-            <SlotResearchButton slotKey={slotKey} onChange={setSlotResearch} />
+            <SlotResearchButton
+              slotKey={slotKey}
+              onChange={setSlotResearch}
+              format={isEmail ? 'email' : 'image'}
+              emailType={isEmail ? emailType : undefined}
+            />
           )}
           {supportsInlineGenerate && !done && (
             <button

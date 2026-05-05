@@ -26,6 +26,13 @@ import {
 interface SlotResearchButtonProps {
   slotKey: string
   onChange?: (picked: ResearchedSeed | null) => void
+  // Research format passed to /api/research-trends. Defaults to 'image'
+  // because image seeds adapt to every visual format. Email cadence cards
+  // override to 'email' so the prompt scopes to lifecycle email signal.
+  format?: 'image' | 'carousel' | 'text' | 'email' | 'print'
+  // Only meaningful when format === 'email'. Tells the prompt to narrow
+  // research to a specific email type (promo, newsletter, etc.).
+  emailType?: string
 }
 
 interface ApiResponse {
@@ -36,7 +43,12 @@ interface ApiResponse {
   error?: string
 }
 
-export default function SlotResearchButton({ slotKey, onChange }: SlotResearchButtonProps) {
+export default function SlotResearchButton({
+  slotKey,
+  onChange,
+  format = 'image',
+  emailType,
+}: SlotResearchButtonProps) {
   const [data, setData] = useState<SlotResearch | null>(() => loadSlotResearch(slotKey))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +60,22 @@ export default function SlotResearchButton({ slotKey, onChange }: SlotResearchBu
     setError(null)
     setOpen(false)
   }, [slotKey])
+
+  // When emailType switches under us (user changed the dropdown), prior
+  // seeds were generated for a different type — drop them so the next
+  // Research click pulls fresh signal scoped to the new type.
+  const prevEmailTypeRef = useRef<string | undefined>(emailType)
+  useEffect(() => {
+    if (prevEmailTypeRef.current !== emailType) {
+      prevEmailTypeRef.current = emailType
+      clearSlotResearch(slotKey)
+      setData(null)
+      setError(null)
+      setOpen(false)
+      onChange?.(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emailType, slotKey])
 
   const picked = pickedSeed(data)
 
@@ -68,10 +96,12 @@ export default function SlotResearchButton({ slotKey, onChange }: SlotResearchBu
     setLoading(true)
     setError(null)
     try {
+      const body: Record<string, unknown> = { format }
+      if (format === 'email' && emailType) body.emailType = emailType
       const r = await fetch('/api/research-trends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ format: 'image' }),
+        body: JSON.stringify(body),
       })
       const json = (await r.json()) as ApiResponse
       if (!r.ok || json.error) {
@@ -165,16 +195,23 @@ interface PickerProps {
 }
 
 function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: PickerProps) {
-  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
 
   useLayoutEffect(() => {
     if (!anchor) return
     const update = () => {
       const rect = anchor.getBoundingClientRect()
-      setPos({
-        top: rect.bottom + 6,
-        right: Math.max(12, window.innerWidth - rect.right),
-      })
+      const margin = 12
+      const width = Math.min(320, window.innerWidth - margin * 2)
+      // Prefer right-aligning the picker with the trigger, but clamp so
+      // both edges stay inside the viewport — important on phones where
+      // the trigger sits far right and a 320px popover would overhang.
+      const desiredLeft = rect.right - width
+      const left = Math.max(
+        margin,
+        Math.min(desiredLeft, window.innerWidth - width - margin),
+      )
+      setPos({ top: rect.bottom + 6, left, width })
     }
     update()
     window.addEventListener('resize', update)
@@ -207,9 +244,8 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
       style={{
         zIndex: 50,
         top: pos.top,
-        right: pos.right,
-        width: 320,
-        maxWidth: 'calc(100vw - 24px)',
+        left: pos.left,
+        width: pos.width,
         background: 'var(--panel)',
         border: '1px solid var(--border)',
         padding: 12,

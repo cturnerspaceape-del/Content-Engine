@@ -66,3 +66,23 @@ export function pickedSeed(sr: SlotResearch | null): ResearchedSeed | null {
   if (sr.pickedIdx < 0 || sr.pickedIdx >= sr.seeds.length) return null
   return sr.seeds[sr.pickedIdx]
 }
+
+// Per-slot email-type selection. Used by Email cadence cards in DayDetail
+// to scope research to a specific email type (promo, newsletter, etc.).
+const EMAIL_TYPE_PREFIX = 'sl:scheduler:slot-email-type:'
+
+export function loadSlotEmailType(key: string): string | null {
+  try {
+    return localStorage.getItem(`${EMAIL_TYPE_PREFIX}${key}`)
+  } catch {
+    return null
+  }
+}
+
+export function saveSlotEmailType(key: string, value: string): void {
+  try {
+    localStorage.setItem(`${EMAIL_TYPE_PREFIX}${key}`, value)
+  } catch {
+    // non-fatal
+  }
+}
