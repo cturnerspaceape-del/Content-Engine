@@ -27,6 +27,12 @@ interface IGSlotPanelProps {
   // set, Generate anchors caption + image to this trend signal instead of
   // the generic PILLAR_IMAGE_SEEDS rotation.
   slotResearch?: ResearchedSeed | null
+  // Owning platform for the slot. Defaults to 'Instagram' (the original use
+  // case — IG feed slot). When set to X/Threads/Facebook, the inline panel
+  // generates an image/reel for those Image+Text / Reel+Text slots and
+  // hides the IG-only "Post Now" button (those slots post via the
+  // scheduled-publish path or the relevant lab).
+  platform?: 'Instagram' | 'X' | 'Threads' | 'Facebook'
   onChange: (item: ContentItem) => void
   onPosted?: (item: ContentItem) => void
 }
@@ -59,7 +65,8 @@ async function runGenerate(
   return generateContentForPostAsync(seedItem, research)
 }
 
-export default function IGSlotPanel({ format, item, slotResearch, onChange, onPosted }: IGSlotPanelProps) {
+export default function IGSlotPanel({ format, item, slotResearch, platform = 'Instagram', onChange, onPosted }: IGSlotPanelProps) {
+  const isIG = platform === 'Instagram'
   const [busy, setBusy] = useState(false)
   const [posting, setPosting] = useState(false)
   const [postErr, setPostErr] = useState<string | null>(null)
@@ -336,24 +343,28 @@ export default function IGSlotPanel({ format, item, slotResearch, onChange, onPo
         >
           {busy ? 'Working…' : '↻ Regen caption'}
         </button>
-        <div style={{ flex: 1 }} />
-        <button
-          onClick={handlePost}
-          disabled={posting || !!item.postedToInstagram}
-          className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
-          style={{
-            background: item.postedToInstagram ? '#10b981' : '#ec4899',
-            color: '#fff',
-            border: 'none',
-            opacity: posting ? 0.6 : 1,
-          }}
-        >
-          {item.postedToInstagram
-            ? '✓ Posted'
-            : posting
-            ? 'Posting…'
-            : '↗ Post Now'}
-        </button>
+        {isIG && (
+          <>
+            <div style={{ flex: 1 }} />
+            <button
+              onClick={handlePost}
+              disabled={posting || !!item.postedToInstagram}
+              className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
+              style={{
+                background: item.postedToInstagram ? '#10b981' : '#ec4899',
+                color: '#fff',
+                border: 'none',
+                opacity: posting ? 0.6 : 1,
+              }}
+            >
+              {item.postedToInstagram
+                ? '✓ Posted'
+                : posting
+                ? 'Posting…'
+                : '↗ Post Now'}
+            </button>
+          </>
+        )}
       </div>
       {postErr && (
         <p className="text-[11px]" style={{ color: 'var(--danger)' }}>

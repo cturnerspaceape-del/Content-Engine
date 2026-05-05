@@ -601,6 +601,20 @@ function CadenceCard({
           entry.platform === 'Threads' ||
           entry.platform === 'Facebook'
         ) {
+          // Format-driven routing: Image+Text and Reel+Text slots use the
+          // Image/Reel inline generator (the cross-post platforms still need
+          // an actual asset). Text-only slots stay on the text-tuner panel.
+          if (entry.format === 'Image+Text' || entry.format === 'Reel+Text') {
+            return (
+              <IGSlotPanel
+                format={entry.format === 'Reel+Text' ? 'Reel' : 'Single Image'}
+                platform={entry.platform}
+                item={scheduled?.item}
+                slotResearch={slotResearch}
+                onChange={handleItemChange}
+              />
+            )
+          }
           return (
             <TextPostSlotPanel
               platform={entry.platform}
