@@ -53,7 +53,7 @@ export const CAROUSEL_ARCS: CarouselArc[] = [
     name: 'Before & After',
     pillarAffinity: ['Entertainment', 'Social Proof'],
     slides: [
-      { role: 'before', brief: 'scene without the product — neutral, slightly desaturated, a room or table that feels incomplete.' },
+      { role: 'before', brief: 'product placed quietly on a neutral, slightly desaturated table or surface — energy dialed-down, palette muted; reads as the "before" state but the product is the visible anchor in the frame.' },
       { role: 'transforming', brief: 'scene mid-transformation — product introduced into the frame, light and color shifting toward saturated.' },
       { role: 'after', brief: 'scene fully "on" — product centered, palette fully alive, environment feels elevated and intentional.' },
     ],
@@ -99,7 +99,7 @@ export const CAROUSEL_ARCS: CarouselArc[] = [
     name: 'Day to Night',
     pillarAffinity: ['Lifestyle', 'Brand Building'],
     slides: [
-      { role: 'dawn', brief: 'empty dawn scene — curtains, a bed edge, a quiet counter — product not yet visible; desaturated, cool blue hour.' },
+      { role: 'dawn', brief: 'product on a quiet counter at dawn — curtains, a bed edge, blue-hour cool light, desaturated; the day hasn\'t started but the product is already there as the focal point.' },
       { role: 'morning-ritual', brief: 'product enters the morning — beside coffee, a notebook, morning light cutting across a table.' },
       { role: 'midday', brief: 'bright commercial moment — product in direct noon light on a clean surface; crisp shadows, high saturation.' },
       { role: 'golden-hour', brief: 'product bathed in warm late-afternoon light — amber tones, cinematic, lived-in room or rooftop.' },
@@ -113,7 +113,7 @@ export const CAROUSEL_ARCS: CarouselArc[] = [
     name: 'Full Story Arc',
     pillarAffinity: ['Brand Building', 'Product Centric'],
     slides: [
-      { role: 'opener-environment', brief: 'scene-setting shot without the product — a room, a window, a surface; clean composition that implies something is about to happen.' },
+      { role: 'opener-environment', brief: 'wide establishing shot of a room, window, or surface with the product placed in-frame as the anchor — clean composition, atmospheric, sets up the rest of the arc.' },
       { role: 'hero-entry', brief: 'product introduced into the scene — clean hero crop, the first moment the viewer sees it clearly.' },
       { role: 'feature-spotlight-1', brief: 'macro on the mouthpiece or top detail of the device; clean geometry and specular highlights.' },
       { role: 'feature-spotlight-2', brief: 'macro on the body / label / colorway; confident editorial crop.' },

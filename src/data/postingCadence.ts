@@ -6,28 +6,63 @@ export interface CadenceEntry {
   format?: string
 }
 
-// Daily baseline runs every day: 1 IG Story, 1 Threads post, 2 X posts.
-// IG feed (Carousel/Reel) + Meta layer in on Mon/Wed/Fri/Sun (4/wk each).
-// Email moved to monthly cadence — see emailCadence.ts.
-const dailyBaseline: CadenceEntry[] = [
-  { platform: 'Instagram', count: 1, format: 'Story' },
-  { platform: 'Threads', count: 1 },
-  { platform: 'X', count: 2 },
-]
-
-const igFeedDay = (format: 'Carousel' | 'Reel'): CadenceEntry[] => [
-  { platform: 'Instagram', count: 1, format },
-  { platform: 'Facebook', count: 1 },
-]
-
+// Weekly cadence encoded day-by-day so each slot's `format` is explicit.
+// Hits these target ratios across the week:
+//   IG    (7 feed, 5 stories): Carousel 40 / Reel 33 / Single Image 33; story modifier 60% feed+story / 25% feed-only / 15% story-only.
+//   Meta  (4/wk on IG-feed days): Image+Text 50 / Reel+Text 25 / Text 25.
+//   Threads (7/wk): Text 57 / Image+Text 29 / Reel+Text 14.
+//   X     (14/wk = 2/day): Text 71 / Image+Text 21 / Reel+Text 7.
+// Slot order per platform must match TIME_RECOMMENDATIONS index order
+// (e.g. IG slot 0 = Story midday-12:00, slot 1 = Feed evening-18:00; X slot 0
+// = morning-09:00, slot 1 = afternoon-17:00).
 export const WEEKLY_CADENCE: Record<DayOfWeek, CadenceEntry[]> = {
-  Monday:    [...dailyBaseline, ...igFeedDay('Carousel')],
-  Tuesday:   [...dailyBaseline],
-  Wednesday: [...dailyBaseline, ...igFeedDay('Reel')],
-  Thursday:  [...dailyBaseline],
-  Friday:    [...dailyBaseline, ...igFeedDay('Carousel')],
-  Saturday:  [...dailyBaseline],
-  Sunday:    [...dailyBaseline, ...igFeedDay('Reel')],
+  Monday: [
+    { platform: 'Instagram', count: 1, format: 'Story' },
+    { platform: 'Instagram', count: 1, format: 'Carousel' },
+    { platform: 'Facebook',  count: 1, format: 'Image+Text' },
+    { platform: 'Threads',   count: 1, format: 'Text' },
+    { platform: 'X',         count: 2, format: 'Text' },
+  ],
+  Tuesday: [
+    { platform: 'Instagram', count: 1, format: 'Single Image' },
+    { platform: 'Threads',   count: 1, format: 'Text' },
+    { platform: 'X',         count: 1, format: 'Text' },
+    { platform: 'X',         count: 1, format: 'Image+Text' },
+  ],
+  Wednesday: [
+    { platform: 'Instagram', count: 1, format: 'Story' },
+    { platform: 'Instagram', count: 1, format: 'Reel' },
+    { platform: 'Facebook',  count: 1, format: 'Reel+Text' },
+    { platform: 'Threads',   count: 1, format: 'Image+Text' },
+    { platform: 'X',         count: 2, format: 'Text' },
+  ],
+  Thursday: [
+    { platform: 'Instagram', count: 1, format: 'Single Image' },
+    { platform: 'Threads',   count: 1, format: 'Text' },
+    { platform: 'X',         count: 2, format: 'Text' },
+  ],
+  Friday: [
+    { platform: 'Instagram', count: 1, format: 'Story' },
+    { platform: 'Instagram', count: 1, format: 'Carousel' },
+    { platform: 'Facebook',  count: 1, format: 'Image+Text' },
+    { platform: 'Threads',   count: 1, format: 'Text' },
+    { platform: 'X',         count: 1, format: 'Text' },
+    { platform: 'X',         count: 1, format: 'Image+Text' },
+  ],
+  Saturday: [
+    { platform: 'Instagram', count: 1, format: 'Story' },
+    { platform: 'Threads',   count: 1, format: 'Image+Text' },
+    { platform: 'X',         count: 1, format: 'Text' },
+    { platform: 'X',         count: 1, format: 'Reel+Text' },
+  ],
+  Sunday: [
+    { platform: 'Instagram', count: 1, format: 'Story' },
+    { platform: 'Instagram', count: 1, format: 'Reel' },
+    { platform: 'Facebook',  count: 1, format: 'Text' },
+    { platform: 'Threads',   count: 1, format: 'Reel+Text' },
+    { platform: 'X',         count: 1, format: 'Text' },
+    { platform: 'X',         count: 1, format: 'Image+Text' },
+  ],
 }
 
 export const PLATFORM_EMOJI: Record<Platform, string> = {
