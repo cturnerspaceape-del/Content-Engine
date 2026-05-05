@@ -198,35 +198,36 @@ interface PickerProps {
   onRefresh: () => void
 }
 
+type PickerPos =
+  | { mode: 'modal' }
+  | { mode: 'popover'; top: number; left: number; width: number; maxHeight: number }
+
 function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: PickerProps) {
-  const [pos, setPos] = useState<{
-    top: number
-    left: number
-    width: number
-    maxHeight: number
-  } | null>(null)
+  const [pos, setPos] = useState<PickerPos | null>(null)
 
   useLayoutEffect(() => {
-    if (!anchor) return
     const update = () => {
+      const isPhone = window.innerWidth < 640
+      // Phone: full-screen backdrop + centered modal sheet. The modal
+      // self-sizes via CSS (maxHeight: 80vh), so we don't need to compute
+      // pixel positions — just signal "modal mode" to the JSX.
+      if (isPhone) {
+        setPos({ mode: 'modal' })
+        return
+      }
+      // Desktop: trigger-anchored popover. Needs the trigger rect to land
+      // just below it, right-aligned to its trailing edge.
+      if (!anchor) return
       const rect = anchor.getBoundingClientRect()
       const margin = 12
       const width = Math.min(320, window.innerWidth - margin * 2)
-      // On phone, center horizontally — the wrapped action row makes the
-      // trigger position unreliable, so anchoring to it pushes the picker
-      // off-screen. Desktop keeps the trigger-anchored right alignment.
-      const isPhone = window.innerWidth < 640
-      const left = isPhone
-        ? Math.max(margin, (window.innerWidth - width) / 2)
-        : Math.max(
-            margin,
-            Math.min(rect.right - width, window.innerWidth - width - margin),
-          )
+      const left = Math.max(
+        margin,
+        Math.min(rect.right - width, window.innerWidth - width - margin),
+      )
       const top = rect.bottom + 6
-      // Cap height so the picker fits between the trigger and the bottom
-      // edge — the inner card list scrolls when content exceeds this.
       const maxHeight = Math.max(200, window.innerHeight - top - margin)
-      setPos({ top, left, width, maxHeight })
+      setPos({ mode: 'popover', top, left, width, maxHeight })
     }
     update()
     window.addEventListener('resize', update)
@@ -237,8 +238,21 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
     }
   }, [anchor])
 
-  // Dismiss on click outside the picker (and the trigger).
+  // Lock body scroll while the mobile modal is open so the page underneath
+  // can't drift while the user scrolls the cards list.
   useEffect(() => {
+    if (!pos || pos.mode !== 'modal') return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [pos])
+
+  // Desktop only: dismiss on click outside the picker (and the trigger).
+  // Mobile dismiss is handled by the backdrop's onClick.
+  useEffect(() => {
+    if (!pos || pos.mode !== 'popover') return
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as Node
       if (anchor && anchor.contains(target)) return
@@ -248,9 +262,59 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
     }
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
-  }, [anchor, onClose])
+  }, [anchor, onClose, pos])
 
   if (!pos) return null
+
+  // Lock body scroll while the mobile modal is open so the page underneath
+  // can't drift while the user scrolls the cards list.
+  if (pos.mode === 'modal') {
+    return createPortal(
+      <>
+        <div
+          onClick={onClose}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 49,
+          }}
+          aria-hidden
+        />
+        <div
+          id="slot-research-picker"
+          className="rounded-2xl shadow-xl"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 'min(380px, calc(100vw - 24px))',
+            maxHeight: '80vh',
+            zIndex: 50,
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'var(--panel)',
+            border: '1px solid var(--border)',
+            padding: 14,
+          }}
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <PickerContent
+            data={data}
+            loading={loading}
+            error={error}
+            onPick={onPick}
+            onClose={onClose}
+            onRefresh={onRefresh}
+          />
+        </div>
+      </>,
+      document.body,
+    )
+  }
 
   return createPortal(
     <div
@@ -271,6 +335,31 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
       role="dialog"
       onClick={(e) => e.stopPropagation()}
     >
+      <PickerContent
+        data={data}
+        loading={loading}
+        error={error}
+        onPick={onPick}
+        onClose={onClose}
+        onRefresh={onRefresh}
+      />
+    </div>,
+    document.body,
+  )
+}
+
+interface PickerContentProps {
+  data: SlotResearch | null
+  loading: boolean
+  error: string | null
+  onPick: (idx: number) => void
+  onClose: () => void
+  onRefresh: () => void
+}
+
+function PickerContent({ data, loading, error, onPick, onClose, onRefresh }: PickerContentProps) {
+  return (
+    <>
       <div className="flex items-center justify-between mb-2">
         <span
           className="text-[10px] font-bold uppercase tracking-wider"
@@ -291,7 +380,7 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
           <button
             type="button"
             onClick={onClose}
-            className="text-[12px] font-semibold"
+            className="text-[14px] font-semibold leading-none px-1"
             style={{ color: 'var(--muted)' }}
             aria-label="Close"
           >
@@ -311,6 +400,7 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
           flex: 1,
           minHeight: 0,
           WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
         }}
       >
         {data?.seeds.map((seed, i) => (
@@ -338,10 +428,7 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
             </div>
             <p
               className="text-[11px] leading-snug mt-0.5"
-              style={{
-                color: 'var(--text)',
-                opacity: 0.75,
-              }}
+              style={{ color: 'var(--text)', opacity: 0.75 }}
             >
               {seed.angle}
             </p>
@@ -353,7 +440,6 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
           {error}
         </p>
       )}
-    </div>,
-    document.body,
+    </>
   )
 }

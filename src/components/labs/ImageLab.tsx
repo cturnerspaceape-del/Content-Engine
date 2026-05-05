@@ -84,15 +84,11 @@ export default function ImageLab({ onBack }: ImageLabProps) {
 
   // Research is the source of truth — there are no static template seeds.
   // researchSeeds holds the 3 ideas from the most recent /api/research-trends
-  // call; activeResearchIdx tracks which one is currently picked.
-  const [researchSeeds, setResearchSeeds] = usePersistedState<ResearchedSeed[]>(
-    'sl:imageLab:researchSeeds',
-    () => [],
-  )
-  const [activeResearchIdx, setActiveResearchIdx] = usePersistedState<number>(
-    'sl:imageLab:activeResearchIdx',
-    0,
-  )
+  // call; activeResearchIdx tracks which one is currently picked. Not
+  // persisted — opening the lab should always land on the idle CTA, not
+  // last session's seeds.
+  const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
+  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(0)
   const {
     result: researchResult,
     loading: researchLoading,

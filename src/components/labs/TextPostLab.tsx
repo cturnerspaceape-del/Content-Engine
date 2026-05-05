@@ -57,14 +57,10 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     () => ({}),
   )
 
-  const [researchSeeds, setResearchSeeds] = usePersistedState<ResearchedSeed[]>(
-    'sl:textPostLab:researchSeeds',
-    () => [],
-  )
-  const [activeResearchIdx, setActiveResearchIdx] = usePersistedState<number>(
-    'sl:textPostLab:activeResearchIdx',
-    0,
-  )
+  // Not persisted — opening the lab lands on the idle CTA, not last
+  // session's seeds.
+  const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
+  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(0)
   const {
     result: researchResult,
     loading: researchLoading,
