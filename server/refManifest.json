@@ -1,3303 +1,849 @@
 {
-  "brand/ACTM5087.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "limes",
-      "liquid splash",
-      "vape device",
-      "astronaut",
-      "leaf"
-    ],
-    "contentHash": "db5b77a88657a8591a2fc5694481f0b9684201feddf3b0396829dd2395320897"
-  },
-  "brand/AWJL1480.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "vape device",
-      "product packaging",
-      "stars",
-      "glowing dots"
-    ],
-    "contentHash": "74fe0e81a93b2add0dafeedddbda4c29d0899b310ea5f926bb89bc8c7f91bdb8"
-  },
-  "brand/BQDN1307.jpeg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "smartwatches",
-      "fruit",
-      "liquid splash",
-      "stylized text",
-      "geometric pattern"
-    ],
-    "contentHash": "c8e92cb276121ac3a0d1202161d7229692570b1710124004bbcec3dcbf3aaa87"
-  },
-  "brand/CORF6242.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "bold typography"
-    ],
-    "contentHash": "ae157e336ef9b2819ff2c7e0de882d4782781503060211e937fd82f772d708dd"
-  },
-  "brand/DMIV5754.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cartoon astronaut",
-      "space suit",
-      "blue accents",
-      "white background"
-    ],
-    "contentHash": "3df1e281f987cff7527469424d20a25caa178b0555495f496a3c455ae5354b03"
-  },
-  "brand/DOVF9941.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "lemons",
-      "cherries",
-      "vape device",
-      "powder splash",
-      "astronaut"
-    ],
-    "contentHash": "26c1cb0f29b1643f7dc57764ffd74b2835fb88dc260771bd526083cae9dc6011"
-  },
-  "brand/DOZL5441.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape device",
-      "green apples",
-      "liquid splash",
-      "astronaut"
-    ],
-    "contentHash": "1eb626d68a0012e118aa7609fba39d37b7c5de26f4f107030f42705a3698732f"
-  },
-  "brand/DRUW2229.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "wavy lines",
-      "product text"
-    ],
-    "contentHash": "fb774e5ae6f8ee3cd5698fb1a595afa4aa27a6652ce2bf7c557ee3ad4098d2a4"
-  },
-  "brand/DYGJ7197.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape device",
-      "dragon fruit",
-      "liquid splash",
-      "astronaut",
-      "space elements"
-    ],
-    "contentHash": "11081ffc2bef86001b255ce851b74c301b3d20f104df8abdbc377821fcff6c5b"
-  },
-  "brand/DZMK3754.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "cherries",
-      "liquid splash",
-      "astronaut",
-      "text overlay"
-    ],
-    "contentHash": "761c15813e904911d57ae5afa4f6032fb5ce0a634b3b671839793074ff36b081"
-  },
-  "brand/EBEH8410.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "cartoon illustration",
-      "space suit"
-    ],
-    "contentHash": "697a018a08ce1b904c99b67763c1a86e1f4c0c5f830df5fa5b508ce283059ab1"
-  },
-  "brand/ESTG4436.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "rocket",
-      "planets",
-      "stars",
-      "product packaging"
-    ],
-    "contentHash": "7354719bef066588bd7d6d324564f60042a9a4e9f8a36977042deef2ed6edba6"
-  },
-  "brand/EUNF3531.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "brand logo",
-      "dripping text"
-    ],
-    "contentHash": "dbfbfee22d917fbbcc353197fd10576963d9b8a80331c075c6e8073982d17b18"
-  },
-  "brand/EWEM0268.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "logo/wordmark",
-      "product size text",
-      "flavor name text"
-    ],
-    "contentHash": "a42b16bf89085d8460623ac9b46520665da7cd74bd5bbba88af3ba742ac2f624"
-  },
-  "brand/FGQD5546.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "t-shirt",
-      "astronaut",
-      "planets",
-      "rocket",
-      "dripping text"
-    ],
-    "contentHash": "b7c20d221de7f12c06202f058f884a4b5faded6d421000ac0c72ed5c2389b0ed"
-  },
-  "brand/FHPK8668.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "blueberries",
-      "liquid splash",
-      "wavy border",
-      "text advertisement"
-    ],
-    "contentHash": "264900215c813dd699383f0a930d265e405ea5f03399d7eb2f7be66381b4aeb3"
-  },
-  "brand/FJPF0830.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "wavy lines background",
-      "text"
-    ],
-    "contentHash": "6c2977416e526afa02c37fa5ddd9956a73e2f047af1d80aa68c6a19fe61819e2"
-  },
-  "brand/FKRF7023.jpg": {
-    "kind": "brand",
-    "vibe": "editorial",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "flavor name cards",
-      "product weight numbers",
-      "directional arrows"
-    ],
-    "contentHash": "c98fec724fe33404ba8cd558fb426cfc35c5131f6db9d0749841bd3f06a0c7bf"
-  },
-  "brand/FKZD5592.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "stars",
-      "rocket"
-    ],
-    "contentHash": "3ed157cc2c2074d6c480203e01d7ddc13521a600519cc4816f6fe5e64aa47ffa"
-  },
-  "brand/FUAP1717.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "space ape logo",
-      "vape devices",
-      "astronaut figures",
-      "glowing displays",
-      "space motifs"
-    ],
-    "contentHash": "a7a0189ef88c7180ae90dbdca475e6d300114234a41159a396163915c53b315e"
-  },
-  "brand/FXMD8258.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "stars",
-      "space ape logo",
-      "product packaging"
-    ],
-    "contentHash": "a12c7c4ae560418066bd357edd63dbd60b77342cb45ac2c3ccd3068cdc63d857"
-  },
-  "brand/GFDK0021.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "astronaut",
-      "berry explosion",
-      "liquid splash",
-      "planets"
-    ],
-    "contentHash": "cd56704d45778fdf6f49852cdc162bec05eae07c888d99da8419ecf6d510c1e1"
-  },
-  "brand/GIVZ0871.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "fireworks",
-      "astronaut",
-      "glowing display",
-      "dark background"
-    ],
-    "contentHash": "9f83f8e6aa37e9c36ca7657758abadac7e03dc9e18b09a5becfa745d1ac77399"
-  },
-  "brand/HRGU1697.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "stars",
-      "rocket",
-      "product packaging"
-    ],
-    "contentHash": "d4212951ef989eaef22b5aaa6c4a1606be5c1c5586b582b96771939824de56cf"
-  },
-  "brand/HSSJ7839.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape device",
-      "product packaging",
-      "astronaut illustration",
-      "space motifs",
-      "glowing screen"
-    ],
-    "contentHash": "fb554ee6779946945e607289b5fa4d29a3644b30c0ef982474cb04d5a94f4f82"
-  },
-  "brand/HUYP8316.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "vape device",
-      "product packaging",
-      "space elements",
-      "glowing lights"
-    ],
-    "contentHash": "84da4f7860a7ac79c2fd762f2758dbde2fdb5e259f1825676fb9727f2adc28f5"
-  },
-  "brand/IMG_0025.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronauts",
-      "planets",
-      "dripping text",
-      "swirling background"
-    ],
-    "contentHash": "a2ac69612b546d47cd0ce55a50617e64391f306b450f98d13822fd7efc150815"
-  },
-  "brand/IMG_0027.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape device",
-      "astronaut",
-      "planets",
-      "glowing dots"
-    ],
-    "contentHash": "17c329891b1609e0c6efdde2184a3db7eb65addbb9a51b05dd746072999bca03"
-  },
-  "brand/IMG_0030.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "space ape mascot",
-      "vape devices",
-      "cherries",
-      "liquid splash",
-      "pixel art"
-    ],
-    "contentHash": "ef9194dcd727af0d5958920b6b7e4c505cfa6d8bc41de3a7207f0d8e52b00717"
-  },
-  "brand/IMG_0036.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "space ape logo",
-      "vape device",
-      "astronaut mascot",
-      "blue raspberries",
-      "liquid splash"
-    ],
-    "contentHash": "6e1becd28fdf56775c9dc06b28ade571a06abcb0ce83722b24ed230828930849"
-  },
-  "brand/IMG_0038.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "vape devices",
-      "cherries",
-      "liquid splashes"
-    ],
-    "contentHash": "5fd19a641cd3a42d72a91715c076c1ae309ffe92861bebf3c0cbabcf57e534dd"
-  },
-  "brand/IMG_0041.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape devices",
-      "cherries",
-      "liquid splash",
-      "astronaut mascot",
-      "bold typography"
-    ],
-    "contentHash": "fb1d5a02bad0ce6e1e74703fc0d6a240e2457454963b9c71937da9d1442d6d4e"
-  },
-  "brand/IMG_0043.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "dragon fruit",
-      "blueberries",
-      "liquid splash",
-      "astronaut",
-      "smartwatch"
-    ],
-    "contentHash": "45edf0fae6a9b9f9edcf97b650ff4db3b4e75deb569cef914c30feb3958c9d5c"
-  },
-  "brand/IMG_0052.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "pastel",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "chat messages",
-      "mobile phone screen",
-      "doodle wallpaper",
-      "rocket",
-      "astronaut"
-    ],
-    "contentHash": "8c5d60c7d2e8cd4fe26a134eba685c92f3f1c86a2748bc0dced5ee7d0f8eeffe"
-  },
-  "brand/IMG_0065-790221.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "bold typography",
-      "pink background",
-      "red accents"
-    ],
-    "contentHash": "790221e5d4d4d72ad9bc60a7e30e4db2190946eec2b156c6fa0d5f4cb4f6f5a5"
-  },
-  "brand/IMG_0075.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "vape devices",
-      "planets",
-      "2g/4g text",
-      "cosmic background"
-    ],
-    "contentHash": "4406f77f79743d7eb3684853148e5e2b6315e2b2ff55aaa1402d184a20af4a3e"
-  },
-  "brand/IMG_0117.png": {
-    "kind": "brand",
-    "vibe": "surreal",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "astronaut",
-      "light trails",
-      "glowing screen",
-      "space"
-    ],
-    "contentHash": "8851ab6e4f86e60bfc815b3e6aa425a5afd65dcb4cf4e57b16fb99977f84dec7"
-  },
-  "brand/IMG_0153.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape devices",
-      "astronaut",
-      "neon lights",
-      "drip effect",
-      "stars"
-    ],
-    "contentHash": "00764597d4a2eb0b432f4e39262afec4ca2e80332a6e36611e39899f4ba99cc8"
-  },
-  "brand/IMG_E0022-a10a04.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "cherries",
-      "liquid splash",
-      "astronaut",
-      "marketing text"
-    ],
-    "contentHash": "a10a0418c5351efbeedd0b79140bbc76af4099e73688145995a805b76b860cae"
-  },
-  "brand/IQFV9862-9fb85a.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "stars",
-      "rocket"
-    ],
-    "contentHash": "9fb85a9fae6bde79cdbe7636a63a59831fe13f1bedf9d9f75721530f38982f72"
-  },
-  "brand/JCNU9132-fdea22.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "blue raspberries",
-      "liquid splash",
-      "wavy border",
-      "dashed line frame"
-    ],
-    "contentHash": "fdea22a61d1f239d8b7e8b49c2772c86d7e3ec46333f2321f04ffde4f8043c57"
-  },
-  "brand/KNZX3971.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape device",
-      "cherries",
-      "liquid splash",
-      "astronaut",
-      "space elements"
-    ],
-    "contentHash": "2427e2718107669ad40efc454ffbca7241dc56bcbf0d23af13d01c9972618557"
-  },
-  "brand/KOZF3399-ab4139.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "vape device",
-      "product packaging",
-      "stars",
-      "space background"
-    ],
-    "contentHash": "ab41399c895c0d0e7b7569621ac0940375634455e3363542d2919ad571c2233c"
-  },
-  "brand/KQZV9865-9bab05.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "packaging",
-      "planets",
-      "rocket ship",
-      "stars"
-    ],
-    "contentHash": "9bab0543e82555596cb71264c49fa137b91466eb9aaddf493d75c7dcc7759b67"
-  },
-  "brand/KSCF8289-6be3e5.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "wavy border",
-      "text"
-    ],
-    "contentHash": "6be3e5292ac1f4b271edaa7f60bb0d0c7d3c8fd39edfa62d9a1459729784ca5a"
-  },
-  "brand/KSQO9520-dbf152.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "rocket ship",
-      "glowing display",
-      "blue watercolor background",
-      "planets"
-    ],
-    "contentHash": "dbf15234444132c30bc70dce0f3a59c50b73142a4e5cb5e6a999fcbca2bd1c80"
-  },
-  "brand/LBZX9227-0c4007.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape device",
-      "astronaut",
-      "ape mascot",
-      "stars",
-      "planets"
-    ],
-    "contentHash": "0c4007cc8389ab84f5f7f5c69eb39bcea422997064b6a71321bf0f86502edbb5"
-  },
-  "brand/LDFX0311-d0af00.png": {
+  "brand/awjl1480-copy.png": {
     "kind": "brand",
     "vibe": "minimal",
     "palette": "high-contrast",
     "composition": "centered-hero",
     "mood": "premium",
     "subjectMotifs": [
-      "wavy border",
-      "dashed line box",
-      "promotional text"
-    ],
-    "contentHash": "d0af00cc33a271b5deb1ce2be4ca742d28dd6db084129347e6aed823738c3ef3"
-  },
-  "brand/LVME6152-4fe8c3.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "drip logo",
-      "2g text",
-      "swirling background pattern",
-      "flavor name"
-    ],
-    "contentHash": "4fe8c3fb273109185d90f6bf73fbcc3c4b2a7d30831b7a4756837b1ccb3ecc8a"
-  },
-  "brand/LYFA0340-bd40ce.jpeg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
       "vape device",
-      "astronaut",
-      "blue raspberries",
-      "liquid splash",
-      "dripping text"
-    ],
-    "contentHash": "bd40ced2e9eb2c021e8c062e290227214dff4670c7f1030a1502a41b4e24260c"
+      "logo"
+    ]
   },
-  "brand/NGRD5186.png": {
+  "brand/bolj8566-copy.png": {
     "kind": "brand",
-    "vibe": "maximalist",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "blueberries",
-      "water splash",
-      "powder explosion",
-      "astronaut"
-    ],
-    "contentHash": "46b738035b8738615f13476bbbf8716940ba6e4192ffaa010816344bdf127fa3"
-  },
-  "brand/NHBJ8003.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cartoon astronaut",
-      "wavy lines",
-      "planets",
-      "text elements"
-    ],
-    "contentHash": "1d22140659f4ca016ce34927023cb461d636a5ccb34befc0571fec6c65d82fa0"
-  },
-  "brand/NZTY8549-e329e4.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "crowd of figures",
-      "space objects",
-      "postage stamp border",
-      "cartoon illustration"
-    ],
-    "contentHash": "e329e4b63be8397b60cec9588be42c5892194ccbcc3655cc7b06732c33da8651"
-  },
-  "brand/PJAL9430-3662fb.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "wordmark",
-      "dripping liquid"
-    ],
-    "contentHash": "3662fb99e220a82c65ba508ae178fb53c634de0dd6402efa891df43b04afe5e4"
-  },
-  "brand/PLZT8984-ffc7b2.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "swirling lines",
-      "decorative text"
-    ],
-    "contentHash": "ffc7b251452d0d9340774546fdd3081b43814d3edbf750b05af28f8ca9a7f1b9"
-  },
-  "brand/PMRU5017-849994.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "space ape wordmark",
-      "astronauts",
-      "small planets",
-      "dripping text",
-      "white tablecloth"
-    ],
-    "contentHash": "8499948a883f96a542e805257effbc710406b0720b1063fda5f10702c6647966"
-  },
-  "brand/PQMR1462-56cb41.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "space ape logo",
-      "vape device",
-      "astronaut",
-      "stars",
-      "rocket"
-    ],
-    "contentHash": "56cb41fa6e90d1417a966dcd3de0a31d8d4dd57df33fc1bddc381d16e1d4cc14"
-  },
-  "brand/QBEK1131-08915d.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "space ape logo",
-      "astronaut",
-      "vape device",
-      "stars",
-      "planet"
-    ],
-    "contentHash": "08915dae1ef627659342354fb40fde03da0fdeea2e40a320a3682f2ba5305796"
-  },
-  "brand/QSAF7355-5b41e7.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronauts",
-      "vape devices",
-      "planets",
-      "pink background",
-      "text"
-    ],
-    "contentHash": "5b41e7742804adbda741914075ecc99b4f33665ab75506443b8f873702768071"
-  },
-  "brand/QZRQ4269.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "premium",
-    "subjectMotifs": [
-      "space ape logo",
-      "astronaut",
-      "planets",
-      "stars",
-      "product packaging"
-    ],
-    "contentHash": "a1031a43548ca0b2e714af092581587dac5a8d98b5e86ddeefe361b6ac00b4f3"
-  },
-  "brand/RMWE0154-7eb1db.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "t-shirt",
-      "astronaut",
-      "planets",
-      "space",
-      "hangers"
-    ],
-    "contentHash": "7eb1db5b29603135293479263e2fa8461a44d835a298add297241eb6af8228da"
-  },
-  "brand/RVIC6315-0d846d.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "premium",
-    "subjectMotifs": [
-      "text",
-      "wavy border",
-      "dashed rectangle",
-      "green background"
-    ],
-    "contentHash": "0d846d5e86133eb088e13e336cf6434d709079ab7d1d337c021b3e2e779bc9e5"
-  },
-  "brand/TAFE1402-76acf3.jpeg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape devices",
-      "cherries",
-      "liquid splash",
-      "astronaut mascot",
-      "bold typography"
-    ],
-    "contentHash": "76acf30acbdde94c9dd400e9daa1625a2398a4c8a5244ec2e40393b4b6453fa1"
-  },
-  "brand/TQUI2343.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "space ape logo",
-      "wavy patterns",
-      "2g text",
-      "flavor name"
-    ],
-    "contentHash": "0d1faaa370dd060b4e0ba90aff03b968889788f72bdd983f6558faef9fedfc21"
-  },
-  "brand/TRVZ0889-ce2d4c.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "premium",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "stars",
-      "rocket",
-      "product packaging"
-    ],
-    "contentHash": "ce2d4c5a8aa9c3a753694651898c531d0486b04d618b546ec8eab69c4d4ab7b4"
-  },
-  "brand/TULH6228.jpeg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "abstract",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronauts",
-      "floating orbs",
-      "dripping wordmark",
-      "patterned background"
-    ],
-    "contentHash": "158fa14a0ff6499520b2a042004dc17332cb139c7ff2099864a59152b6420f17"
-  },
-  "brand/TYVM7598-700652.jpeg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "astronaut",
-      "raspberries",
-      "liquid splash",
-      "brand logo"
-    ],
-    "contentHash": "700652400164cef54eded2ffa1a0a503125a9b08c40b28fa181581f51833c216"
-  },
-  "brand/UDMR7494-186435.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets",
-      "space ape logo",
-      "wavy patterns",
-      "2g text"
-    ],
-    "contentHash": "1864351fa1acd6133e4e6e1d9e5f63e38ded6a3498b4ee9861aae65c5ef31d98"
-  },
-  "brand/UFKO0448-293d01.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "space ape logo",
-      "vape device",
-      "astronaut",
-      "blueberries",
-      "liquid splash"
-    ],
-    "contentHash": "293d01aba071578bf5246c8e6bba2d6b0fe5830ed366be1764bca8a107dc3cac"
-  },
-  "brand/URXG4036.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "astronaut",
-      "vape devices",
-      "cherries",
-      "liquid splash"
-    ],
-    "contentHash": "fe564fabbdd06039d27ce49f21fbd1de6096d279c955db35bebf8a4627b3f2f5"
-  },
-  "brand/UZFC6463-63aef0.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "product packaging",
-      "astronaut",
-      "space ape logo",
-      "planets",
-      "sparkling texture"
-    ],
-    "contentHash": "63aef0cb18238259aeadb13a144a502259451d761fb71009aa652f4875675edf"
-  },
-  "brand/VBKF0135-d290bb.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape device",
-      "grapes",
-      "purple splash",
-      "astronaut",
-      "planets"
-    ],
-    "contentHash": "d290bb9ac3c11348fa4896142e4b127b1ac4cee8ae0285ff2517488c00695dc3"
-  },
-  "brand/VHCH4947-e7c081.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "vape device",
-      "space ape logo",
-      "stars",
-      "rocket"
-    ],
-    "contentHash": "e7c08162e8b5257156e9acf0832922c48d0e5497661553c4ed776cbc8267fc04"
-  },
-  "brand/VOQJ5201-d0d191.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vape device",
-      "astronaut",
-      "raspberries",
-      "liquid splash",
-      "space elements"
-    ],
-    "contentHash": "d0d1918422bf5518711c560c0c591881d7f815acafba5a22c8ebc685cfcb49c0"
-  },
-  "brand/VUMB2635-ad85b5.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "dripping text",
-      "wordmark"
-    ],
-    "contentHash": "ad85b5c362468641f5e21535d05fc1a6cb6b8ea94eb769fc4e21316b1349e767"
-  },
-  "brand/WDEQ4257-45f23a.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "astronaut",
-      "planets",
-      "glowing lights"
-    ],
-    "contentHash": "45f23a0240367b571b71df58eb94aea798a7914a9fce88ecb5771a75d5974560"
-  },
-  "brand/WQIB8188-6963e5.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape device",
-      "cherries",
-      "liquid splash",
-      "astronaut",
-      "stars"
-    ],
-    "contentHash": "6963e5f9afc077cb6321c6b17c5bf70dabedf796a8e618320ba19f38f51d2129"
-  },
-  "brand/XAYU2612.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "monochrome",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "space ape logo",
-      "vape packaging",
-      "stars",
-      "planets"
-    ],
-    "contentHash": "9bb7ae0fa896b5a9bbcda69f1fe6b99092cd8b7831ce43a2616ebb2ab8517495"
-  },
-  "brand/XCIJ6735-1602d8.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "limes",
-      "liquid splash",
-      "wavy border",
-      "text",
-      "dashed frame"
-    ],
-    "contentHash": "1602d8719b883af7e54c2c2de6957c00b52ddc8915511a56c395cfa2c0ae88c0"
-  },
-  "brand/XHJL1921-73b138.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "rocket",
-      "planet",
-      "stars",
-      "glitter texture"
-    ],
-    "contentHash": "73b138debba8092f682f2da1dadc6e083e23ccfe0480ab68765aa4be1a412dfb"
-  },
-  "brand/XNHE8850.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "space ape logo",
-      "planets",
-      "2g text",
-      "raspberry rebel text"
-    ],
-    "contentHash": "47a1bf035a550799eec9f904ef499a588ce2ece5b6ddbf28bcc63345e5f949f2"
-  },
-  "brand/XVCY4129.jpg": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronauts",
-      "product packaging",
-      "space ape logo",
-      "planets",
-      "stars"
-    ],
-    "contentHash": "98061ea16c83bd2f797f40f4aba57bb8f320a6a92f9aba2156b27a2b9b375ca0"
-  },
-  "brand/XWQA0672.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "space ape logo",
-      "astronaut mascot",
-      "vape device",
-      "product packaging",
-      "glowing screen"
-    ],
-    "contentHash": "e62a53c54533ac4ecd17626fb7dcc34fc75b7273c66f35863bfbf234d24041d6"
-  },
-  "brand/YDWS1248.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "vape device",
-      "product packaging",
-      "stars",
-      "rocket ship"
-    ],
-    "contentHash": "e0b2bc66b6c13ab6f57ea32d99cb1b72f0c5ca0c7a721aa0937346ef4729e821"
-  },
-  "brand/YFSP7319.png": {
-    "kind": "brand",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "brand logo",
-      "dripping text",
-      "teal background"
-    ],
-    "contentHash": "9051897335e5e039f198998fa1b639b68dd4430ad6f4408444e878bcfd5d3e81"
-  },
-  "brand/c8d49e51-940d-4210-967a-4cba78f24d1c.png": {
-    "kind": "brand",
-    "vibe": "maximalist",
-    "palette": "high-contrast",
-    "composition": "abstract",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "vape devices",
-      "ape mascot",
-      "light streaks",
-      "abstract tunnel",
-      "red and orange glow"
-    ],
-    "contentHash": "cd22c81f0a1d0404c4e56e7391bc5dbb8a28ba6d09c73139eea2d0738c8df039"
-  },
-  "inspo/CUZD0649.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "planets"
-    ],
-    "contentHash": "d6ebe9c1a97fa556c20ed4501913406f46db3319055c299219a24a4723dedbee"
-  },
-  "inspo/FMKL6413.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "walking figures",
-      "postage stamp",
-      "planets",
-      "stars"
-    ],
-    "contentHash": "861b9392fae05cfbce0c5d6cd3c348d98ec743e8e87df4dc5619b51e28d0fd78"
-  },
-  "inspo/HYYE9990.png": {
-    "kind": "inspo",
-    "vibe": "minimal",
-    "palette": "monochrome",
-    "composition": "abstract",
-    "mood": "calm",
-    "subjectMotifs": [],
-    "contentHash": "2d3a81ab9b89d0a0d4e0f1a63dd0e6f9a5c0c78a690dc8100ba96bab4b89fbf7"
-  },
-  "inspo/IMG_0157.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "pastel",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "astronaut",
-      "stars",
-      "planet",
-      "rocket",
-      "space"
-    ],
-    "contentHash": "2b38f70f5f2244a42904fa44c456c406736b0e518120b25921a664d3382d2dcc"
-  },
-  "inspo/IMG_0158.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "chicken sticks",
-      "colorful packaging",
-      "blue textured background",
-      "script typeface",
-      "product information"
-    ],
-    "contentHash": "29498de44f341a301b48b08978469b200097747db5c9f5dbea9654b7ba03ac45"
-  },
-  "inspo/IMG_0159.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "pink packaging",
-      "food basket",
-      "snack products",
-      "personal care items",
-      "hand holding basket"
-    ],
-    "contentHash": "7a6058bf75917cd69ba8068910c809281b404d224996ad40e214444dd6957627"
-  },
-  "inspo/IMG_0160.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "chicken sticks",
-      "product packaging",
-      "bold typography",
-      "red background"
-    ],
-    "contentHash": "2dd5690580440a2f85f78a751e58a14c6c52f58caf033e3d400fc3039f8cc202"
-  },
-  "inspo/IMG_0161.png": {
-    "kind": "inspo",
     "vibe": "minimal",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "orange background",
-      "green leaves",
-      "product packaging element",
-      "coming soon text",
-      "brand logo"
-    ],
-    "contentHash": "ac303e869bb2c724bc123f58e96bee2670828f9104baf6cb20808660d033d5dc"
-  },
-  "inspo/IMG_0162.png": {
-    "kind": "inspo",
-    "vibe": "editorial",
-    "palette": "high-contrast",
-    "composition": "environmental",
     "mood": "premium",
     "subjectMotifs": [
-      "product packaging",
-      "meat sticks",
-      "shelves",
-      "bright colors"
-    ],
-    "contentHash": "74ecf9cb7ce91021f52f166a9673aea57d887bb2dad5c704bb17dcd054f2d9c0"
-  },
-  "inspo/IMG_0163.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "beef sticks",
-      "red packaging",
-      "pink ribbon",
-      "glass vase"
-    ],
-    "contentHash": "0396b27f2cf411fd85e14e02ea90e6836a1842fba4d5c19b4917f7d4bca04768"
-  },
-  "inspo/IMG_0164.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "snow",
-      "winter hat",
-      "beef sticks",
-      "red packaging",
-      "green packaging"
-    ],
-    "contentHash": "aa2fd9f9cd9be6653a1378f0469b98eb9894eaa439ed65882bd1906050d8be98"
-  },
-  "inspo/IMG_0165.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "rule-of-thirds",
-    "mood": "fun",
-    "subjectMotifs": [
-      "beef stick",
-      "ski glove",
-      "ripped paper",
-      "mountain logos",
-      "bold typography"
-    ],
-    "contentHash": "8e73ccdbda7181ca179f637b55bf96f1a4adf9227b5c1fe8d1482ac32310a6b4"
-  },
-  "inspo/IMG_0166-bbc26b.png": {
-    "kind": "inspo",
-    "vibe": "editorial",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "product packaging",
-      "colorful pouches",
-      "blurred text"
-    ],
-    "contentHash": "bbc26b79607e0deacb70c6414959b571de71f452e30dd53456dffbae25234b8d"
-  },
-  "inspo/IMG_0167-8b5cb9.png": {
-    "kind": "inspo",
-    "vibe": "minimal",
-    "palette": "warm",
-    "composition": "flat-lay",
-    "mood": "calm",
-    "subjectMotifs": [
-      "beef sticks",
-      "red packaging",
-      "cow illustration",
-      "meat snacks"
-    ],
-    "contentHash": "8b5cb922cabed244511b8a1ab511f7f55700079de176e41b16e970e3ee8f4705"
-  },
-  "inspo/IMG_0168-809eab.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "mirrored surface",
-      "beef stick",
-      "hand",
-      "red packaging",
-      "cow icon"
-    ],
-    "contentHash": "809eab979e4f6afad2c888b6343dec89992defd444b6f542fa3d658a2abd935f"
-  },
-  "inspo/IMG_0169-1d8e69.png": {
-    "kind": "inspo",
-    "vibe": "maximalist",
-    "palette": "warm",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "shelves",
-      "cherry illustrations",
-      "product display"
-    ],
-    "contentHash": "1d8e69b33e14e483d93d67da59c0fe7a455803ab6e2e615c89c43bedeb1a4f62"
-  },
-  "inspo/IMG_0170-e7a336.png": {
-    "kind": "inspo",
-    "vibe": "luxe",
-    "palette": "high-contrast",
-    "composition": "rule-of-thirds",
-    "mood": "fun",
-    "subjectMotifs": [
-      "canned drinks",
-      "cocktail shaker",
-      "metallic straws",
-      "liquor bottles",
-      "reflective surfaces"
-    ],
-    "contentHash": "e7a336d16e5691e5da22ecd811e51709f97146d3cde6c8178749343d0e3954b8"
-  },
-  "inspo/IMG_0171-150a12.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "retail shelf",
-      "colorful packaging",
-      "store display",
-      "beverages"
-    ],
-    "contentHash": "150a123324e7e92b259af4b29b00718da3f322e84f54d1f41db2c179e06d0b56"
-  },
-  "inspo/IMG_0172-0a381a.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "gradient background",
-      "easter egg design",
-      "product packaging"
-    ],
-    "contentHash": "0a381ad4d7c90a1616ea62451f1d1bdbbc30e05d235619114700f2ea4326fed8"
-  },
-  "inspo/IMG_0173-a5f2f3.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "soda can",
-      "liquid pour",
-      "glass",
-      "ice",
-      "berries"
-    ],
-    "contentHash": "a5f2f3defd5fcddd339050a23b4826b65ee6ca95e1e59ce7d8bb18c8999c1ac9"
-  },
-  "inspo/IMG_0174-852a54.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "ice cream scoops",
-      "berries",
-      "shiny 3d text",
-      "water droplets"
-    ],
-    "contentHash": "852a54a0844cee134ef85d46289e7ad04ccaaa902ea489594a5ed7afaad2798a"
-  },
-  "inspo/IMG_0175-00a13a.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "blue sky",
-      "wedding cake",
-      "hearts"
-    ],
-    "contentHash": "00a13a530f6d270fbeec41f118ae538fc7ee6f19d243eac584697265f7b932ff"
-  },
-  "inspo/IMG_0176-bc4e7e.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "lip serums",
-      "fruit illustrations",
-      "bright packaging",
-      "hands"
-    ],
-    "contentHash": "bc4e7e02f08b0ac9f92a19c424cf0b9dd5c79f9afc6365a7199a81802383953c"
-  },
-  "inspo/IMG_0177-c860fa.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "water droplets",
-      "sparkle effects",
-      "cherry graphics"
-    ],
-    "contentHash": "c860fa67db702945ce1bdd706f5376c24d7e6efee64197ee3eafcb4125acd259"
-  },
-  "inspo/IMG_0178-f4caab.png": {
-    "kind": "inspo",
-    "vibe": "maximalist",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "product packaging",
-      "cardboard boxes"
-    ],
-    "contentHash": "f4caabc87e7342f052798c1a7bf66373720a8fbb5051b2e6156a75d5b2bd6b3b"
-  },
-  "inspo/IMG_0179-9ceda7.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "rainbow",
-      "shamrock",
-      "pot of gold",
-      "clouds"
-    ],
-    "contentHash": "9ceda7c1c2251725dd642fa5e9c009e27263c3e074895552ce4b7461857afc73"
-  },
-  "inspo/IMG_0180.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "lip serum duo",
-      "water droplets",
-      "bold typography",
-      "pink background"
-    ],
-    "contentHash": "fcc19a06e1fafbb6e98a02bebc84573d3b38fd9b069f8148396d695d514452b6"
-  },
-  "inspo/IMG_0181.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "bagels",
-      "cream cheese",
-      "soda cans",
-      "red packaging",
-      "hearts"
-    ],
-    "contentHash": "b3c7295ca3ff998c0009453820dca35651a5b2356e22fd76f1f73243ac3ae490"
-  },
-  "inspo/IMG_0182-238a71.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "bagel",
-      "pink cream cheese",
-      "maraschino cherries",
-      "human hand",
-      "city skyline"
-    ],
-    "contentHash": "238a710f5fd7743ddce1fb42db8eac7e8c7e322c66dc4b07724235907de3a340"
-  },
-  "inspo/IMG_0183-b37033.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "fresh fruit",
-      "candy",
-      "retro toys",
-      "liquid splashes"
-    ],
-    "contentHash": "b3703363ecd65d670110f6ce4e54665ba5fabf9291f26f3566ece14a332b5f4a"
-  },
-  "inspo/IMG_0184-4d5573.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "poppi cans",
-      "pink sweatshirts",
-      "hands",
-      "embossed logo"
-    ],
-    "contentHash": "4d5573b6cccc769017173d1aebda85dfa5c5c623f6be45d94c481f40224339fd"
-  },
-  "inspo/IMG_0185-3df05f.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "women",
-      "paper roses",
-      "lip prints",
-      "sweatsuits",
-      "romantic text"
-    ],
-    "contentHash": "3df05f85f3e0a74e71eb1f218bf2783c2930873703d6bebd4af2f2b01e5abb9f"
-  },
-  "inspo/IMG_0186-7b48e2.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "macro",
-    "mood": "fun",
-    "subjectMotifs": [
-      "pink socks",
-      "woman",
-      "pink background",
-      "red stripes",
-      "brand logo"
-    ],
-    "contentHash": "7b48e2ed15d37b63b22bd87c4a50a663684152974936c2d4493f85077ac797e1"
-  },
-  "inspo/IMG_0188.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "hands",
-      "pink nails",
-      "leather jacket"
-    ],
-    "contentHash": "9c3bfed9def07d451e994a1d1148a60dd138d5d7e8da98092cefdae166077fd4"
-  },
-  "inspo/IMG_0190.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "barrel",
-      "confetti",
-      "party cups",
-      "tile floor",
-      "bold typography"
-    ],
-    "contentHash": "5997dc09095a6466fc15ddb245eeb94d9c218cda348eb4012fe60a6d5e510e9e"
-  },
-  "inspo/IMG_0191-e47115.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "metallic cans",
-      "gradient background",
-      "halftone texture",
-      "embossed text"
-    ],
-    "contentHash": "e471150d22d7a4709ac683a7d81ef707c972baf77dde4b303fdf3ee61188b352"
-  },
-  "inspo/IMG_0192-dba119.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "cherries",
-      "liquid splash",
-      "water",
-      "bold typography"
-    ],
-    "contentHash": "dba11934f133eb2d6b176430205ca7e866caf2e7610992012195d4a4c1430644"
-  },
-  "inspo/IMG_0194-2ed3b2.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "checkered jacket",
-      "hand",
-      "silver ring"
-    ],
-    "contentHash": "2ed3b275c0ae63359c28e8de8ef3a7616d8ac22dc36b3b6185a82283c2ccdcfe"
-  },
-  "inspo/IMG_0195-009224.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cherries",
-      "soda can",
-      "grass",
-      "white bowl"
-    ],
-    "contentHash": "009224e39d34bcec08e54f07844e7e3f0f84093c10935183df53e233a17819a1"
-  },
-  "inspo/IMG_0196.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda boxes",
-      "shopping cart",
-      "cranberry",
-      "snowflakes"
-    ],
-    "contentHash": "91cf48e6fdbfeb7e5c6726af4a9a4eef532fa2c732298f6cf038ef174be24bf2"
-  },
-  "inspo/IMG_0197-6f6717.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "stylized strawberry",
-      "bold text",
-      "halftone dots",
-      "starbursts"
-    ],
-    "contentHash": "6f67177894cc1eb918c52439c58f60aa0c8d71c091dd9f46aa9a4b4b212f1ad8"
-  },
-  "inspo/IMG_0198.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "layered wavy shapes",
-      "bold typography",
-      "color gradient",
-      "halftone pattern"
-    ],
-    "contentHash": "cd9e833ee7bd86a3862ce94a783ec8e8fadddefb2b8de063e321925500cdac87"
-  },
-  "inspo/IMG_0199-90bd4f.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "macro",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "hands",
-      "cartoon illustrations",
-      "red nail polish"
-    ],
-    "contentHash": "90bd4fbcced7ebfc099db3bdd18d111d5ef5c31f11438c2140c78a156984c831"
-  },
-  "inspo/IMG_0200-869a5b.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cardboard box",
-      "clouds",
-      "cherries",
-      "strawberries",
-      "bubbly text"
-    ],
-    "contentHash": "869a5bd1c51ed8e2a20955f49354bfe979751e8aae91e1622c92b519ce0a989c"
-  },
-  "inspo/IMG_0201-06600a.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "social media interface",
-      "water ripples",
-      "text messages"
-    ],
-    "contentHash": "06600a8b5934ee4b1a729bf65e950d9ce14c752a8e62036cb92b86f43f9622a2"
-  },
-  "inspo/IMG_0202-259bc4.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vending machine",
-      "pimple patches",
-      "starface packaging",
-      "yellow plastic",
-      "cartoon clouds"
-    ],
-    "contentHash": "259bc4ae9d7aeebcefdd6dad5e84101af35038c9557bb067ca0fae481aea0cf4"
-  },
-  "inspo/IMG_0203-3e85c0.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "pastel",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "pink compact",
-      "unicorn figure",
-      "heart jewel",
-      "gum package",
-      "hands"
-    ],
-    "contentHash": "3e85c0535d1d42901e3e36ec909fd735cdb160bab5c7e83b0b586f92402dba07"
-  },
-  "inspo/IMG_0205.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "skincare products",
-      "star-shaped embellishments",
-      "smiley faces",
-      "blue background"
-    ],
-    "contentHash": "1d1bd141c18dfaa2f8fb824ed7e4719ee266c07e9a3b25b651385aeed5db890c"
-  },
-  "inspo/IMG_0206.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "skincare tubes",
-      "star-shaped objects",
-      "blue background",
-      "clear beads",
-      "holographic text"
-    ],
-    "contentHash": "aac98609c274e3326ef009d276a52579218754253c4670dc2e47316c7467d5d9"
-  },
-  "inspo/IMG_0207.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "star patches",
-      "product packaging",
-      "blue background",
-      "clear beads"
-    ],
-    "contentHash": "d264cc9e888356bf44dc1922b31aa2955faa862e54cdb51ec2aeef2bbb0b38c9"
-  },
-  "inspo/IMG_0208-82ae05.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "star patches",
-      "compacts",
-      "smiling faces",
-      "blue background",
-      "star shapes"
-    ],
-    "contentHash": "82ae05ad528550ae715f5962e45be641d1341ddc2e750da9f2728af8f1ed3ae1"
-  },
-  "inspo/IMG_0210-ab823f.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "sanrio characters",
-      "pimple patches",
-      "gummy bears",
-      "mini cameras",
-      "cherries"
-    ],
-    "contentHash": "ab823fac203d347f378d28a35f16365f593e0f75405eb2339b8457a8403d2b3f"
-  },
-  "inspo/IMG_0211-88fc2b.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "hello kitty products",
-      "apples",
-      "red bows",
-      "pimple patches",
-      "starface branding"
-    ],
-    "contentHash": "88fc2b32822dda7188048d82d3dfec91dfecc04218bf9f6f956ecf51ede60bc1"
-  },
-  "inspo/IMG_0212-06a56e.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "snoopy character",
-      "colorful packaging",
-      "pimple patches",
-      "hand",
-      "blue background"
-    ],
-    "contentHash": "06a56e8048f228d185f1b325d9c47e397ab890a6a183f712fe1f8232443feb1b"
-  },
-  "inspo/IMG_0213-4fbaf0.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "snoopy characters",
-      "yellow stars",
-      "red platform",
-      "blue background",
-      "christmas lights"
-    ],
-    "contentHash": "4fbaf0bf05ffc39e62ace44c19d7177cf0f929ab7875229ba67fd1efcc1198f6"
-  },
-  "inspo/IMG_0214-cd26fb.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cherries",
-      "raspberries",
-      "blueberries",
-      "pomegranate seeds",
-      "lip balm"
-    ],
-    "contentHash": "cd26fb35bf24f943ca92aecb5bd1021e27e1c06ec5292e27c302cdc38dc9fce9"
-  },
-  "inspo/IMG_0215-a48232.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "abstract",
-    "mood": "fun",
-    "subjectMotifs": [
-      "lip balm",
-      "strawberry",
-      "raspberry",
-      "pomegranate",
-      "floating fruit"
-    ],
-    "contentHash": "a48232a4af595ac8f465bbee314f6ae6660b2cac1e1619bc33d0e2b84eade78e"
-  },
-  "inspo/IMG_0216-6156ba.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cakes",
-      "smiley faces",
-      "stars",
-      "fruit",
-      "party hats"
-    ],
-    "contentHash": "6156bace2ca6df3a7fe2c2f535db62ae2da628bc9a0691a792225e5fadfa454e"
-  },
-  "inspo/IMG_0217-961e6e.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cotton candy",
-      "lip balm",
-      "smiley face",
-      "diagonal color blocks"
-    ],
-    "contentHash": "961e6eba47ba9ff2db2ec8ba861eb8ad8445987655dec104cee45abd1662faf7"
-  },
-  "inspo/IMG_0218-a0265e.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "lemons",
-      "lemon slice",
-      "yellow lip balms",
-      "wavy background"
-    ],
-    "contentHash": "a0265e73a368e475cee5cf9b9d05e2d2297d5d0be4924e3ddc1181db06246601"
-  },
-  "inspo/IMG_0219-6c6179.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "lip balm tubes",
-      "smiling face emblems",
-      "red and gold studded surface",
-      "green curved tubes"
-    ],
-    "contentHash": "6c6179d901fc9f15953c4afbf565a9cd349f394448b71420a3290f8c84776d46"
-  },
-  "inspo/IMG_0221-87c4e0.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "candy cloud sign",
-      "miniature roller coaster",
-      "lip balms",
-      "cotton candy",
-      "toy car"
-    ],
-    "contentHash": "87c4e06adf4b307c5c0546c2807346a390c0b00f1326ff83a2f17e9a40176617"
-  },
-  "inspo/IMG_0222-ecf66a.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cartoon building",
-      "smiley face",
-      "stars",
-      "city street",
-      "traffic light"
-    ],
-    "contentHash": "ecf66a25fd9b701fdef67b904c5f47159c2a795a7b7779a678690ed49cd406a9"
-  },
-  "inspo/IMG_0223.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "artificial grass",
-      "yellow compact",
-      "fuzzy chick",
-      "smiley face",
-      "illustrated book"
-    ],
-    "contentHash": "3899515affda279eadeb2058f1268b75b8de58021afcb2241dc04c73b86adb26"
-  },
-  "inspo/IMG_0224.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "star pimple patches",
-      "miniature toys",
-      "party streamers",
-      "colorful compacts",
-      "neon star confetti"
-    ],
-    "contentHash": "0b044b9115a10f800c675d36a2a4605cd478fd46f1ae5fe441770edb750402da"
-  },
-  "inspo/IMG_0226-f21e02.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "monochrome",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "green toys",
-      "plastic objects",
-      "frog",
-      "dinosaur",
-      "turtle"
-    ],
-    "contentHash": "f21e02cd1dcd98e178bb7b2dc1b4a8b93ad176b433d38b422ff9a335ff77c528"
-  },
-  "inspo/IMG_0227-394c3e.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "dolphin figurines",
-      "plastic toys",
-      "blue stars",
-      "bubble wand",
-      "toy car"
-    ],
-    "contentHash": "394c3e596ceaf0a86474eab9de1c97466ca21b3c5241c7f4ce47a8bcb389d5b4"
-  },
-  "inspo/IMG_0228-6a3a12.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "miniature playground set",
-      "fake grass",
-      "blue sky backdrop",
-      "colorful product packaging",
-      "smiley faces"
-    ],
-    "contentHash": "6a3a129a18d7f6de3a7aa4f5b16caf487afa58297f45114da98e33df55f523b3"
-  },
-  "inspo/IMG_0229-45613b.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "game spinner",
-      "colorful stars",
-      "yellow game board",
-      "orange background"
-    ],
-    "contentHash": "45613bd751fb350db5f0da8e4266100dbe9640de3b747b1fadca4ba2df83d4ad"
-  },
-  "inspo/IMG_0230-1cfab7.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "digital billboard",
-      "urban skyline",
-      "people",
-      "star stickers",
-      "bright graphics"
-    ],
-    "contentHash": "1cfab7add860afb94830a09041f2e7b7dea8f77abc469501269007f7e381d14b"
-  },
-  "inspo/IMG_0231-d8dc8b.png": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "tattoo stickers",
-      "smiley face",
-      "star shapes",
-      "spider",
-      "compact case"
-    ],
-    "contentHash": "d8dc8b061ae99d58aafe34ff4e4f1f87bd4194fe96b66d30ff78de6e9baae5e8"
-  },
-  "inspo/IMG_E0158-f38ea6.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "snack sticks",
-      "textured background",
-      "bold typography"
-    ],
-    "contentHash": "f38ea6c1081d16642177ced7af66dfed05916791eb8265ad90f6913f069e4827"
-  },
-  "inspo/IMG_E0159-7ec674.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "pink packaging",
-      "gift basket",
-      "pickles jar",
-      "snack items",
-      "hand holding"
-    ],
-    "contentHash": "7ec674cf784122ed9edcbb9f3c2929ca7ca78205e1b718502e559bdd61c60373"
-  },
-  "inspo/IMG_E0160-e83f93.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "chicken sticks",
-      "product packaging",
-      "bold text",
-      "red background",
-      "display platform"
-    ],
-    "contentHash": "e83f93682137c3e598fbc32f30ed208faede1c95efc47a33a0d08792558cf317"
-  },
-  "inspo/IMG_E0161-105c5f.jpg": {
-    "kind": "inspo",
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/bqdn1307-copy.jpeg": {
+    "kind": "brand",
     "vibe": "minimal",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "leaves",
-      "product packaging",
-      "text overlay"
-    ],
-    "contentHash": "105c5f9d939d92638ce57b58851a0e9f5a09783ff404257eaca54289d9315e80"
-  },
-  "inspo/IMG_E0162-cf33fb.jpg": {
-    "kind": "inspo",
-    "vibe": "clinical",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "calm",
-    "subjectMotifs": [
-      "packaged food",
-      "chicken sticks",
-      "shelves",
-      "retail display"
-    ],
-    "contentHash": "cf33fbdb23614265675e6ee48b0accc61e1c6de4194f2485931610e24a5508a4"
-  },
-  "inspo/IMG_E0163-ec1ffa.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "beef sticks",
-      "pink ribbon",
-      "glass vase",
-      "hand"
-    ],
-    "contentHash": "ec1ffa12947997f5a9679342a17f324e113a10f056e1c763126fb1e90cf4f3e8"
-  },
-  "inspo/IMG_E0164-91b09e.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "snow",
-      "beanie",
-      "meat sticks",
-      "colorful packaging"
-    ],
-    "contentHash": "91b09e73df48e1ae8fe0fc1a9d2d87faa0c7bc7862b77a3631368d9e1451973a"
-  },
-  "inspo/IMG_E0165-35610d.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "abstract",
-    "mood": "fun",
-    "subjectMotifs": [
-      "beef stick",
-      "ski glove",
-      "ripped paper",
-      "mountain logos",
-      "bold typography"
-    ],
-    "contentHash": "35610df54cf06b06d58b0ead3a21768ca8d9a5fa513dccdf43b19b2497f2e0f8"
-  },
-  "inspo/IMG_E0166-c5f778.jpg": {
-    "kind": "inspo",
-    "vibe": "editorial",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "beef jerky",
-      "product packaging",
-      "red pouches",
-      "blue pouch",
-      "cow illustration"
-    ],
-    "contentHash": "c5f778696e0d327c293deffdd73a75ce3edd0443c7e6fc1a6ff57202e7025e49"
-  },
-  "inspo/IMG_E0167-c11e83.jpg": {
-    "kind": "inspo",
-    "vibe": "editorial",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "beef sticks",
-      "red packaging",
-      "cow logo",
-      "red background"
-    ],
-    "contentHash": "c11e831f1de778b6a9480a37b7c286d6da108cb40500167005b1e86f19303017"
-  },
-  "inspo/IMG_E0168-1d7064.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "beef stick packaging",
-      "hand",
-      "red mosaic pattern",
-      "cow illustration",
-      "silver text"
-    ],
-    "contentHash": "1d7064a770fe5a5c9e9fb46e295ac05549e435bec8bdf117a9f2f892ad061dbb"
-  },
-  "inspo/IMG_E0169-dcc33c.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "cherries",
-      "shelves",
-      "product display",
-      "retro graphics"
-    ],
-    "contentHash": "dcc33cfbf82646cb0a24ae3789700d546cfc19053d9b9db3051654f9e5cbe723"
-  },
-  "inspo/IMG_E0170-fe9ce0.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cocktail shaker",
-      "soda cans",
-      "metal straws",
-      "liquor bottles",
-      "reflective surface"
-    ],
-    "contentHash": "fe9ce08b46c8c0de420aa853ee17bd7d41e265c9bdaa04be945eedca4eddfbf5"
-  },
-  "inspo/IMG_E0171-7072f2.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "product display",
-      "retail shelves",
-      "colorful packaging"
-    ],
-    "contentHash": "7072f29caae57968dd9823a4f8c6afb41733f3d91f4633df6ed359b08c524f33"
-  },
-  "inspo/IMG_E0172-09d9eb.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "easter egg pattern",
-      "gradient background"
-    ],
-    "contentHash": "09d9ebb4c01b0606ee6d50d19750bdff8fdd3c9ef2ca2e7bcce21a0976e5405f"
-  },
-  "inspo/IMG_E0173-b463a2.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "soda can",
-      "liquid pouring",
-      "glass",
-      "ice cubes",
-      "berries"
-    ],
-    "contentHash": "b463a23fb31376eddef8b2abed71941095ba72de0ebea19ec0de845b79e78615"
-  },
-  "inspo/IMG_E0174-0ef7ce.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "ice cream scoops",
-      "berries",
-      "water droplets",
-      "glossy text"
-    ],
-    "contentHash": "0ef7ceddb5c985b86db722c029e29f24aefe78a5b51f28a41c88efd0b5e0a702"
-  },
-  "inspo/IMG_E0175-a964a6.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "pink soda can",
-      "cake graphics",
-      "hearts",
-      "blue sky",
-      "white clouds"
-    ],
-    "contentHash": "a964a617ac3d9295a230f5abd866e93f0831954c6f4dcd741cc61985e1683936"
-  },
-  "inspo/IMG_E0176-ec6045.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "lip serum",
-      "colorful packaging",
-      "strawberry graphic",
-      "grape graphic",
-      "hand"
-    ],
-    "contentHash": "ec60450b58281464749da518aa2f77340d43ec9ad75340c11ba56758694d96d0"
-  },
-  "inspo/IMG_E0177-8e76d1.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "water droplets",
-      "sparkle graphics"
-    ],
-    "contentHash": "8e76d1f2aa12d82cded1e3f632f8cea634faf5181876ee74b00dad9cf48c2834"
-  },
-  "inspo/IMG_E0178-952c25.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "product packaging",
-      "colorful boxes",
-      "text/logos"
-    ],
-    "contentHash": "952c256a6a01e4a321e672ea7b238bf6e9bae1639c8d8fb6bc5b0369eea3cd2d"
-  },
-  "inspo/IMG_E0179-aa32ef.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "rainbow",
-      "clouds",
-      "shamrock",
-      "pot of gold"
-    ],
-    "contentHash": "aa32ef74398e20bf8e3fb08ed5ee5d9dc8fda1879fd98fce5872e092dd86ef0a"
-  },
-  "inspo/IMG_E0180-879ca4.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "lip serum",
-      "water droplets",
-      "fruit illustrations"
-    ],
-    "contentHash": "879ca45f19371d5751905f95fa4a728bb4a1ee0597cb76fc8eca4794c62dfca4"
-  },
-  "inspo/IMG_E0181-45289d.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "bagels",
-      "cream cheese",
-      "soda can",
-      "red packaging",
-      "basket"
-    ],
-    "contentHash": "45289d4cde8fd2210d6114b505abd798c6fa26b00348ddcd04b83eae05ec5402"
-  },
-  "inspo/IMG_E0182-901cbb.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "bagel",
-      "pink cream cheese",
-      "cherries",
-      "city skyline",
-      "hand holding item"
-    ],
-    "contentHash": "901cbbcf8f5bf2bf823912abdf621c65e5717525f6d1ee83dbe73ccec5566602"
-  },
-  "inspo/IMG_E0183-77c6ee.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "beverage cans",
-      "fresh fruit",
-      "desserts",
-      "splashing liquid",
-      "toys and trinkets"
-    ],
-    "contentHash": "77c6eef00a98c977a657e4509e3e6b56b9a4023eb500a4783d38e6c0dc0f9ab2"
-  },
-  "inspo/IMG_E0184-a8deaa.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "matching outfits",
-      "embroidered text",
-      "hands",
-      "sunlight"
-    ],
-    "contentHash": "a8deaa3e6442002a855bc96faf76e82b0c2fb9fe6e0798924fb410c77ac54dac"
-  },
-  "inspo/IMG_E0186-0406bf.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "giant legs",
-      "pink socks",
-      "small person",
-      "pink background",
-      "heart logo"
-    ],
-    "contentHash": "0406bfd668736b89390c65860aa99c19647becb35092ca38b3c0ebdf5a2105c0"
-  },
-  "inspo/IMG_E0187-2d2f96.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "party snacks",
-      "emojis",
-      "desserts",
-      "football"
-    ],
-    "contentHash": "2d2f965d9b8cea43ffeaff44cfdb6b4d1e93665959712161b68f0ad203c0561e"
-  },
-  "inspo/IMG_E0188-c85479.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "beverage cans",
-      "hands",
-      "pink nails",
-      "leather jacket",
-      "rings"
-    ],
-    "contentHash": "c85479110612a9775365e45b5bec30fc9eda5bfcc376474cf37886a7940d75b4"
-  },
-  "inspo/IMG_E0190-0e279c.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "keg",
-      "plastic cups",
-      "confetti",
-      "tiled floor"
-    ],
-    "contentHash": "0e279cc345f083cc0e26c3ca1162608599e2d9e4245b56ece5c15510970cc07f"
-  },
-  "inspo/IMG_E0191-40caff.jpg": {
-    "kind": "inspo",
-    "vibe": "retro",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "silver cans",
-      "halftone pattern",
-      "gradient background",
-      "embossed text"
-    ],
-    "contentHash": "40caffb7e4228d04f56a862076dc26d9506f1f9f3b6bf0316165db7a321e2126"
-  },
-  "inspo/IMG_E0192-5420df.jpg": {
-    "kind": "inspo",
-    "vibe": "retro",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda can",
-      "cherries",
-      "red liquid splash",
-      "teal water",
-      "bold typography"
-    ],
-    "contentHash": "5420dfed732646da92f9df618129992437b576ed2ce16218cfd1fe32575a122a"
-  },
-  "inspo/IMG_E0193.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "maraschino cherries",
-      "red soda can",
-      "poppi branding",
-      "smartphone",
-      "hoop earrings"
-    ],
-    "contentHash": "632c75410ffada3008e9f17583e339042431f2aeecc55e159d73240273b6cdbd"
-  },
-  "inspo/IMG_E0194-ba7127.jpg": {
-    "kind": "inspo",
-    "vibe": "editorial",
-    "palette": "high-contrast",
-    "composition": "rule-of-thirds",
-    "mood": "fun",
-    "subjectMotifs": [
-      "hand",
-      "soda can",
-      "plaid jacket",
-      "ring",
-      "zipper"
-    ],
-    "contentHash": "ba7127306fb1a77d435d5928eb0ec1acadaa1be8de0204bda861c664a1f60704"
-  },
-  "inspo/IMG_E0195-e4ffe8.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cherries",
-      "soda can",
-      "grass",
-      "bowl",
-      "sunlight"
-    ],
-    "contentHash": "e4ffe8c292724c0501a3cc9defe85b2608446991dc3820791b2f0bfc4028012c"
-  },
-  "inspo/IMG_E0196-7b0656.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "environmental",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda boxes",
-      "cranberry packaging",
-      "snowflakes",
-      "shopping cart",
-      "holiday theme"
-    ],
-    "contentHash": "7b0656595b4ec355691f0e9d2c19b7d24a968f2715f935cf26bce38fb0501fb1"
-  },
-  "inspo/IMG_E0197-7e73e4.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "fruit",
-      "bold typography",
-      "halftone pattern",
-      "sparkles",
-      "gradient background"
-    ],
-    "contentHash": "7e73e47a75eadf2c2f866f8e5ec08f515e955a3eac8299c37cc09bd87f23f819"
-  },
-  "inspo/IMG_E0198-64469e.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "typography",
-      "layered borders",
-      "color gradient"
-    ],
-    "contentHash": "64469ed2abf283d5e88a9f088f08cad5a640d36f077a8b9d9f78254e0c9f47e8"
-  },
-  "inspo/IMG_E0199.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "rule-of-thirds",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "cartoon illustrations",
-      "hands"
-    ],
-    "contentHash": "cc9bcfc9e7f2297bca4ca45ba67d2b7e9fa8dbad2432945a67dbda2d9218328a"
-  },
-  "inspo/IMG_E0200.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "mailer box",
-      "clouds",
-      "cherries",
-      "strawberry",
-      "bubbly text"
-    ],
-    "contentHash": "13fcd7629a65eaf045fc496c8d9e932833f78c78cf83c46d4965cc289844b01d"
-  },
-  "inspo/IMG_E0201.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "soda cans",
-      "imessage interface",
-      "fruit illustrations",
-      "water ripples"
-    ],
-    "contentHash": "ea1ec51d8af4896c4744f53a7f2188a90488cbc5cd34a9ab3b9dd3500718986e"
-  },
-  "inspo/IMG_E0202-fb6a41.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "vending machine",
-      "pimple patches",
-      "star shape",
-      "yellow plastic",
-      "blue sky"
-    ],
-    "contentHash": "fb6a4116d3f5552f268b52a3711fdce3260946db4170d98811730e4e3d40fdcf"
-  },
-  "inspo/IMG_E0203-267dab.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "pastel",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "pink compact",
-      "hands with nails",
-      "bubblegum wrapper",
-      "pink unicorn",
-      "heart gem"
-    ],
-    "contentHash": "267dabe80a4fd8265c6e0998c2444224fa42c62c79fef7190f00fe3d5fa90369"
-  },
-  "inspo/IMG_E0205-02bc06.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "skincare products",
-      "star shapes",
-      "smiley faces",
-      "light blue packaging",
-      "clear decorative gems"
-    ],
-    "contentHash": "02bc0660904b77f311fe0ddce04f3cf257bfbb554888f28fd91814a12abe7efb"
-  },
-  "inspo/IMG_E0206-b538c6.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "skincare tubes",
-      "star-shaped decorations",
-      "clear beads",
-      "product packaging",
-      "blue background"
-    ],
-    "contentHash": "b538c6c58127f5a78ccd123943eccd4cc4c68909b67afb2f4b31a6f5899004a6"
-  },
-  "inspo/IMG_E0207.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "skincare patches",
-      "star shapes",
-      "product packaging",
-      "blue background",
-      "clear gems"
-    ],
-    "contentHash": "5ab94103aa5726dd9cad2693ba51f1bd6aef0388760af688a72ba7b0ef64d777"
-  },
-  "inspo/IMG_E0208-d96a4f.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "cool",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "blue compacts",
-      "star patches",
-      "clear stars"
-    ],
-    "contentHash": "d96a4f835d53ec86d93b7e9e508af0cf38a76844a6a5eb1507eeb1ccf5bad96c"
-  },
-  "inspo/IMG_E0209-133eca.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "rule-of-thirds",
-    "mood": "fun",
-    "subjectMotifs": [
-      "smiling strawberry",
-      "wooden seesaw",
-      "green grass",
-      "red cylinder"
-    ],
-    "contentHash": "133eca7d75b0d750293c31bb3bd031e3a70168071836f888aceda3c41e5ddf7a"
-  },
-  "inspo/IMG_E0210-625871.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "pimple patches",
-      "cartoon characters",
-      "gummy bears",
-      "colorful packaging",
-      "compact camera"
-    ],
-    "contentHash": "62587149190363695dad01ed29dd590d9b01c41d95042b33137f744c17dccdd0"
-  },
-  "inspo/IMG_E0211-94a475.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "hello kitty character",
-      "red apples",
-      "red bows",
-      "skincare products",
-      "product packaging"
-    ],
-    "contentHash": "94a475c901600dfa315beab8f1f401541364c9fa7aaf281be49095d59b3a6714"
-  },
-  "inspo/IMG_E0212-46a1f3.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "snoopy character",
-      "star shapes",
-      "product packaging",
-      "human hand",
-      "bright blue background"
-    ],
-    "contentHash": "46a1f3344ad0dfd19426f1d815180267d47277721981d5ea05d74db381308773"
-  },
-  "inspo/IMG_E0213.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "snoopy character",
-      "yellow stars",
-      "red platform",
-      "yellow square object",
-      "christmas lights"
-    ],
-    "contentHash": "1b6587750ddf6334571a37cac19badfb7817c4e5f4b4dcce88145b2e1b77d946"
-  },
-  "inspo/IMG_E0214.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "abstract",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cherries",
-      "raspberries",
-      "blueberries",
-      "cylindrical products",
-      "smiley face"
-    ],
-    "contentHash": "347891c7653e3f8907afbba8f89afcf9bbcf7186230662405182e8d84659a036"
-  },
-  "inspo/IMG_E0215-233e96.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "floating fruits",
-      "pomegranate",
-      "strawberry",
-      "raspberry",
-      "purple container"
-    ],
-    "contentHash": "233e96e52c0a5b86f8f66c6804ada498544342ff8dc416db8aa951170984390e"
-  },
-  "inspo/IMG_E0216-248be8.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "warm",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cakes",
-      "smiling faces",
-      "stars",
-      "strawberries",
-      "sprinkles"
-    ],
-    "contentHash": "248be8cf633a6198ef97b6d39ae89c2f07dfd5d7783f89215a0c934ee3913521"
-  },
-  "inspo/IMG_E0217-768390.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cotton candy",
-      "cosmetic tube",
-      "smiley face",
-      "heart shapes"
-    ],
-    "contentHash": "768390e4b6349cd00b76325f2f6d5e803553218cf84c2877cff48b2d7bba039c"
-  },
-  "inspo/IMG_E0219-23598b.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "colorful stick devices",
-      "bubbly lettering",
-      "smiley face",
-      "studded surface",
-      "green tubes"
-    ],
-    "contentHash": "23598b44eea15b50727f8a0df10e995d5a0001f99d6ff07689ddc8630543400a"
-  },
-  "inspo/IMG_E0220-967d23.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "lemons",
-      "yellow cylindrical devices",
-      "lemonade sign",
-      "tiered platform",
-      "straw"
-    ],
-    "contentHash": "967d23b3dddbff94e7f4b6685dbe3dd7da5874590074a3cea6c664eb08ddc9f0"
-  },
-  "inspo/IMG_E0222.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "cartoon building",
-      "smiling face",
-      "stars",
-      "city street",
-      "potted plant"
-    ],
-    "contentHash": "a38846e3e3cca67591c9504b1c398571c92de9c1f2711af0c774ded3410616b1"
-  },
-  "inspo/IMG_E0223-47fa0f.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "yellow square character",
-      "fuzzy chick toy",
-      "artificial grass",
-      "book"
-    ],
-    "contentHash": "47fa0f99a0a67b08596eb606c01131e3806313cd029c575140cd8e7bfca63195"
-  },
-  "inspo/IMG_E0224-5d7004.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "pimple patches",
-      "plastic toys",
-      "star confetti",
-      "colorful ribbons",
-      "lipstick"
-    ],
-    "contentHash": "5d7004d79f72ed808e69947e301902ef706613f325cf4ba6d99cfc7a2f0bf476"
-  },
-  "inspo/IMG_E0225-25de00.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "monochrome",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "purple toys",
-      "star confetti",
-      "streamers",
-      "candy",
-      "gummy bears"
-    ],
-    "contentHash": "25de008884011577c0bec4ef452bd1213a93a0aa3cbd4f326ea1da3e1a503c77"
-  },
-  "inspo/IMG_E0226-13a120.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "green toys",
-      "plastic maze",
-      "dinosaur figure",
-      "frog figure",
-      "green stars"
-    ],
-    "contentHash": "13a12015e05082a008a0e030908463ec79c39dadb39d05f32b6083907e6d024a"
-  },
-  "inspo/IMG_E0227-a3bb8a.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "monochrome",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "dolphins",
-      "toy car",
-      "bubble wand",
-      "stars",
-      "umbrella"
-    ],
-    "contentHash": "a3bb8a722bf37e07c9b3279d133246cc7ca40e9119f55850df2f1a8888a3fef7"
-  },
-  "inspo/IMG_E0228-ad2e0c.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "miniature playground",
-      "green grass",
-      "blue sky",
-      "smiley faces",
-      "colorful box"
-    ],
-    "contentHash": "ad2e0c5841752a6088a216bdf833b4500ae2c6e646fed9baf817017f346a5345"
-  },
-  "inspo/IMG_E0229.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "flat-lay",
-    "mood": "fun",
-    "subjectMotifs": [
-      "game spinner",
-      "colorful sections",
-      "stars",
-      "arrow pointer",
-      "orange background"
-    ],
-    "contentHash": "e6c5f4ba84d51a6f780383e9812aca7b31e87db5da36d59990d8f12bca0701f6"
-  },
-  "inspo/IMG_E0230-70025c.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "neon",
-    "composition": "environmental",
-    "mood": "energetic",
-    "subjectMotifs": [
-      "digital billboard",
-      "star stickers",
-      "city street",
-      "people",
-      "colorful text"
-    ],
-    "contentHash": "70025ce5ee286217a573b5f05e81c0b352576077e673bbb75bce88a045a9ca8c"
-  },
-  "inspo/IMG_E0231-c0f06c.jpg": {
-    "kind": "inspo",
-    "vibe": "playful",
-    "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "fun",
-    "subjectMotifs": [
-      "tattoo stickers",
-      "colorful spider",
-      "smiley face",
-      "stars",
-      "red background"
-    ],
-    "contentHash": "c0f06c2a73af3834e30acee65115e5bffd0b081152ef388b7198c942b93035d2"
-  },
-  "inspo/Screenshot.png": {
-    "kind": "inspo",
-    "vibe": "clinical",
-    "palette": "high-contrast",
-    "composition": "environmental",
     "mood": "premium",
     "subjectMotifs": [
-      "dashboard ui",
-      "digital art",
-      "data tables",
-      "charts and graphs",
-      "dark mode"
-    ],
-    "contentHash": "77e064c5e86ac772ccfe77a70dca79e67ea959a07269227324a20faaef03b3b8"
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/corf6242-copy.jpg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/corf6242.jpg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/cuzd0649-copy.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ddty6809.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/dmiv5754-copy.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/druw2229-copy.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ebeh8410.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/estg4436.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/eunf3531.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ewem0268.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/fgqd5546.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/fjpf0830.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/fkzd5592.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/fxmd8258.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/givz0871.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/hrgu1697.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/hssj7839.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/img_0025.jpg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/img_0027.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/img_0036.jpg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/img_0065.jpg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/img_0075.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/img_0117.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/img_0157.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/iqfv9862.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/jtfj6695.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/kozf3399.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/kqzv9865.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ksqo9520.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/lvme6152.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/lyfa0340.jpeg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/mdfj8356.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/mfor0379.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/nhbj8003.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ozfk9873.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/pjal9430.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/plzt8984.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/pmru5017.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/pqmr1462.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/prxa7070.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/qbek1131.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/qbjv7975.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/qckk8688.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/qzrq4269.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/rmwe0154.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/sbby1664.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/sbiw4698.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/screenshot-181.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/silz8193.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/tafe1402.jpeg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/tqui2343.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/trvz0889.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ttsr8372.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/tulh6228.jpeg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/tyvm7598.jpeg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/udmr7494.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ufko0448.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/uotr5637.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/urxg4036.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/uzfc6463.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/vbkf0135.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/vhch4947.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/voqj5201.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/vumb2635.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/wqib8188-copy-copy.jpg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/wqib8188-copy.jpg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/wqib8188.jpg": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/xayu2612.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/xhjl1921.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/xnhe8850.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/xwqa0672.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ydws1248.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/yfsp7319.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
+  },
+  "brand/ylek5492-copy-copy.png": {
+    "kind": "brand",
+    "vibe": "minimal",
+    "palette": "high-contrast",
+    "composition": "centered-hero",
+    "mood": "premium",
+    "subjectMotifs": [
+      "vape device",
+      "logo"
+    ]
   }
 }

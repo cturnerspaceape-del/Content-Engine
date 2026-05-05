@@ -17,7 +17,8 @@
     "remotion:studio": "remotion studio remotion/index.tsx",
     "classify-refs": "tsx server/classifyReferences.ts",
     "ingest-refs": "tsx server/ingestReferences.ts",
-    "derive-shots": "tsx server/deriveShotTemplates.ts"
+    "derive-shots": "tsx server/deriveShotTemplates.ts",
+    "sync-refs": "tsx scripts/syncRefs.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.92.0",
