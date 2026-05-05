@@ -18,7 +18,8 @@
     "classify-refs": "tsx server/classifyReferences.ts",
     "ingest-refs": "tsx server/ingestReferences.ts",
     "derive-shots": "tsx server/deriveShotTemplates.ts",
-    "sync-refs": "tsx scripts/syncRefs.ts"
+    "sync-refs": "tsx scripts/syncRefs.ts",
+    "deploy-refs": "npm run sync-refs -- \"C:/Users/cturn/OneDrive/Pictures/INSPO\" && railway up"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.92.0",
