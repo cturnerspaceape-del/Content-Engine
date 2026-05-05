@@ -89,7 +89,13 @@ export default function ResearchPanel({
         />
 
         {seeds.length > 1 && (
-          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${seeds.length - 1}, minmax(0, 1fr))` }}>
+          <div
+            className="grid gap-2"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              alignItems: 'start',
+            }}
+          >
             {seeds.slice(1).map((seed, i) => {
               const idx = i + 1
               return (
@@ -278,7 +284,6 @@ function AlternateCard({
         background: isActive ? 'rgba(236,72,153,.10)' : 'var(--panel-2)',
         border: isActive ? '1.5px solid #ec4899' : '1px solid var(--border)',
         cursor: 'pointer',
-        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         gap: 4,
@@ -296,14 +301,7 @@ function AlternateCard({
       </div>
       <p
         className="text-[11px] leading-snug"
-        style={{
-          color: 'var(--text)',
-          opacity: 0.75,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}
+        style={{ color: 'var(--text)', opacity: 0.75 }}
       >
         {seed.angle}
       </p>
