@@ -195,7 +195,12 @@ interface PickerProps {
 }
 
 function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: PickerProps) {
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [pos, setPos] = useState<{
+    top: number
+    left: number
+    width: number
+    maxHeight: number
+  } | null>(null)
 
   useLayoutEffect(() => {
     if (!anchor) return
@@ -203,15 +208,21 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
       const rect = anchor.getBoundingClientRect()
       const margin = 12
       const width = Math.min(320, window.innerWidth - margin * 2)
-      // Prefer right-aligning the picker with the trigger, but clamp so
-      // both edges stay inside the viewport — important on phones where
-      // the trigger sits far right and a 320px popover would overhang.
-      const desiredLeft = rect.right - width
-      const left = Math.max(
-        margin,
-        Math.min(desiredLeft, window.innerWidth - width - margin),
-      )
-      setPos({ top: rect.bottom + 6, left, width })
+      // On phone, center horizontally — the wrapped action row makes the
+      // trigger position unreliable, so anchoring to it pushes the picker
+      // off-screen. Desktop keeps the trigger-anchored right alignment.
+      const isPhone = window.innerWidth < 640
+      const left = isPhone
+        ? Math.max(margin, (window.innerWidth - width) / 2)
+        : Math.max(
+            margin,
+            Math.min(rect.right - width, window.innerWidth - width - margin),
+          )
+      const top = rect.bottom + 6
+      // Cap height so the picker fits between the trigger and the bottom
+      // edge — the inner card list scrolls when content exceeds this.
+      const maxHeight = Math.max(200, window.innerHeight - top - margin)
+      setPos({ top, left, width, maxHeight })
     }
     update()
     window.addEventListener('resize', update)
@@ -246,6 +257,9 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
         top: pos.top,
         left: pos.left,
         width: pos.width,
+        maxHeight: pos.maxHeight,
+        display: 'flex',
+        flexDirection: 'column',
         background: 'var(--panel)',
         border: '1px solid var(--border)',
         padding: 12,
@@ -286,7 +300,15 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
           🔭 Scanning trends…
         </p>
       )}
-      <div className="flex flex-col gap-1.5">
+      <div
+        className="flex flex-col gap-1.5"
+        style={{
+          overflowY: 'auto',
+          flex: 1,
+          minHeight: 0,
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         {data?.seeds.map((seed, i) => (
           <button
             key={`${seed.subcategory}-${i}`}
@@ -315,10 +337,6 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
               style={{
                 color: 'var(--text)',
                 opacity: 0.75,
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
               }}
             >
               {seed.angle}
