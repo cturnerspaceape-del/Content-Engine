@@ -13,6 +13,11 @@ interface CarouselLoungeVisualProps {
   slideCount: number
   carouselSeed: number
   variationSeed?: number
+  // Picked research seed — anchors each slide to a specific trend signal.
+  // Forwarded to /api/generate-carousel-slide and into the Gemini prompt's
+  // TREND CONTEXT section.
+  researchAngle?: string
+  researchNotes?: string
   // Persisted per-slide results. A slot that has either a URL or an error set
   // will NOT be auto-fetched on mount — the guard is the whole cost-safety story.
   slideUrls?: (string | null)[]
@@ -91,6 +96,8 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     slideCount,
     carouselSeed,
     variationSeed,
+    researchAngle,
+    researchNotes,
     slideUrls,
     slideErrors,
     slideVariationSeeds,
@@ -109,8 +116,10 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
       arcId,
       carouselSeed,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
+      ...(researchAngle ? { researchAngle } : {}),
+      ...(researchNotes ? { researchNotes } : {}),
     }),
-    [flavor, hook, caption, pillar, subcategory, arcId, carouselSeed, variationSeed],
+    [flavor, hook, caption, pillar, subcategory, arcId, carouselSeed, variationSeed, researchAngle, researchNotes],
   )
 
   // Seed local state from persisted results so a refresh/remount re-renders

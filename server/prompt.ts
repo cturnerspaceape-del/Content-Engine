@@ -22,6 +22,11 @@ export interface BuildPromptInput {
   brandRefCount: number
   variationSeed?: number
   slideContext?: SlideContext
+  // Picked research seed (Research Lab → fetchTrends). When present, anchors
+  // the visual to a specific trend signal so Gemini doesn't fall back to the
+  // generic Space Ape moodboard.
+  researchAngle?: string
+  researchNotes?: string
 }
 
 // ─── Fixed sections ───
@@ -81,6 +86,8 @@ export function buildPrompt({
   brandRefCount,
   variationSeed,
   slideContext,
+  researchAngle,
+  researchNotes,
 }: BuildPromptInput): string {
   const strain = theme.strainType || 'Hybrid'
   const mood = extractMoodWords(hook, caption, pillar, subcategory).join(', ')
@@ -113,6 +120,21 @@ export function buildPrompt({
 
   // 4. SHOT BRIEF (structured fields from the template)
   sections.push(`SHOT BRIEF — "${shotTemplate.name}":\n${buildShotBrief(shotTemplate)}`)
+
+  // 4b. TREND CONTEXT (picked research seed). Front-loaded after the brief so
+  // the angle-specific direction outranks the generic mood adjectives below.
+  // This is the fix for "research-picked seeds still produced cookie-cutter
+  // visuals" — the trend signal now reaches Gemini as an explicit instruction.
+  if (researchAngle && researchAngle.trim().length > 0) {
+    const lines = [
+      'TREND CONTEXT (anchor the visual to this trend signal — do NOT default to the generic Space Ape moodboard):',
+      `  Angle: ${researchAngle.trim()}`,
+    ]
+    if (researchNotes && researchNotes.trim().length > 0) {
+      lines.push(`  Signal: ${researchNotes.trim()}`)
+    }
+    sections.push(lines.join('\n'))
+  }
 
   // 5. FLAVOR
   sections.push(

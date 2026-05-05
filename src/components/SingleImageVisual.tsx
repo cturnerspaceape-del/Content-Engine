@@ -15,6 +15,11 @@ interface SingleImageVisualProps {
   subcategory: string
   shotTemplateId?: string
   variationSeed?: number
+  // Picked research seed — anchors the visual to a specific trend signal.
+  // Forwarded to /api/generate-single-image and into the Gemini prompt's
+  // TREND CONTEXT section.
+  researchAngle?: string
+  researchNotes?: string
   // Persisted generation result. If either is defined, the mount-fetch is
   // skipped — that's the core cost-safety invariant: only a click can fire a
   // new /api call (a click clears these via onResult(null, null)).
@@ -51,6 +56,8 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
     subcategory,
     shotTemplateId,
     variationSeed,
+    researchAngle,
+    researchNotes,
     imageUrl,
     imageError,
     onResult,
@@ -65,8 +72,10 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
       subcategory,
       ...(shotTemplateId ? { shotTemplateId } : {}),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
+      ...(researchAngle ? { researchAngle } : {}),
+      ...(researchNotes ? { researchNotes } : {}),
     }),
-    [flavor, hook, caption, pillar, subcategory, shotTemplateId, variationSeed],
+    [flavor, hook, caption, pillar, subcategory, shotTemplateId, variationSeed, researchAngle, researchNotes],
   )
 
   const [localUrl, setLocalUrl] = useState<string | null>(imageUrl ?? null)

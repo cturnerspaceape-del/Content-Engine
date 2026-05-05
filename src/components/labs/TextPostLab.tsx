@@ -93,33 +93,11 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Re-tune variants whenever archetype changes (driven by the active
-  // research seed) or platforms change.
-  useEffect(() => {
-    if (!activeResearchSeed) return
-    const source: TunerSource = buildSource(archetype)
-    setVariants((prev) => {
-      const next: Partial<Record<TunerPlatform, PlatformVariant>> = {}
-      for (const platform of selectedPlatforms) {
-        const cached = prev[platform]
-        next[platform] =
-          cached && cached.platform === platform ? cached : tuneFor(platform, source)
-      }
-      return next
-    })
-    let cancelled = false
-    ;(async () => {
-      for (const platform of selectedPlatforms) {
-        const v = await tuneForAsync(platform, source)
-        if (cancelled) return
-        setVariants((prev) => ({ ...prev, [platform]: v }))
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [archetype, selectedPlatforms.join('|'), activeResearchSeed?.subcategory])
+  // Note: previously this lab auto-tuned variants whenever the active
+  // research seed changed, which made the preview pop in before the user
+  // ever clicked Generate. Removed — the only path that populates variants
+  // is now `handleGenerate` below. Picking a research card just stages the
+  // angle; the preview stays empty until Generate is clicked.
 
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
     const seeds = [rec, ...candidates].slice(0, 3)
@@ -291,7 +269,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
                   color: 'white',
                 }}
               >
-                ⚡ Regenerate (all platforms)
+                ⚡ {Object.keys(variants).length > 0 ? 'Regenerate' : 'Generate'} (all platforms)
               </button>
             </div>
 

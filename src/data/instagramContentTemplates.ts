@@ -544,6 +544,8 @@ export async function generateContentForPostAsync(
       ...(layoutTemplate !== undefined && { layoutTemplate }),
       ...(shotTemplateId !== undefined && { shotTemplateId }),
       ...(slideCount !== undefined && { slideCount }),
+      ...(research?.angle ? { researchAngle: research.angle } : {}),
+      ...(research?.notes ? { researchNotes: research.notes } : {}),
     },
   }
 }
@@ -632,6 +634,8 @@ export async function generateCarouselLoungePostAsync(
       slideCount: arc.slides.length,
       arcId: arc.id,
       carouselSeed,
+      ...(research?.angle ? { researchAngle: research.angle } : {}),
+      ...(research?.notes ? { researchNotes: research.notes } : {}),
     },
   }
 }

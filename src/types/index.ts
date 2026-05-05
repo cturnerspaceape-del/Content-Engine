@@ -95,6 +95,11 @@ export interface ContentItem {
     reelUrl?: string
     reelError?: string
     reelVariationSeed?: number
+    // Trend signal that produced this content. Threaded down to the image
+    // model so visuals anchor to the picked research angle instead of the
+    // generic Space Ape mood pool.
+    researchAngle?: string
+    researchNotes?: string
   }
 }
 

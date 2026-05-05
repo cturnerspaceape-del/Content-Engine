@@ -24,11 +24,13 @@ interface GenerateBody {
   slideIndex?: number
   carouselSeed?: number
   variationSeed?: number
+  researchAngle?: string
+  researchNotes?: string
 }
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 1
+const CACHE_VERSION = 2 // bumped for TREND CONTEXT section (research-aware prompts)
 
 export async function generateCarouselSlideHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -42,6 +44,8 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       slideIndex,
       carouselSeed,
       variationSeed,
+      researchAngle,
+      researchNotes,
     } = (req.body ?? {}) as GenerateBody
 
     if (
@@ -106,6 +110,8 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       inspoRefs: [...inspoKeys].sort(),
       brandRefs: [...brandKeys].sort(),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
+      ...(researchAngle ? { researchAngle } : {}),
+      ...(researchNotes ? { researchNotes } : {}),
     })
     const { absPath, publicUrl } = cachePath(hash, 'carousel-slide')
 
@@ -140,6 +146,8 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       inspoRefCount: inspoKeys.length,
       brandRefCount: brandKeys.length,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
+      ...(researchAngle ? { researchAngle } : {}),
+      ...(researchNotes ? { researchNotes } : {}),
       slideContext: {
         index: slideIndex + 1,
         total: arc.slides.length,

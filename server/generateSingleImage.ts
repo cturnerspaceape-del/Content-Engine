@@ -21,16 +21,27 @@ interface GenerateBody {
   subcategory?: string
   shotTemplateId?: string
   variationSeed?: number
+  researchAngle?: string
+  researchNotes?: string
 }
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 3 // bumped for v2 prompt structure
+const CACHE_VERSION = 4 // bumped for TREND CONTEXT section (research-aware prompts)
 
 export async function generateSingleImageHandler(req: Request, res: Response): Promise<void> {
   try {
-    const { flavor, hook, caption, pillar, subcategory, shotTemplateId, variationSeed } =
-      (req.body ?? {}) as GenerateBody
+    const {
+      flavor,
+      hook,
+      caption,
+      pillar,
+      subcategory,
+      shotTemplateId,
+      variationSeed,
+      researchAngle,
+      researchNotes,
+    } = (req.body ?? {}) as GenerateBody
 
     if (!flavor || !hook || !caption || !pillar || !subcategory) {
       res.status(400).json({ error: 'missing required fields: flavor, hook, caption, pillar, subcategory' })
@@ -66,6 +77,10 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       inspoRefs: [...inspoKeys].sort(),
       brandRefs: [...brandKeys].sort(),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
+      // Trend signal participates in the cache key so a new picked seed busts
+      // any prior cached PNG that was rendered without trend context.
+      ...(researchAngle ? { researchAngle } : {}),
+      ...(researchNotes ? { researchNotes } : {}),
     })
     const { absPath, publicUrl } = cachePath(hash)
 
@@ -98,6 +113,8 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       inspoRefCount: inspoKeys.length,
       brandRefCount: brandKeys.length,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
+      ...(researchAngle ? { researchAngle } : {}),
+      ...(researchNotes ? { researchNotes } : {}),
     })
 
     if (process.env.NODE_ENV !== 'production') {

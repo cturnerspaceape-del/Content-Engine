@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ScheduledPost } from '../../types'
 import {
   TEXT_ARCHETYPES,
@@ -12,6 +12,8 @@ import {
   type TunerPlatform,
   type TunerSource,
 } from '../../lib/platformTuners'
+import { toTextArchetype } from '../../lib/research/researchedSeed'
+import type { ResearchedSeed } from '../../lib/research/types'
 import MultiPlatformPreview from '../MultiPlatformPreview'
 import InlineSlotShell from './InlineSlotShell'
 
@@ -33,6 +35,10 @@ interface TextPostSlotPanelProps {
   platform: SupportedPlatform
   scheduled: ScheduledPost | undefined
   ensureSchedule: () => ScheduledPost
+  // Day-level trend signal. When set, derives the archetype from it and
+  // feeds research context into the tuners so captions reflect the picked
+  // angle instead of the default "Hot Take" template.
+  dayResearch?: ResearchedSeed | null
   onChange: (post: ScheduledPost) => void
 }
 
@@ -40,12 +46,20 @@ export default function TextPostSlotPanel({
   platform,
   scheduled,
   ensureSchedule,
+  dayResearch,
   onChange,
 }: TextPostSlotPanelProps) {
   const tunerPlatform = PLATFORM_TO_TUNER[platform]
   const stored = scheduled?.textVariants?.[platform]
 
-  const [archetype, setArchetype] = useState<TextArchetype>('Hot Take')
+  const [archetype, setArchetype] = useState<TextArchetype>(() =>
+    dayResearch ? toTextArchetype(dayResearch) : 'Hot Take',
+  )
+  // When the day's research seed changes, snap archetype to the derived one
+  // so the next Generate uses the freshly picked angle.
+  useEffect(() => {
+    if (dayResearch) setArchetype(toTextArchetype(dayResearch))
+  }, [dayResearch])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [localVariant, setLocalVariant] = useState<PlatformVariant | null>(null)
@@ -80,7 +94,12 @@ export default function TextPostSlotPanel({
     setBusy(true)
     setError(null)
     try {
-      const source: TunerSource = { format: 'text', archetype: a }
+      const source: TunerSource = {
+        format: 'text',
+        archetype: a,
+        ...(dayResearch?.angle ? { researchAngle: dayResearch.angle } : {}),
+        ...(dayResearch?.sourceNotes ? { researchNotes: dayResearch.sourceNotes } : {}),
+      }
       // Optimistic sync fill so the preview updates immediately.
       const sync = tuneFor(tunerPlatform, source)
       setLocalVariant(sync)
