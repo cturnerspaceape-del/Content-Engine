@@ -30,6 +30,8 @@ export interface TunerSource {
   // Optional creative direction from the Research button.
   researchAngle?: string
   researchNotes?: string
+  // Executable photo brief from the picked seed; visual-only signal.
+  researchShotBrief?: string
 }
 
 export interface PlatformVariant {

@@ -31,6 +31,10 @@ const FORMAT_HINTS: Record<ResearchFormat, string> = {
 interface ScopeArgs {
   emailType?: string
   historicalContext?: string
+  // Identity of the slot requesting research. Included in the cache key so
+  // each slot on a given day gets its own LLM call rather than sharing a
+  // single per-format cached payload across every Daily View slot.
+  slotKey?: string
 }
 
 let client: Anthropic | null = null
@@ -57,7 +61,7 @@ function cacheKey(format: ResearchFormat, scope: ScopeArgs): string {
   const histHash = scope.historicalContext
     ? createHash('sha256').update(scope.historicalContext).digest('hex').slice(0, 8)
     : ''
-  return `${format}|${scope.emailType ?? ''}|${histHash}`
+  return `${format}|${scope.emailType ?? ''}|${histHash}|${scope.slotKey ?? ''}`
 }
 
 function isResearchFormat(s: unknown): s is ResearchFormat {
@@ -74,6 +78,15 @@ function buildPrompt(format: ResearchFormat, scope: ScopeArgs): string {
 
   const historyBlock = scope.historicalContext
     ? `\n\nPast sends from this brand (style/voice anchor — match the brand's existing flavor, do not repeat the same angle they've already shipped):\n${scope.historicalContext}`
+    : ''
+
+  // Visual formats need an executable photo brief so the image model
+  // actually executes the trend's visual treatment instead of falling back
+  // to the generic Space Ape moodboard. Text/email don't need it.
+  const isVisualFormat = format === 'image' || format === 'carousel' || format === 'print'
+  const shotBriefLine = isVisualFormat
+    ? `,
+      "shotBrief": "<1-3 short lines describing the EXACT visual treatment the image model should execute. Be specific and executable — name the scene, framing, lighting, camera/film stock, and any styling notes. Examples: 'passport-booth headshot, harsh overhead flash, neutral-blue backdrop, ID-card cropping' or '90s disposable-cam nightlife snapshot, on-camera flash, motion blur, low-saturation greens'. Do NOT use vague mood words like 'cool' or 'editorial'. This replaces the brand's default shot template, so write it as a directive, not a description.">`
     : ''
 
   return `You're researching trend signals for Space Ape, an ultra-premium cannabis live-resin vape brand. Their voice is "cool Charlie Sheen" — confident, fun, cosmic, sticker-pop. Founder admires these brands as creative references:
@@ -99,7 +112,7 @@ Return ONLY a JSON object with this exact shape (no markdown fences, no commenta
       "sourceBrands": ["<which admired brand inspired this — pick from the list above, can be multiple>"],
       "sourceNotes": "<short observation from web_search: what the brand actually did, with a date or campaign name where possible>",
       "sourceUrls": ["<page URLs from your web_search results that show this trend in action — up to 3, only include URLs you actually retrieved; omit the field if none>"],
-      "sourceImageUrls": ["<direct image URLs (jpg/png/webp) from your web_search results — up to 3, only include if you actually saw them in results; omit if none. These will be downloaded as visual references for image generation, so prefer hero/lookbook/campaign shots over thumbnails>"]
+      "sourceImageUrls": ["<direct image URLs (jpg/png/webp) from your web_search results — up to 3, only include if you actually saw them in results; omit if none. These will be downloaded as visual references for image generation, so prefer hero/lookbook/campaign shots over thumbnails>"]${shotBriefLine}
     }
   ]
 }`
@@ -113,6 +126,7 @@ interface RawSeed {
   sourceNotes?: unknown
   sourceUrls?: unknown
   sourceImageUrls?: unknown
+  shotBrief?: unknown
 }
 
 const MAX_URLS_PER_SEED = 3
@@ -160,6 +174,7 @@ function normalizeSeed(raw: RawSeed): ResearchedSeed | null {
   if (!pillar || !subcategory || !angle) return null
   const sourceUrls = normalizeUrlList(raw.sourceUrls)
   const sourceImageUrls = normalizeUrlList(raw.sourceImageUrls)
+  const shotBrief = typeof raw.shotBrief === 'string' ? raw.shotBrief.trim() : ''
   return {
     pillar,
     subcategory,
@@ -168,6 +183,7 @@ function normalizeSeed(raw: RawSeed): ResearchedSeed | null {
     sourceNotes,
     ...(sourceUrls.length > 0 ? { sourceUrls } : {}),
     ...(sourceImageUrls.length > 0 ? { sourceImageUrls } : {}),
+    ...(shotBrief.length > 0 ? { shotBrief } : {}),
   }
 }
 
@@ -214,6 +230,8 @@ export async function researchTrendsHandler(req: Request, res: Response): Promis
       format?: unknown
       emailType?: unknown
       historicalContext?: unknown
+      slotKey?: unknown
+      nonce?: unknown
     }
     if (!isResearchFormat(body.format)) {
       res.status(400).json({ error: `format must be one of ${FORMATS.join(', ')}` })
@@ -226,13 +244,23 @@ export async function researchTrendsHandler(req: Request, res: Response): Promis
         typeof body.historicalContext === 'string' && body.historicalContext.trim().length > 0
           ? body.historicalContext
           : undefined,
+      slotKey:
+        typeof body.slotKey === 'string' && body.slotKey.trim().length > 0
+          ? body.slotKey
+          : undefined,
     }
+    // nonce is the Refresh-button cache buster: when present, skip the cache
+    // lookup so the user gets a fresh LLM call on demand. Result still gets
+    // written back so subsequent same-slot reads (without a nonce) hit cache.
+    const bypassCache = body.nonce !== undefined
     const today = dayBucket()
     const key = cacheKey(format, scope)
-    const cached = cache.get(key)
-    if (cached && cached.day === today) {
-      res.json({ ...cached.result, cached: true })
-      return
+    if (!bypassCache) {
+      const cached = cache.get(key)
+      if (cached && cached.day === today) {
+        res.json({ ...cached.result, cached: true })
+        return
+      }
     }
     const result = await callAnthropic(format, scope)
     cache.set(key, { day: today, result })

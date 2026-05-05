@@ -20,6 +20,9 @@ interface SingleImageVisualProps {
   // TREND CONTEXT section.
   researchAngle?: string
   researchNotes?: string
+  // Executable photo brief from the picked seed — replaces the generic
+  // shot template in the SHOT BRIEF section of the Gemini prompt.
+  researchShotBrief?: string
   // URLs from the picked seed. Server downloads images from these and
   // uses them as inspo refs in place of the static manifest pool.
   researchSourceUrls?: string[]
@@ -62,6 +65,7 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
     variationSeed,
     researchAngle,
     researchNotes,
+    researchShotBrief,
     researchSourceUrls,
     researchSourceImageUrls,
     imageUrl,
@@ -86,11 +90,12 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(researchShotBrief ? { researchShotBrief } : {}),
       ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
       ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [flavor, hook, caption, pillar, subcategory, shotTemplateId, variationSeed, researchAngle, researchNotes, urlsKey, imageUrlsKey],
+    [flavor, hook, caption, pillar, subcategory, shotTemplateId, variationSeed, researchAngle, researchNotes, researchShotBrief, urlsKey, imageUrlsKey],
   )
 
   const [localUrl, setLocalUrl] = useState<string | null>(imageUrl ?? null)

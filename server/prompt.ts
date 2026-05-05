@@ -27,6 +27,11 @@ export interface BuildPromptInput {
   // generic Space Ape moodboard.
   researchAngle?: string
   researchNotes?: string
+  // Executable photo brief from the picked research seed. When present, it
+  // REPLACES the body of the SHOT BRIEF section so the trend's specific
+  // visual treatment (e.g. "passport-booth headshot") wins over the generic
+  // shot template's scene/lighting/camera defaults.
+  researchShotBrief?: string
 }
 
 // ─── Fixed sections ───
@@ -88,6 +93,7 @@ export function buildPrompt({
   slideContext,
   researchAngle,
   researchNotes,
+  researchShotBrief,
 }: BuildPromptInput): string {
   const strain = theme.strainType || 'Hybrid'
   const mood = extractMoodWords(hook, caption, pillar, subcategory).join(', ')
@@ -118,13 +124,8 @@ export function buildPrompt({
   // 3. BRAND BIBLE (identical across every call — builds cross-post consistency)
   sections.push(`BRAND BIBLE:\n${BRAND_BIBLE}`)
 
-  // 4. SHOT BRIEF (structured fields from the template)
-  sections.push(`SHOT BRIEF — "${shotTemplate.name}":\n${buildShotBrief(shotTemplate)}`)
-
-  // 4b. TREND CONTEXT (picked research seed). Front-loaded after the brief so
-  // the angle-specific direction outranks the generic mood adjectives below.
-  // This is the fix for "research-picked seeds still produced cookie-cutter
-  // visuals" — the trend signal now reaches Gemini as an explicit instruction.
+  // 4. TREND CONTEXT (picked research seed). Now placed BEFORE the shot
+  // brief so the angle frames the brief instead of trailing it.
   if (researchAngle && researchAngle.trim().length > 0) {
     const lines = [
       'TREND CONTEXT (anchor the visual to this trend signal — do NOT default to the generic Space Ape moodboard):',
@@ -134,6 +135,21 @@ export function buildPrompt({
       lines.push(`  Signal: ${researchNotes.trim()}`)
     }
     sections.push(lines.join('\n'))
+  }
+
+  // 5. SHOT BRIEF — research-driven when the picked seed supplied a
+  // shotBrief, otherwise the brand's default template. Research takes
+  // priority because the trend's visual treatment (e.g. "passport-booth
+  // headshot, harsh flash") must dominate the generic template; the
+  // template only fills in when no research brief is available.
+  const trimmedResearchBrief =
+    typeof researchShotBrief === 'string' ? researchShotBrief.trim() : ''
+  if (trimmedResearchBrief.length > 0) {
+    sections.push(
+      `SHOT BRIEF (research-driven — execute this exact treatment, override any conflicting defaults):\n  ${trimmedResearchBrief.replace(/\n+/g, '\n  ')}`,
+    )
+  } else {
+    sections.push(`SHOT BRIEF — "${shotTemplate.name}":\n${buildShotBrief(shotTemplate)}`)
   }
 
   // 5. FLAVOR

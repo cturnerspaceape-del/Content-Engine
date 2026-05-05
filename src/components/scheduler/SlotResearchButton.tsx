@@ -91,13 +91,17 @@ export default function SlotResearchButton({
     onChange?.(pickedSeed(next))
   }
 
-  const fetchSeeds = async () => {
+  const fetchSeeds = async (forceRefresh = false) => {
     if (loading) return
     setLoading(true)
     setError(null)
     try {
-      const body: Record<string, unknown> = { format }
+      // slotKey scopes the server-side cache so each slot on the day gets
+      // its own LLM call. forceRefresh adds a nonce that bypasses the cache
+      // entirely — wired to the picker's 🔄 Refresh button.
+      const body: Record<string, unknown> = { format, slotKey }
       if (format === 'email' && emailType) body.emailType = emailType
+      if (forceRefresh) body.nonce = Date.now()
       const r = await fetch('/api/research-trends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,7 +181,7 @@ export default function SlotResearchButton({
           anchor={triggerRef.current}
           onPick={handlePick}
           onClose={() => setOpen(false)}
-          onRefresh={() => void fetchSeeds()}
+          onRefresh={() => void fetchSeeds(true)}
         />
       )}
     </>

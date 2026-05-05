@@ -24,6 +24,9 @@ interface GenerateBody {
   variationSeed?: number
   researchAngle?: string
   researchNotes?: string
+  // Executable photo brief from the picked seed. When present, replaces the
+  // generic shot template body in the Gemini prompt's SHOT BRIEF section.
+  researchShotBrief?: string
   // When present, the image generator tries to fetch real-world trend
   // imagery from these URLs and uses them in place of the static inspo
   // refs picked from refManifest.json. Falls back to static refs if all
@@ -34,7 +37,7 @@ interface GenerateBody {
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 5 // bumped for research-driven inspo refs
+const CACHE_VERSION = 6 // bumped for research-driven shotBrief override
 
 export async function generateSingleImageHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -48,6 +51,7 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       variationSeed,
       researchAngle,
       researchNotes,
+      researchShotBrief,
       researchSourceUrls,
       researchSourceImageUrls,
     } = (req.body ?? {}) as GenerateBody
@@ -96,6 +100,7 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       // any prior cached PNG that was rendered without trend context.
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(researchShotBrief ? { researchShotBrief } : {}),
       // Sorted URL set so two callers passing the same trend imagery hit the
       // same cache slot regardless of array order.
       ...(useResearchInspo
@@ -148,6 +153,7 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(researchShotBrief ? { researchShotBrief } : {}),
     })
 
     if (process.env.NODE_ENV !== 'production') {

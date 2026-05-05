@@ -27,13 +27,14 @@ interface GenerateBody {
   variationSeed?: number
   researchAngle?: string
   researchNotes?: string
+  researchShotBrief?: string
   researchSourceUrls?: string[]
   researchSourceImageUrls?: string[]
 }
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 3 // bumped for research-driven inspo refs
+const CACHE_VERSION = 4 // bumped for research-driven shotBrief override
 
 export async function generateCarouselSlideHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -49,6 +50,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       variationSeed,
       researchAngle,
       researchNotes,
+      researchShotBrief,
       researchSourceUrls,
       researchSourceImageUrls,
     } = (req.body ?? {}) as GenerateBody
@@ -123,6 +125,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(researchShotBrief ? { researchShotBrief } : {}),
       ...(useResearchInspo
         ? {
             researchInspoUrls: [
@@ -175,6 +178,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(researchShotBrief ? { researchShotBrief } : {}),
       slideContext: {
         index: slideIndex + 1,
         total: arc.slides.length,

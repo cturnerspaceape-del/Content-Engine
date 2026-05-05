@@ -19,6 +19,12 @@ export interface ResearchedSeed {
   // Direct image URLs (≤3) Claude lifted from search results — used first
   // because no HTML resolution hop is needed.
   sourceImageUrls?: string[]
+  // Executable photo direction — 1-3 short lines covering scene / framing /
+  // lighting / camera / styling. When present, this REPLACES the generic
+  // shot template in the Gemini prompt's SHOT BRIEF section so the trend's
+  // visual treatment dominates the brand's default moodboard. Only seeded
+  // for visual formats (image, carousel, print).
+  shotBrief?: string
 }
 
 export interface ResearchResult {

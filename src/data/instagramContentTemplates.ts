@@ -493,6 +493,9 @@ export function generateContentForPost(item: ContentItem): ContentItem {
 export interface ResearchContext {
   angle?: string
   notes?: string
+  // Executable photo brief from the picked seed. Visual-only — only used by
+  // generate-single-image / generate-carousel-slide; caption gen ignores it.
+  shotBrief?: string
   // Trend URLs picked from the research seed. Server-side, /api/generate-*
   // resolves these to images and uses them as inspo refs.
   sourceUrls?: string[]
@@ -550,6 +553,7 @@ export async function generateContentForPostAsync(
       ...(slideCount !== undefined && { slideCount }),
       ...(research?.angle ? { researchAngle: research.angle } : {}),
       ...(research?.notes ? { researchNotes: research.notes } : {}),
+      ...(research?.shotBrief ? { researchShotBrief: research.shotBrief } : {}),
       ...(research?.sourceUrls?.length ? { researchSourceUrls: research.sourceUrls } : {}),
       ...(research?.sourceImageUrls?.length
         ? { researchSourceImageUrls: research.sourceImageUrls }
@@ -644,6 +648,7 @@ export async function generateCarouselLoungePostAsync(
       carouselSeed,
       ...(research?.angle ? { researchAngle: research.angle } : {}),
       ...(research?.notes ? { researchNotes: research.notes } : {}),
+      ...(research?.shotBrief ? { researchShotBrief: research.shotBrief } : {}),
       ...(research?.sourceUrls?.length ? { researchSourceUrls: research.sourceUrls } : {}),
       ...(research?.sourceImageUrls?.length
         ? { researchSourceImageUrls: research.sourceImageUrls }

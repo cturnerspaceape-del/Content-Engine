@@ -73,6 +73,7 @@ export default function IGSlotPanel({ format, item, slotResearch, onChange, onPo
     ? {
         angle: slotResearch.angle,
         notes: slotResearch.sourceNotes,
+        ...(slotResearch.shotBrief ? { shotBrief: slotResearch.shotBrief } : {}),
         ...(slotResearch.sourceUrls?.length ? { sourceUrls: slotResearch.sourceUrls } : {}),
         ...(slotResearch.sourceImageUrls?.length
           ? { sourceImageUrls: slotResearch.sourceImageUrls }
@@ -192,6 +193,7 @@ export default function IGSlotPanel({ format, item, slotResearch, onChange, onPo
             variationSeed={gv.imageVariationSeed}
             researchAngle={gv.researchAngle}
             researchNotes={gv.researchNotes}
+            researchShotBrief={gv.researchShotBrief}
             researchSourceUrls={gv.researchSourceUrls}
             researchSourceImageUrls={gv.researchSourceImageUrls}
             imageUrl={gv.imageUrl}
@@ -234,6 +236,7 @@ export default function IGSlotPanel({ format, item, slotResearch, onChange, onPo
             carouselSeed={gv.carouselSeed}
             researchAngle={gv.researchAngle}
             researchNotes={gv.researchNotes}
+            researchShotBrief={gv.researchShotBrief}
             researchSourceUrls={gv.researchSourceUrls}
             researchSourceImageUrls={gv.researchSourceImageUrls}
             slideUrls={gv.slideUrls}

@@ -166,6 +166,7 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     const research = {
       angle: activeResearchSeed.angle,
       notes: activeResearchSeed.sourceNotes,
+      ...(activeResearchSeed.shotBrief ? { shotBrief: activeResearchSeed.shotBrief } : {}),
       ...(activeResearchSeed.sourceUrls?.length
         ? { sourceUrls: activeResearchSeed.sourceUrls }
         : {}),

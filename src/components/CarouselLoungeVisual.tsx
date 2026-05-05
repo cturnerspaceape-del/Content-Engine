@@ -18,6 +18,9 @@ interface CarouselLoungeVisualProps {
   // TREND CONTEXT section.
   researchAngle?: string
   researchNotes?: string
+  // Executable photo brief from the picked seed — replaces the generic
+  // shot template in the SHOT BRIEF section of the Gemini prompt.
+  researchShotBrief?: string
   // URLs from the picked seed. Server downloads images from these and
   // uses them as inspo refs in place of the static manifest pool.
   researchSourceUrls?: string[]
@@ -102,6 +105,7 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     variationSeed,
     researchAngle,
     researchNotes,
+    researchShotBrief,
     researchSourceUrls,
     researchSourceImageUrls,
     slideUrls,
@@ -127,11 +131,12 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(researchShotBrief ? { researchShotBrief } : {}),
       ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
       ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [flavor, hook, caption, pillar, subcategory, arcId, carouselSeed, variationSeed, researchAngle, researchNotes, urlsKey, imageUrlsKey],
+    [flavor, hook, caption, pillar, subcategory, arcId, carouselSeed, variationSeed, researchAngle, researchNotes, researchShotBrief, urlsKey, imageUrlsKey],
   )
 
   // Seed local state from persisted results so a refresh/remount re-renders
