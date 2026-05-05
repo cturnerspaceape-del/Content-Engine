@@ -82,6 +82,15 @@ export default function ReelLab({ onBack }: ReelLabProps) {
     () => ({}),
   )
 
+  // Open the lab to a clean slate — drop any prior generated reel and
+  // platform-tuned variants. Selected platforms are kept so users don't
+  // re-pick basics every visit.
+  useEffect(() => {
+    setItem(makeSeed(formatReelSeedTitle(SEED_PREFIX, REEL_ARC_SEEDS[0])))
+    setVariants({})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Migrate older persisted selections that still hold 'Instagram' /
   // 'Facebook' as separate strings — collapse to a single 'IG/FB'.
   useEffect(() => {

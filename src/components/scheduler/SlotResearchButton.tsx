@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { ResearchedSeed } from '../../lib/research/types'
 import {
   loadSlotResearch,
@@ -13,6 +14,10 @@ import {
 //   - idle: no seeds yet → "🔍 Research" pill.
 //   - browsing: 3 cards in a small popover; click one to pick.
 //   - locked-in: chip with picked subcategory + "Change" link.
+//
+// The picker renders through a React portal anchored to the trigger
+// button's bounding rect, so it floats above sibling cards and any
+// stacking context the action row sits inside.
 //
 // Uses /api/research-trends with format=image because image seeds adapt to
 // every format via the existing seed adapters; format here is just a
@@ -36,6 +41,7 @@ export default function SlotResearchButton({ slotKey, onChange }: SlotResearchBu
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     setData(loadSlotResearch(slotKey))
@@ -88,11 +94,13 @@ export default function SlotResearchButton({ slotKey, onChange }: SlotResearchBu
     setOpen(false)
   }
 
-  // Locked-in chip (picked seed)
-  if (picked && !open) {
-    return (
-      <>
+  const showPicker = open && data != null && data.seeds.length > 0
+
+  return (
+    <>
+      {picked ? (
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
@@ -109,39 +117,38 @@ export default function SlotResearchButton({ slotKey, onChange }: SlotResearchBu
             {picked.subcategory}
           </span>
         </button>
-        {open && <Picker data={data} onPick={handlePick} onClose={() => setOpen(false)} onRefresh={() => void fetchSeeds()} loading={loading} error={error} />}
-      </>
-    )
-  }
-
-  // Browsing seeds (have data, none picked OR open=true)
-  if (data && data.seeds.length > 0 && open) {
-    return (
-      <Picker data={data} onPick={handlePick} onClose={() => setOpen(false)} onRefresh={() => void fetchSeeds()} loading={loading} error={error} />
-    )
-  }
-
-  // Idle — no data fetched yet
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => void fetchSeeds()}
-        disabled={loading}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105 disabled:opacity-60"
-        style={{
-          background: 'linear-gradient(135deg, rgba(236,72,153,.14), rgba(139,92,246,.10))',
-          color: '#ec4899',
-          border: '1px solid #ec489955',
-        }}
-        title="Pull a trend signal for this slot"
-      >
-        {loading ? '🔭 …' : '🔍 Research'}
-      </button>
-      {error && (
+      ) : (
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => void fetchSeeds()}
+          disabled={loading}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105 disabled:opacity-60"
+          style={{
+            background: 'linear-gradient(135deg, rgba(236,72,153,.14), rgba(139,92,246,.10))',
+            color: '#ec4899',
+            border: '1px solid #ec489955',
+          }}
+          title="Pull a trend signal for this slot"
+        >
+          {loading ? '🔭 …' : '🔍 Research'}
+        </button>
+      )}
+      {error && !showPicker && (
         <p className="text-[10px]" style={{ color: '#fb923c' }}>
           {error}
         </p>
+      )}
+      {showPicker && (
+        <Picker
+          data={data}
+          loading={loading}
+          error={error}
+          anchor={triggerRef.current}
+          onPick={handlePick}
+          onClose={() => setOpen(false)}
+          onRefresh={() => void fetchSeeds()}
+        />
       )}
     </>
   )
@@ -151,18 +158,56 @@ interface PickerProps {
   data: SlotResearch | null
   loading: boolean
   error: string | null
+  anchor: HTMLButtonElement | null
   onPick: (idx: number) => void
   onClose: () => void
   onRefresh: () => void
 }
 
-function Picker({ data, loading, error, onPick, onClose, onRefresh }: PickerProps) {
-  return (
+function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: PickerProps) {
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
+
+  useLayoutEffect(() => {
+    if (!anchor) return
+    const update = () => {
+      const rect = anchor.getBoundingClientRect()
+      setPos({
+        top: rect.bottom + 6,
+        right: Math.max(12, window.innerWidth - rect.right),
+      })
+    }
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('scroll', update, true)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', update, true)
+    }
+  }, [anchor])
+
+  // Dismiss on click outside the picker (and the trigger).
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (anchor && anchor.contains(target)) return
+      const picker = document.getElementById('slot-research-picker')
+      if (picker && picker.contains(target)) return
+      onClose()
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [anchor, onClose])
+
+  if (!pos) return null
+
+  return createPortal(
     <div
-      className="absolute z-30 rounded-xl shadow-xl"
+      id="slot-research-picker"
+      className="fixed rounded-xl shadow-xl"
       style={{
-        right: 0,
-        top: 'calc(100% + 6px)',
+        zIndex: 50,
+        top: pos.top,
+        right: pos.right,
         width: 320,
         maxWidth: 'calc(100vw - 24px)',
         background: 'var(--panel)',
@@ -250,6 +295,7 @@ function Picker({ data, loading, error, onPick, onClose, onRefresh }: PickerProp
           {error}
         </p>
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }

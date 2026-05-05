@@ -95,6 +95,14 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     setActiveResearchIdx(0)
   }, [campaign.emailType])
 
+  // Open the lab to a clean slate — drop the current draft and any cached
+  // per-audience generations. Email type, audience, viewport, and last
+  // recipient are kept so users don't re-enter basics every visit.
+  useEffect(() => {
+    setCampaign((cur) => ({ ...cur, email: null, cache: {} }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const researchSeeds: ResearchedSeed[] = researchResult
     ? [researchResult.recommendation, ...researchResult.candidates].slice(0, 3)
     : []

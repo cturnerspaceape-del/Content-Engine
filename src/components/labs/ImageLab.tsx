@@ -105,6 +105,16 @@ export default function ImageLab({ onBack }: ImageLabProps) {
       ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
       : null
 
+  // Open the lab to a clean slate — drop any prior generated image,
+  // variants, and research seeds. Selected platforms are kept.
+  useEffect(() => {
+    setItem(makeSeed(PLACEHOLDER_TITLE))
+    setVariants({})
+    setResearchSeeds([])
+    setActiveResearchIdx(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Migrate older persisted selections that still hold legacy platform names.
   useEffect(() => {
     setSelectedPlatforms((prev) => {

@@ -425,19 +425,6 @@ function CadenceCard({
           {!done && (
             <SlotResearchButton slotKey={slotKey} onChange={setSlotResearch} />
           )}
-          {!done && (
-            <button
-              onClick={() => setShowSchedule((v) => !v)}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:scale-105"
-              style={{
-                background: showSchedule ? 'var(--panel-2)' : 'rgba(184,164,255,.15)',
-                color: '#7c5fff',
-                border: '1px solid var(--border)',
-              }}
-            >
-              {scheduled ? 'Edit time' : 'Schedule'}
-            </button>
-          )}
           {supportsInlineGenerate && !done && (
             <button
               onClick={() => setShowGenerator((v) => !v)}
@@ -454,6 +441,19 @@ function CadenceCard({
                 : hasGeneratedContent
                 ? 'Edit content'
                 : '✨ Generate'}
+            </button>
+          )}
+          {!done && (
+            <button
+              onClick={() => setShowSchedule((v) => !v)}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:scale-105"
+              style={{
+                background: showSchedule ? 'var(--panel-2)' : 'rgba(184,164,255,.15)',
+                color: '#7c5fff',
+                border: '1px solid var(--border)',
+              }}
+            >
+              {scheduled ? 'Edit time' : 'Schedule'}
             </button>
           )}
         </div>

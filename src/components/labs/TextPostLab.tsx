@@ -93,6 +93,15 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Open the lab to a clean slate — drop prior tuned variants and any
+  // research seeds. Archetype + selected platforms are kept.
+  useEffect(() => {
+    setVariants({})
+    setResearchSeeds([])
+    setActiveResearchIdx(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Note: previously this lab auto-tuned variants whenever the active
   // research seed changed, which made the preview pop in before the user
   // ever clicked Generate. Removed — the only path that populates variants

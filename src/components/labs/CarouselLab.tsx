@@ -102,6 +102,16 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
       ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
       : null
 
+  // Open the lab to a clean slate — drop any prior generated carousel,
+  // variants, and research seeds. Selected platforms are kept.
+  useEffect(() => {
+    setItem(makeSeed(PLACEHOLDER_TITLE))
+    setVariants({})
+    setResearchSeeds([])
+    setActiveResearchIdx(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     setSelectedPlatforms((prev) => {
       const stale = prev as ReadonlyArray<string>

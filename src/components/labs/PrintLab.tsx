@@ -79,6 +79,16 @@ export default function PrintLab({ onBack }: PrintLabProps) {
       ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
       : null
 
+  // Open the lab to a clean slate — drop any generated artwork and prior
+  // research seeds. The active format selection is kept so users land on
+  // whichever piece they were last working on.
+  useEffect(() => {
+    setCampaign((cur) => ({ ...DEFAULT_CAMPAIGN, activeFormat: cur.activeFormat }))
+    setResearchSeeds([])
+    setActiveResearchIdx(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const setFormat = (next: PrintFormat) => {
     setCampaign((cur) => ({ ...cur, activeFormat: next }))
   }
