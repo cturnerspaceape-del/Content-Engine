@@ -160,12 +160,14 @@ export default function IGSlotPanel({ format, item, slotResearch, platform = 'In
   }
 
   if (!item || !gv) {
+    const canGenerate = slotResearch != null
     return (
       <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
         <button
           onClick={handleGenerate}
-          disabled={busy}
-          className="px-4 py-2 rounded-lg text-sm font-bold transition-all hover:scale-105"
+          disabled={busy || !canGenerate}
+          title={canGenerate ? '' : 'Run Research first and pick an idea'}
+          className="px-4 py-2 rounded-lg text-sm font-bold transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
           style={{
             background: busy ? 'var(--panel-2)' : '#ec4899',
             color: '#fff',
@@ -176,7 +178,9 @@ export default function IGSlotPanel({ format, item, slotResearch, platform = 'In
           {busy ? 'Generating…' : `✨ Generate ${format}`}
         </button>
         <p className="text-[10px] mt-2 italic" style={{ color: 'var(--muted)' }}>
-          Calls the same generator as {format === 'Reel' ? 'Reel Lab' : format === 'Carousel' ? 'Carousel Lab' : 'Image Lab'} — caption + visual ready in seconds.
+          {canGenerate
+            ? `Calls the same generator as ${format === 'Reel' ? 'Reel Lab' : format === 'Carousel' ? 'Carousel Lab' : 'Image Lab'} — caption + visual ready in seconds.`
+            : 'Run Research on this slot first — generation needs a picked trend.'}
         </p>
       </div>
     )

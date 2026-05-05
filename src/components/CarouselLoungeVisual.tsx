@@ -119,24 +119,21 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
   const urlsKey = (researchSourceUrls ?? []).join('|')
   const imageUrlsKey = (researchSourceImageUrls ?? []).join('|')
 
+  // Research-only flow: every slide uses the picked seed's shotBrief as its
+  // prompt. Per-slide variation comes from slideIndex + carouselSeed in the
+  // server's cache key (and from any per-slot variationSeed bumped via
+  // reroll). Old fields (flavor/hook/caption/pillar/arcId) are intentionally
+  // dropped — server only consumes prompt + slide identity + optional URLs.
   const body = useMemo(
     () => ({
-      flavor,
-      hook,
-      caption,
-      pillar,
-      subcategory,
-      arcId,
+      prompt: researchShotBrief ?? '',
       carouselSeed,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
-      ...(researchAngle ? { researchAngle } : {}),
-      ...(researchNotes ? { researchNotes } : {}),
-      ...(researchShotBrief ? { researchShotBrief } : {}),
       ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
       ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [flavor, hook, caption, pillar, subcategory, arcId, carouselSeed, variationSeed, researchAngle, researchNotes, researchShotBrief, urlsKey, imageUrlsKey],
+    [carouselSeed, variationSeed, researchShotBrief, urlsKey, imageUrlsKey],
   )
 
   // Seed local state from persisted results so a refresh/remount re-renders
@@ -185,6 +182,13 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     setRerollingIndices(new Set())
     setCurrent(0)
     const isCancelled = () => cancelledRef.current
+
+    // Research-only flow: nothing fires until a prompt is in hand.
+    if (!body.prompt) {
+      return () => {
+        cancelledRef.current = true
+      }
+    }
 
     for (let i = 0; i < slideCount; i++) {
       const slideIndex = i

@@ -1,134 +1,63 @@
+// Research-driven single-image generation. The user picks one of three
+// research-LLM-produced prompts; this handler sends that prompt verbatim
+// (plus the literal word "photorealistic") to the image model with one
+// random reference picked from the brand pool. No brand bible, no
+// reference key, no shot templates — research output is the sole source
+// of visual direction.
+//
+// Non-research generation is deliberately unsupported: the handler
+// rejects 400 if the `prompt` field is missing or empty.
+
 import type { Request, Response } from 'express'
-import { flavorThemes } from '../src/remotion/flavorThemes'
-import type { SpaceApeFlavor } from '../src/remotion/types'
-import type { ShotTemplate } from '../src/data/shotTemplates'
-import { getShotTemplate, pickShotTemplate } from '../src/data/shotTemplates'
-import { buildPrompt } from './prompt'
-import {
-  pickProductReference,
-  pickInspoRefs,
-  pickBrandRefs,
-  loadProductReference,
-  loadReferenceByManifestKey,
-} from './referenceImages'
 import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './openaiImage'
+import { loadReferenceByManifestKey, pickOneRandomBrandRef } from './referenceImages'
 import { resolveResearchInspo } from './researchInspo'
 
 interface GenerateBody {
-  flavor?: string
-  hook?: string
-  caption?: string
-  pillar?: string
-  subcategory?: string
-  shotTemplateId?: string
-  variationSeed?: number
-  researchAngle?: string
-  researchNotes?: string
-  // Executable photo brief from the picked seed. When present, replaces the
-  // generic shot template body in the Gemini prompt's SHOT BRIEF section.
-  researchShotBrief?: string
-  // When present, the image generator tries to fetch real-world trend
-  // imagery from these URLs and uses them in place of the static inspo
-  // refs picked from refManifest.json. Falls back to static refs if all
-  // URLs fail to resolve to images.
+  // The selected research prompt (was researchShotBrief). The image model
+  // receives this verbatim followed by the literal word "photorealistic".
+  prompt?: string
+  // Optional research-resolved imagery. When provided AND a fetch succeeds,
+  // we use the trend image as the reference instead of the random brand
+  // ref. Lets a passport-booth seed anchor visually to the actual research
+  // hit when one exists.
   researchSourceUrls?: string[]
   researchSourceImageUrls?: string[]
+  variationSeed?: number
 }
 
-const INSPO_REF_COUNT = 2
-const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 8 // bumped: research-brief path drops brand refs and slims brand bible
+const CACHE_VERSION = 9 // bumped for the simplified research-only flow
 
 export async function generateSingleImageHandler(req: Request, res: Response): Promise<void> {
   try {
-    const {
-      flavor,
-      hook,
-      caption,
-      pillar,
-      subcategory,
-      shotTemplateId,
-      variationSeed,
-      researchAngle,
-      researchNotes,
-      researchShotBrief,
-      researchSourceUrls,
-      researchSourceImageUrls,
-    } = (req.body ?? {}) as GenerateBody
-
-    if (!flavor || !hook || !caption || !pillar || !subcategory) {
-      res.status(400).json({ error: 'missing required fields: flavor, hook, caption, pillar, subcategory' })
+    const body = (req.body ?? {}) as GenerateBody
+    const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : ''
+    if (!prompt) {
+      res.status(400).json({
+        error: 'missing required field: prompt (research-driven flow only — non-research generation is unsupported)',
+      })
       return
     }
 
-    const theme = flavorThemes[flavor as SpaceApeFlavor]
-    if (!theme) {
-      res.status(400).json({ error: `unknown flavor: ${flavor}` })
-      return
-    }
+    const { researchSourceUrls, researchSourceImageUrls, variationSeed } = body
 
-    // When the picked research seed supplied a shotBrief, the brief alone is
-    // authoritative — skip the random shot template entirely so it can't leak
-    // into the prompt's GOAL line, the cache key, or reference selection.
-    const hasResearchBrief =
-      typeof researchShotBrief === 'string' && researchShotBrief.trim().length > 0
-    const shotTemplate: ShotTemplate | undefined = hasResearchBrief
-      ? undefined
-      : shotTemplateId
-        ? getShotTemplate(shotTemplateId) ?? pickShotTemplate(pillar, subcategory)
-        : pickShotTemplate(pillar, subcategory)
-
-    const productFile = pickProductReference(flavor)
-    // Research-brief path: skip the static inspo/brand-ref pools entirely.
-    // Those refs anchor the model to past Space Ape work and out-vote the
-    // brief's aesthetic when there's a contradiction (e.g. a "passport-booth
-    // / harsh flash" brief gets washed into editorial-glossy by the brand
-    // refs). We rely on the research-resolved sourceImageUrls instead; if
-    // those fail to fetch, we send no inspo refs at all — better to give the
-    // model a clean slate than the wrong moodboard.
-    const [inspoKeys, brandKeys, researchInspo] = hasResearchBrief
-      ? [
-          [] as string[],
-          [] as string[],
-          await resolveResearchInspo({
-            sourceImageUrls: researchSourceImageUrls,
-            sourceUrls: researchSourceUrls,
-            max: INSPO_REF_COUNT,
-          }),
-        ]
-      : await Promise.all([
-          pickInspoRefs(shotTemplate, INSPO_REF_COUNT),
-          pickBrandRefs(shotTemplate, BRAND_REF_COUNT),
-          resolveResearchInspo({
-            sourceImageUrls: researchSourceImageUrls,
-            sourceUrls: researchSourceUrls,
-            max: INSPO_REF_COUNT,
-          }),
-        ])
+    // Reference resolution: try research source URLs first; if none resolve,
+    // fall back to one random brand ref. Either way we send exactly one
+    // reference image (or zero, if nothing's available).
+    const researchInspo = await resolveResearchInspo({
+      sourceImageUrls: researchSourceImageUrls,
+      sourceUrls: researchSourceUrls,
+      max: 1,
+    })
     const useResearchInspo = researchInspo.length > 0
+    const brandRefKey = useResearchInspo ? null : await pickOneRandomBrandRef()
 
-    // variationSeed in the cache key only when set — keeps the default path cache-friendly.
     const hash = hashKey({
       v: CACHE_VERSION,
       imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
-      flavor,
-      hook,
-      caption,
-      pillar,
-      subcategory,
-      ...(shotTemplate ? { shotTemplate: shotTemplate.id } : {}),
-      productRef: productFile,
-      inspoRefs: useResearchInspo ? [] : [...inspoKeys].sort(),
-      brandRefs: [...brandKeys].sort(),
-      ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
-      // Trend signal participates in the cache key so a new picked seed busts
-      // any prior cached PNG that was rendered without trend context.
-      ...(researchAngle ? { researchAngle } : {}),
-      ...(researchNotes ? { researchNotes } : {}),
-      ...(researchShotBrief ? { researchShotBrief } : {}),
-      // Sorted URL set so two callers passing the same trend imagery hit the
-      // same cache slot regardless of array order.
+      prompt,
+      brandRef: brandRefKey,
       ...(useResearchInspo
         ? {
             researchInspoUrls: [
@@ -137,72 +66,38 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
             ].sort(),
           }
         : {}),
+      ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
     })
     const { absPath, publicUrl } = cachePath(hash)
 
     if (await exists(absPath)) {
-      res.json({
-        url: publicUrl,
-        cached: true,
-        hash,
-        ...(shotTemplate
-          ? { shotTemplateId: shotTemplate.id, shotTemplateName: shotTemplate.name }
-          : {}),
-      })
+      res.json({ url: publicUrl, cached: true, hash })
       return
     }
 
     const references: ReferenceImage[] = []
-    if (productFile) references.push(await loadProductReference(productFile))
-    let inspoRefCount: number
     if (useResearchInspo) {
       references.push(...researchInspo)
-      inspoRefCount = researchInspo.length
-    } else {
-      const loadedInspo = await Promise.all(inspoKeys.map(loadReferenceByManifestKey))
-      const filtered = loadedInspo.filter((r): r is ReferenceImage => r !== null)
-      references.push(...filtered)
-      inspoRefCount = filtered.length
+    } else if (brandRefKey) {
+      const loaded = await loadReferenceByManifestKey(brandRefKey)
+      if (loaded) references.push(loaded)
     }
-    const loadedBrand = await Promise.all(brandKeys.map(loadReferenceByManifestKey))
-    references.push(...loadedBrand.filter((r): r is ReferenceImage => r !== null))
 
-    const prompt = buildPrompt({
-      flavor,
-      hook,
-      caption,
-      pillar,
-      subcategory,
-      theme,
-      ...(shotTemplate ? { shotTemplate } : {}),
-      inspoRefCount,
-      brandRefCount: brandKeys.length,
-      ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
-      ...(researchAngle ? { researchAngle } : {}),
-      ...(researchNotes ? { researchNotes } : {}),
-      ...(researchShotBrief ? { researchShotBrief } : {}),
-      appendSuffix: 'Text filter. Photorealism.',
-    })
+    const fullPrompt = `${prompt}\n\nphotorealistic`
 
     if (process.env.NODE_ENV !== 'production') {
-      const inspoLabel = useResearchInspo ? `research(${inspoRefCount})` : `static(${inspoRefCount})`
-      const shotLabel = shotTemplate ? shotTemplate.id : 'research-brief'
-      console.log(
-        `\n[generate-single-image] inspo source: ${inspoLabel} brand(${brandKeys.length}) — shot=${shotLabel} flavor=${flavor}\n${prompt}\n`,
-      )
+      const refLabel = useResearchInspo
+        ? `research(${references.length})`
+        : brandRefKey
+          ? `brand(${brandRefKey})`
+          : 'none'
+      console.log(`\n[generate-single-image] ref=${refLabel}\n${fullPrompt}\n`)
     }
 
-    const png = await generateImage({ prompt, references })
+    const png = await generateImage({ prompt: fullPrompt, references })
     await writePng(absPath, png)
 
-    res.json({
-      url: publicUrl,
-      cached: false,
-      hash,
-      ...(shotTemplate
-        ? { shotTemplateId: shotTemplate.id, shotTemplateName: shotTemplate.name }
-        : {}),
-    })
+    res.json({ url: publicUrl, cached: false, hash })
   } catch (err) {
     console.error('[generate-single-image]', err)
     const message = err instanceof Error ? err.message : 'generation failed'

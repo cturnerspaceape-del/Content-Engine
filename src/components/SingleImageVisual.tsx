@@ -79,23 +79,19 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
   const urlsKey = (researchSourceUrls ?? []).join('|')
   const imageUrlsKey = (researchSourceImageUrls ?? []).join('|')
 
+  // Research-only flow: the picked seed's shotBrief IS the prompt sent to
+  // the image model. Everything else (flavor, hook, caption, pillar, shot
+  // template ids, etc.) is intentionally absent — server expects only the
+  // research prompt + optional source URLs + variationSeed.
   const body = useMemo(
     () => ({
-      flavor,
-      hook,
-      caption,
-      pillar,
-      subcategory,
-      ...(shotTemplateId ? { shotTemplateId } : {}),
+      prompt: researchShotBrief ?? '',
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
-      ...(researchAngle ? { researchAngle } : {}),
-      ...(researchNotes ? { researchNotes } : {}),
-      ...(researchShotBrief ? { researchShotBrief } : {}),
       ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
       ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [flavor, hook, caption, pillar, subcategory, shotTemplateId, variationSeed, researchAngle, researchNotes, researchShotBrief, urlsKey, imageUrlsKey],
+    [variationSeed, researchShotBrief, urlsKey, imageUrlsKey],
   )
 
   const [localUrl, setLocalUrl] = useState<string | null>(imageUrl ?? null)
@@ -123,6 +119,15 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
     if (imageError) {
       setLocalUrl(null)
       setLocalError(imageError)
+      return () => {
+        cancelledRef.current = true
+      }
+    }
+
+    // Research-only flow: no prompt → no generation. Server would 400 anyway.
+    if (!body.prompt) {
+      setLocalUrl(null)
+      setLocalError(null)
       return () => {
         cancelledRef.current = true
       }

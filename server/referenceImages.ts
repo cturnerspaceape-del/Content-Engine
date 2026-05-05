@@ -120,6 +120,19 @@ export async function pickInspoRefs(
   return pickRefsOfKind('inspo', template?.aestheticTags ?? {}, count)
 }
 
+// Single uniform-random brand ref for the simplified research-driven flow.
+// Returns null when the brand pool is empty (e.g. local dev with no refs
+// synced) — callers should treat that as "no reference image" and proceed
+// with the prompt alone.
+export async function pickOneRandomBrandRef(): Promise<string | null> {
+  const manifest = await loadManifest()
+  const brand = Object.entries(manifest)
+    .filter(([, entry]) => entry.kind === 'brand')
+    .map(([k]) => k)
+  if (brand.length === 0) return null
+  return brand[Math.floor(Math.random() * brand.length)]
+}
+
 export async function pickBrandRefs(
   template: ShotTemplate | undefined,
   count = 2,

@@ -4,7 +4,7 @@ import path from 'node:path'
 
 const GENERATED_ROOT = path.resolve(process.cwd(), 'public', 'generated')
 
-export type CacheKind = 'single-image' | 'carousel-slide' | 'reel' | 'email-image' | 'email-json'
+export type CacheKind = 'single-image' | 'carousel-slide' | 'reel' | 'email-image' | 'email-json' | 'print-image'
 
 const EXT: Record<CacheKind, string> = {
   'single-image': 'png',
@@ -12,6 +12,7 @@ const EXT: Record<CacheKind, string> = {
   reel: 'mp4',
   'email-image': 'png',
   'email-json': 'json',
+  'print-image': 'png',
 }
 
 export function hashKey(input: unknown): string {
