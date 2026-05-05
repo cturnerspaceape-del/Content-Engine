@@ -85,7 +85,9 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
   // Not persisted — opening the lab lands on the idle CTA, not last
   // session's seeds.
   const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
-  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(0)
+  // -1 = nothing picked yet; Generate stays disabled until the user chooses
+  // one of the 3 strategies returned by Research.
+  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(-1)
   const {
     result: researchResult,
     loading: researchLoading,
@@ -94,8 +96,8 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
   } = useResearch('carousel')
 
   const activeResearchSeed: ResearchedSeed | null =
-    researchSeeds.length > 0
-      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
+      ? researchSeeds[activeResearchIdx]
       : null
 
   // Open the lab to a clean slate — drop any prior generated carousel,
@@ -104,7 +106,7 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
     setItem(makeSeed(PLACEHOLDER_TITLE))
     setVariants({})
     setResearchSeeds([])
-    setActiveResearchIdx(0)
+    setActiveResearchIdx(-1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -146,8 +148,9 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
     const seeds = [rec, ...candidates].slice(0, 3)
     setResearchSeeds(seeds)
-    setActiveResearchIdx(0)
-    setItem(makeSeed(formatCarouselSeedTitle(SEED_PREFIX, toCarouselArcSeed(rec))))
+    // Don't auto-select — user picks the strategy they like best.
+    setActiveResearchIdx(-1)
+    setItem(makeSeed(PLACEHOLDER_TITLE))
     setVariants({})
   }
 

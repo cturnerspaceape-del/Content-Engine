@@ -5,7 +5,7 @@ import { RELATED_BRANDS } from '../src/config/relatedBrands'
 import type { ResearchedSeed, ResearchResult, ResearchFormat } from '../src/lib/research/types'
 
 const MODEL = process.env.ANTHROPIC_RESEARCH_MODEL || 'claude-sonnet-4-6'
-const FORMATS: readonly ResearchFormat[] = ['image', 'carousel', 'text', 'email', 'print'] as const
+const FORMATS: readonly ResearchFormat[] = ['image', 'carousel', 'reel', 'text', 'email', 'print'] as const
 const ALLOWED_PILLARS = [
   'Lifestyle',
   'Product Centric',
@@ -15,17 +15,43 @@ const ALLOWED_PILLARS = [
   'Social Proof',
 ] as const
 
-const FORMAT_HINTS: Record<ResearchFormat, string> = {
-  image:
-    'A single Instagram still post. Look for visual moments, drop reveals, mood-board energy, sticker-pop product shots.',
-  carousel:
-    'A multi-slide Instagram carousel arc. Look for storytelling sequences, before/after reveals, day-in-the-life formats, build-up posts.',
-  text:
-    'A short text post for X/Threads — no image. Look for hot takes, drop announcements, group-chat one-liners, hooks, founder voice.',
-  email:
-    'A lifecycle marketing email — subject + sections. Look for newsletter formats, drop announcements, restock alerts, founder notes.',
-  print:
-    'Physical print collateral — poster, brochure, sticker. Look for retail/IRL activations, lookbook drops, sticker-pop visual treatments.',
+// Per-lab playbook the researcher uses to scope ideas to what actually wins
+// on each surface. Each entry is a multi-line directive injected as
+// `FORMAT PLAYBOOK:` in the prompt — Composition / Voice / Structure /
+// Winning patterns. The seeds returned must read like they were written for
+// THAT surface specifically (a carousel idea references slide arcs, a reel
+// idea references hook frames, etc).
+const FORMAT_PLAYBOOKS: Record<ResearchFormat, string> = {
+  image: `A single Instagram still post (1:1 square).
+  Composition: one hero subject, ≤30% breathing room top-right for caption space, sticker-pop or editorial flat-lay anchor.
+  Voice: confident one-liner energy — group-chat dispatch, not a brochure.
+  Structure: one frame does the whole job — hook + payoff in a single image.
+  Winning patterns: drop reveal hero, mood-board flat-lay, sticker-pop product portrait, "future cool" still life.`,
+  carousel: `A multi-slide Instagram carousel arc (5-7 slides).
+  Composition: cohesive palette + lighting across slides so the set reads as one shoot; anchor product hero appears in slide 1 and the payoff slide.
+  Voice: group-chat narrator — short captions per slide, build a beat.
+  Structure: slide 1 = pattern interrupt / hook, slides 2-5 = build (one beat per slide), slide 6 = payoff or reveal, slide 7 = CTA.
+  Winning patterns: before/after reveals, day-in-the-life arcs, drop tease build-up, "5 things" / numbered list, founder annotations on a single shoot.`,
+  reel: `A short vertical Instagram/TikTok reel (9:16, 7-15s).
+  Composition: 9:16 portrait, captions-on by default, hook frame designed to read in 3 seconds with zero context.
+  Voice: dispatch from the future — punchy, present-tense, no setup.
+  Structure: 0-3s = visual hook + on-screen text, 3-10s = beat-cut build (1-2s per cut), final beat = product / drop / CTA payoff.
+  Winning patterns: lookbook intercut, sticker-pop transition, founder hot-take voiceover, behind-the-glass product reveal, "POV" framing.`,
+  text: `A short text post for X / Threads — no image (≤280 chars).
+  Composition: one tweet, one thought. No threads, no thread-bait.
+  Voice: "cool Charlie Sheen" group-chat one-liner — confident, fun, premium without trying.
+  Structure: hook + payoff in a single sentence, or setup + punchline across two short lines.
+  Winning patterns: drop tease, founder hot-take, group-chat-screenshot energy, "if you know you know" reference, deadpan flex.`,
+  email: `A lifecycle marketing email — subject + hero + body sections + CTA.
+  Composition: subject = curiosity-gap one-liner (no emoji walls), hero image at top, 2-3 short body sections, ONE clear CTA.
+  Voice: founder note — first person, conversational, not corporate.
+  Structure: subject line, preview text, hero, opening one-liner, 2-3 short body beats, single CTA button.
+  Winning patterns: drop announcement, restock alert, lookbook send, founder dispatch, member-first early-access tease.`,
+  print: `Physical print collateral — poster, brochure panel, sticker.
+  Composition: high-contrast typographic hierarchy, bleed-aware layout, IRL surface implied (retail wall, sticker pack, lookbook page).
+  Voice: visuals carry — minimal copy, headline + product wordmark only.
+  Structure: hero subject + headline + (optional) supporting line + drop/brand mark.
+  Winning patterns: lookbook spread, sticker pack, retail signage, poster drop, holographic / die-cut effect, "future cool" IRL activation.`,
 }
 
 interface ScopeArgs {
@@ -73,8 +99,10 @@ function buildPrompt(format: ResearchFormat, scope: ScopeArgs): string {
 
   const formatLine =
     format === 'email' && scope.emailType
-      ? `Format being planned: ${format} (specifically a **${scope.emailType}** email — scope your research to what's working for ${scope.emailType} emails specifically; do not return ideas that fit a different email type) — ${FORMAT_HINTS[format]}`
-      : `Format being planned: ${format} — ${FORMAT_HINTS[format]}`
+      ? `Format being planned: ${format} (specifically a **${scope.emailType}** email — scope your research to what's working for ${scope.emailType} emails specifically; do not return ideas that fit a different email type).`
+      : `Format being planned: ${format}.`
+
+  const formatPlaybook = `FORMAT PLAYBOOK — best-practices scope for this surface (every seed you return must read like it was written for THIS surface specifically):\n${FORMAT_PLAYBOOKS[format]}`
 
   const historyBlock = scope.historicalContext
     ? `\n\nPast sends from this brand (style/voice anchor — match the brand's existing flavor, do not repeat the same angle they've already shipped):\n${scope.historicalContext}`
@@ -82,8 +110,10 @@ function buildPrompt(format: ResearchFormat, scope: ScopeArgs): string {
 
   // Visual formats need an executable photo brief so the image model
   // actually executes the trend's visual treatment instead of falling back
-  // to the generic Space Ape moodboard. Text/email don't need it.
-  const isVisualFormat = format === 'image' || format === 'carousel' || format === 'print'
+  // to the generic Space Ape moodboard. Text/email don't need it. Reel
+  // gets one too since its cover frame is generated by the image model.
+  const isVisualFormat =
+    format === 'image' || format === 'carousel' || format === 'print' || format === 'reel'
   const shotBriefLine = isVisualFormat
     ? `,
       "shotBrief": "<1-3 short lines describing the EXACT visual treatment the image model should execute. Be specific and executable — name the scene, framing, lighting, camera/film stock, and any styling notes. Examples: 'passport-booth headshot, harsh overhead flash, neutral-blue backdrop, ID-card cropping' or '90s disposable-cam nightlife snapshot, on-camera flash, motion blur, low-saturation greens'. Do NOT use vague mood words like 'cool' or 'editorial'. This replaces the brand's default shot template, so write it as a directive, not a description.">`
@@ -95,7 +125,9 @@ ${brandList}
 
 Your job: use web_search to find what these brands have actually been doing in the last 14 days — drops, campaigns, copywriting moves, visual treatments, social activations, collabs. Focus on signal that translates into a content idea Space Ape could remix.
 
-${formatLine}${historyBlock}
+${formatLine}
+
+${formatPlaybook}${historyBlock}
 
 Output exactly 3 trend-driven content seeds Space Ape could ship next week, ordered with the strongest first. The first seed is your top recommendation.
 

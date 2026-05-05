@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express'
 import { cachePath, exists, hashKey, writePng } from './cache'
-import { generateImage, type ReferenceImage } from './gemini'
+import { generateImage, type ReferenceImage } from './openaiImage'
 import {
   pickProductReference,
   loadProductReference,
@@ -16,7 +16,7 @@ interface GenerateEmailImageBody {
   variationSeed?: number
 }
 
-const CACHE_VERSION = 1
+const CACHE_VERSION = 2 // bumped for gpt-image-2 backend swap
 const MANIFEST_PATH = path.resolve(process.cwd(), 'server', 'refManifest.json')
 
 interface ManifestEntry {
@@ -125,6 +125,7 @@ export async function generateEmailImageHandler(req: Request, res: Response): Pr
 
     const hash = hashKey({
       v: CACHE_VERSION,
+      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
       slot,
       prompt,
       flavor,

@@ -95,7 +95,10 @@
       "Bash(RAILWAY_API_TOKEN=5158399b-d79a-4eed-8927-7c15f165587c railway whoami *)",
       "Bash(RAILWAY_TOKEN=5158399b-d79a-4eed-8927-7c15f165587c railway whoami *)",
       "Bash(echo \"exit: $?\")",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(kill %1)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(railway --version)"
     ]
   }
 }

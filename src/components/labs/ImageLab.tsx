@@ -5,7 +5,6 @@ import MultiPlatformPreview from '../MultiPlatformPreview'
 import PostConfirmModal from '../PostConfirmModal'
 import type { ContentItem, ContentPillar, PostDestination } from '../../types'
 import { generateContentForPostAsync } from '../../data/instagramContentTemplates'
-import { getShotTemplate } from '../../data/shotTemplates'
 import { usePersistedState } from '../../utils/persistedState'
 import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
 import { formatPillarSeedTitle } from '../../lib/seeds/pillarImage'
@@ -46,13 +45,6 @@ function makeSeed(title: string): ContentItem {
   }
 }
 
-function decorateTitle(item: ContentItem, seedTitle: string): ContentItem {
-  const id = item.generatedVisual?.shotTemplateId
-  const name = id ? getShotTemplate(id)?.name : undefined
-  if (!name) return item
-  return { ...item, title: `${seedTitle}  ·  🎬 ${name}` }
-}
-
 function tunerSourceFromItem(item: ContentItem): TunerSource {
   const gv = item.generatedVisual
   return {
@@ -84,11 +76,12 @@ export default function ImageLab({ onBack }: ImageLabProps) {
 
   // Research is the source of truth — there are no static template seeds.
   // researchSeeds holds the 3 ideas from the most recent /api/research-trends
-  // call; activeResearchIdx tracks which one is currently picked. Not
-  // persisted — opening the lab should always land on the idle CTA, not
-  // last session's seeds.
+  // call; activeResearchIdx tracks which one is currently picked. -1 means
+  // "nothing picked yet" — Generate stays disabled until the user explicitly
+  // chooses one of the 3 strategies. Not persisted — opening the lab should
+  // always land on the idle CTA, not last session's seeds.
   const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
-  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(0)
+  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(-1)
   const {
     result: researchResult,
     loading: researchLoading,
@@ -97,8 +90,8 @@ export default function ImageLab({ onBack }: ImageLabProps) {
   } = useResearch('image')
 
   const activeResearchSeed: ResearchedSeed | null =
-    researchSeeds.length > 0
-      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
+      ? researchSeeds[activeResearchIdx]
       : null
 
   // Open the lab to a clean slate — drop any prior generated image,
@@ -107,7 +100,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     setItem(makeSeed(PLACEHOLDER_TITLE))
     setVariants({})
     setResearchSeeds([])
-    setActiveResearchIdx(0)
+    setActiveResearchIdx(-1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -157,8 +150,9 @@ export default function ImageLab({ onBack }: ImageLabProps) {
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
     const seeds = [rec, ...candidates].slice(0, 3)
     setResearchSeeds(seeds)
-    setActiveResearchIdx(0)
-    setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(rec))))
+    // Don't auto-select — user picks the strategy they like best.
+    setActiveResearchIdx(-1)
+    setItem(makeSeed(PLACEHOLDER_TITLE))
     setVariants({})
   }
 
@@ -183,7 +177,7 @@ export default function ImageLab({ onBack }: ImageLabProps) {
     }
     const generated = await generateContentForPostAsync(item, research)
     const seedTitle = formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(activeResearchSeed))
-    setItem(decorateTitle(generated, seedTitle))
+    setItem({ ...generated, title: seedTitle })
     setVariants({})
   }
 

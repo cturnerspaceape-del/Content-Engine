@@ -62,7 +62,8 @@ export default function PrintLab({ onBack }: PrintLabProps) {
   // Not persisted — opening the lab lands on the idle CTA, not last
   // session's seeds.
   const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
-  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(0)
+  // -1 = nothing picked yet; Generate stays disabled until the user picks.
+  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(-1)
   const {
     result: researchResult,
     loading: researchLoading,
@@ -71,8 +72,8 @@ export default function PrintLab({ onBack }: PrintLabProps) {
   } = useResearch('print')
 
   const activeResearchSeed: ResearchedSeed | null =
-    researchSeeds.length > 0
-      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
+      ? researchSeeds[activeResearchIdx]
       : null
 
   // Open the lab to a clean slate — drop any generated artwork and prior
@@ -81,7 +82,7 @@ export default function PrintLab({ onBack }: PrintLabProps) {
   useEffect(() => {
     setCampaign((cur) => ({ ...DEFAULT_CAMPAIGN, activeFormat: cur.activeFormat }))
     setResearchSeeds([])
-    setActiveResearchIdx(0)
+    setActiveResearchIdx(-1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -103,7 +104,8 @@ export default function PrintLab({ onBack }: PrintLabProps) {
 
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
     setResearchSeeds([rec, ...candidates].slice(0, 3))
-    setActiveResearchIdx(0)
+    // Don't auto-select — user picks the strategy they like best.
+    setActiveResearchIdx(-1)
   }
 
   const handlePickSeed = (idx: number) => {

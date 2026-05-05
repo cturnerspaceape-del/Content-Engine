@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { flavorThemes } from '../src/remotion/flavorThemes'
 import type { SpaceApeFlavor } from '../src/remotion/types'
-import type { ReferenceImage } from './gemini'
+import type { ReferenceImage } from './openaiImage'
 import type {
   ShotTemplate,
   TagFilter,
@@ -110,12 +110,21 @@ async function pickRefsOfKind(
   return sampleWeighted(scored, count)
 }
 
-export async function pickInspoRefs(template: ShotTemplate, count = 2): Promise<string[]> {
-  return pickRefsOfKind('inspo', template.aestheticTags, count)
+// `template` is optional: when omitted (research-brief-driven path), refs are
+// pulled uniformly at random from the manifest pool — the brief is the
+// authority on aesthetics, so template tags would only fight it.
+export async function pickInspoRefs(
+  template: ShotTemplate | undefined,
+  count = 2,
+): Promise<string[]> {
+  return pickRefsOfKind('inspo', template?.aestheticTags ?? {}, count)
 }
 
-export async function pickBrandRefs(template: ShotTemplate, count = 2): Promise<string[]> {
-  return pickRefsOfKind('brand', template.brandTags, count)
+export async function pickBrandRefs(
+  template: ShotTemplate | undefined,
+  count = 2,
+): Promise<string[]> {
+  return pickRefsOfKind('brand', template?.brandTags ?? {}, count)
 }
 
 // ─── Loading ───

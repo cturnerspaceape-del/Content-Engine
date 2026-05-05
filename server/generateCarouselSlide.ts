@@ -12,7 +12,7 @@ import {
   loadReferenceByManifestKey,
 } from './referenceImages'
 import { cachePath, exists, hashKey, writePng } from './cache'
-import { generateImage, type ReferenceImage } from './gemini'
+import { generateImage, type ReferenceImage } from './openaiImage'
 import { resolveResearchInspo } from './researchInspo'
 
 interface GenerateBody {
@@ -34,7 +34,7 @@ interface GenerateBody {
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 4 // bumped for research-driven shotBrief override
+const CACHE_VERSION = 5 // bumped for gpt-image-2 backend swap
 
 export async function generateCarouselSlideHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -109,6 +109,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
 
     const hash = hashKey({
       v: CACHE_VERSION,
+      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
       kind: 'carousel-slide',
       flavor,
       hook,
@@ -186,6 +187,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
         brief: slideSpec.brief,
         carouselSeed,
       },
+      appendSuffix: 'Text filter. Photorealism.',
     })
 
     if (process.env.NODE_ENV !== 'production') {

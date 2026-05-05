@@ -60,7 +60,8 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
   // Not persisted — opening the lab lands on the idle CTA, not last
   // session's seeds.
   const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
-  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(0)
+  // -1 = nothing picked yet; Generate stays disabled until the user picks.
+  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(-1)
   const {
     result: researchResult,
     loading: researchLoading,
@@ -69,8 +70,8 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
   } = useResearch('text')
 
   const activeResearchSeed: ResearchedSeed | null =
-    researchSeeds.length > 0
-      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
+      ? researchSeeds[activeResearchIdx]
       : null
 
   const buildSource = (a: TextArchetype): TunerSource => ({
@@ -94,7 +95,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
   useEffect(() => {
     setVariants({})
     setResearchSeeds([])
-    setActiveResearchIdx(0)
+    setActiveResearchIdx(-1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -107,8 +108,9 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
     const seeds = [rec, ...candidates].slice(0, 3)
     setResearchSeeds(seeds)
-    setActiveResearchIdx(0)
-    setArchetype(toTextArchetype(rec))
+    // Don't auto-select — user picks the strategy they like best. Archetype
+    // is set later by handlePickSeed once they choose.
+    setActiveResearchIdx(-1)
     setVariants({})
   }
 

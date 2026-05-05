@@ -1,4 +1,4 @@
-// Resolves research-supplied URLs into ReferenceImage[] for Gemini.
+// Resolves research-supplied URLs into ReferenceImage[] for the image model.
 // Two URL kinds flow in from /api/research-trends:
 //   - sourceImageUrls: direct image URLs (jpg/png/webp). Tried first since
 //     no HTML hop is needed.
@@ -14,7 +14,7 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { createHash } from 'node:crypto'
-import type { ReferenceImage } from './gemini'
+import type { ReferenceImage } from './openaiImage'
 
 const RESEARCH_INSPO_ROOT = path.resolve(process.cwd(), 'public', 'research-inspo')
 const FETCH_TIMEOUT_MS = 6000

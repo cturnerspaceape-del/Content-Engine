@@ -5,6 +5,9 @@ import MultiPlatformPreview from '../MultiPlatformPreview'
 import PostConfirmModal from '../PostConfirmModal'
 import type { ContentItem, ContentPillar, PostDestination } from '../../types'
 import { generateReelLoungePostAsync } from '../../data/instagramContentTemplates'
+import ResearchPanel from '../ResearchPanel'
+import { useResearch } from '../../lib/research/useResearch'
+import type { ResearchedSeed } from '../../lib/research/types'
 import { getReelArc } from '../../data/reelArcs'
 import { usePersistedState } from '../../utils/persistedState'
 import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
@@ -82,12 +85,31 @@ export default function ReelLab({ onBack }: ReelLabProps) {
     () => ({}),
   )
 
+  // Research seeds for the reel — 3 strategies returned by /api/research-trends.
+  // -1 = nothing picked yet; Generate stays disabled until the user chooses
+  // a strategy. Not persisted — opening the lab lands on the idle CTA.
+  const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
+  const [activeResearchIdx, setActiveResearchIdx] = useState<number>(-1)
+  const {
+    result: researchResult,
+    loading: researchLoading,
+    error: researchError,
+    fetchTrends: fetchResearchTrends,
+  } = useResearch('reel')
+
+  const activeResearchSeed: ResearchedSeed | null =
+    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
+      ? researchSeeds[activeResearchIdx]
+      : null
+
   // Open the lab to a clean slate — drop any prior generated reel and
   // platform-tuned variants. Selected platforms are kept so users don't
   // re-pick basics every visit.
   useEffect(() => {
     setItem(makeSeed(formatReelSeedTitle(SEED_PREFIX, REEL_ARC_SEEDS[0])))
     setVariants({})
+    setResearchSeeds([])
+    setActiveResearchIdx(-1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -126,7 +148,40 @@ export default function ReelLab({ onBack }: ReelLabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.generatedVisual?.caption, selectedPlatforms.join('|')])
 
+  const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
+    setResearchSeeds([rec, ...candidates].slice(0, 3))
+    // Don't auto-select — user picks the strategy they like best.
+    setActiveResearchIdx(-1)
+    setVariants({})
+  }
+
+  const handlePickResearchSeed = (idx: number, seed: ResearchedSeed) => {
+    setActiveResearchIdx(idx)
+    // Encode the picked seed's pillar:subcategory into the item title so
+    // generateReelLoungePostAsync parses them out for fetchCaption.
+    setItem(makeSeed(`${SEED_PREFIX} — ${seed.pillar}: ${seed.subcategory}`))
+    setVariants({})
+  }
+
   const handleGenerate = async () => {
+    if (activeResearchSeed) {
+      const research = {
+        angle: activeResearchSeed.angle,
+        notes: activeResearchSeed.sourceNotes,
+        ...(activeResearchSeed.shotBrief ? { shotBrief: activeResearchSeed.shotBrief } : {}),
+        ...(activeResearchSeed.sourceUrls?.length
+          ? { sourceUrls: activeResearchSeed.sourceUrls }
+          : {}),
+        ...(activeResearchSeed.sourceImageUrls?.length
+          ? { sourceImageUrls: activeResearchSeed.sourceImageUrls }
+          : {}),
+      }
+      // Server picks the arc via pickReelArc(pillar) when arcId is undefined.
+      const generated = await generateReelLoungePostAsync(item, undefined, research)
+      setItem(generated)
+      setVariants({})
+      return
+    }
     const seedIdxAtClick = findReelSeedIdxFromTitle(SEED_PREFIX, item.title)
     const seed = REEL_ARC_SEEDS[seedIdxAtClick]
     const generated = await generateReelLoungePostAsync(item, seed.arcId)
@@ -331,6 +386,19 @@ export default function ReelLab({ onBack }: ReelLabProps) {
           </p>
         </div>
 
+        <ResearchPanel
+          loading={researchLoading}
+          error={researchError}
+          result={researchResult}
+          activeIdx={activeResearchIdx}
+          onPickSeed={handlePickResearchSeed}
+          onResearched={handleResearched}
+          fetchTrends={fetchResearchTrends}
+          idleTitle="What's hot for reels?"
+          idleHint="Pulls fresh signal from Supreme, Scotch and Soda, Chomps, and @starface — then writes you 3 reel angles to ship next."
+          researchLabel="Research reel trends"
+        />
+
         <div className="flex flex-wrap justify-center gap-2 mb-3">
           {REEL_ARC_SEEDS.map((seed, idx) => {
             const active = idx === activeSeedIdx
@@ -395,7 +463,13 @@ export default function ReelLab({ onBack }: ReelLabProps) {
               </button>
               <button
                 onClick={handleGenerate}
-                className="text-sm font-bold px-6 py-3 rounded-xl"
+                disabled={!activeResearchSeed && researchSeeds.length > 0}
+                title={
+                  !activeResearchSeed && researchSeeds.length > 0
+                    ? 'Pick one of the 3 research strategies above'
+                    : ''
+                }
+                className="text-sm font-bold px-6 py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   background: platformColors.Instagram ?? '#a855f7',
                   color: 'white',

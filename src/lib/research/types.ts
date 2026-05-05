@@ -1,6 +1,6 @@
 import type { ContentPillar } from '../../types'
 
-export type ResearchFormat = 'image' | 'carousel' | 'text' | 'email' | 'print'
+export type ResearchFormat = 'image' | 'carousel' | 'reel' | 'text' | 'email' | 'print'
 
 export interface ResearchedSeed {
   pillar: ContentPillar
@@ -21,9 +21,9 @@ export interface ResearchedSeed {
   sourceImageUrls?: string[]
   // Executable photo direction — 1-3 short lines covering scene / framing /
   // lighting / camera / styling. When present, this REPLACES the generic
-  // shot template in the Gemini prompt's SHOT BRIEF section so the trend's
+  // shot template in the image prompt's SHOT BRIEF section so the trend's
   // visual treatment dominates the brand's default moodboard. Only seeded
-  // for visual formats (image, carousel, print).
+  // for visual formats (image, carousel, reel, print).
   shotBrief?: string
 }
 

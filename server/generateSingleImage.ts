@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { flavorThemes } from '../src/remotion/flavorThemes'
 import type { SpaceApeFlavor } from '../src/remotion/types'
+import type { ShotTemplate } from '../src/data/shotTemplates'
 import { getShotTemplate, pickShotTemplate } from '../src/data/shotTemplates'
 import { buildPrompt } from './prompt'
 import {
@@ -11,7 +12,7 @@ import {
   loadReferenceByManifestKey,
 } from './referenceImages'
 import { cachePath, exists, hashKey, writePng } from './cache'
-import { generateImage, type ReferenceImage } from './gemini'
+import { generateImage, type ReferenceImage } from './openaiImage'
 import { resolveResearchInspo } from './researchInspo'
 
 interface GenerateBody {
@@ -37,7 +38,7 @@ interface GenerateBody {
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 6 // bumped for research-driven shotBrief override
+const CACHE_VERSION = 7 // bumped for gpt-image-2 backend swap
 
 export async function generateSingleImageHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -67,9 +68,16 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       return
     }
 
-    const shotTemplate = shotTemplateId
-      ? getShotTemplate(shotTemplateId) ?? pickShotTemplate(pillar, subcategory)
-      : pickShotTemplate(pillar, subcategory)
+    // When the picked research seed supplied a shotBrief, the brief alone is
+    // authoritative — skip the random shot template entirely so it can't leak
+    // into the prompt's GOAL line, the cache key, or reference selection.
+    const hasResearchBrief =
+      typeof researchShotBrief === 'string' && researchShotBrief.trim().length > 0
+    const shotTemplate: ShotTemplate | undefined = hasResearchBrief
+      ? undefined
+      : shotTemplateId
+        ? getShotTemplate(shotTemplateId) ?? pickShotTemplate(pillar, subcategory)
+        : pickShotTemplate(pillar, subcategory)
 
     const productFile = pickProductReference(flavor)
     const [inspoKeys, brandKeys, researchInspo] = await Promise.all([
@@ -86,12 +94,13 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
     // variationSeed in the cache key only when set — keeps the default path cache-friendly.
     const hash = hashKey({
       v: CACHE_VERSION,
+      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
       flavor,
       hook,
       caption,
       pillar,
       subcategory,
-      shotTemplate: shotTemplate.id,
+      ...(shotTemplate ? { shotTemplate: shotTemplate.id } : {}),
       productRef: productFile,
       inspoRefs: useResearchInspo ? [] : [...inspoKeys].sort(),
       brandRefs: [...brandKeys].sort(),
@@ -119,8 +128,9 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
         url: publicUrl,
         cached: true,
         hash,
-        shotTemplateId: shotTemplate.id,
-        shotTemplateName: shotTemplate.name,
+        ...(shotTemplate
+          ? { shotTemplateId: shotTemplate.id, shotTemplateName: shotTemplate.name }
+          : {}),
       })
       return
     }
@@ -147,19 +157,21 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       pillar,
       subcategory,
       theme,
-      shotTemplate,
+      ...(shotTemplate ? { shotTemplate } : {}),
       inspoRefCount,
       brandRefCount: brandKeys.length,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
       ...(researchShotBrief ? { researchShotBrief } : {}),
+      appendSuffix: 'Text filter. Photorealism.',
     })
 
     if (process.env.NODE_ENV !== 'production') {
       const inspoLabel = useResearchInspo ? `research(${inspoRefCount})` : `static(${inspoRefCount})`
+      const shotLabel = shotTemplate ? shotTemplate.id : 'research-brief'
       console.log(
-        `\n[generate-single-image] inspo source: ${inspoLabel} brand(${brandKeys.length}) — shot=${shotTemplate.id} flavor=${flavor}\n${prompt}\n`,
+        `\n[generate-single-image] inspo source: ${inspoLabel} brand(${brandKeys.length}) — shot=${shotLabel} flavor=${flavor}\n${prompt}\n`,
       )
     }
 
@@ -170,8 +182,9 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       url: publicUrl,
       cached: false,
       hash,
-      shotTemplateId: shotTemplate.id,
-      shotTemplateName: shotTemplate.name,
+      ...(shotTemplate
+        ? { shotTemplateId: shotTemplate.id, shotTemplateName: shotTemplate.name }
+        : {}),
     })
   } catch (err) {
     console.error('[generate-single-image]', err)

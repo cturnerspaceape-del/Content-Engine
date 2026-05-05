@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express'
 import { cachePath, exists, hashKey, writePng } from './cache'
-import { generateImage, type ReferenceImage } from './gemini'
+import { generateImage, type ReferenceImage } from './openaiImage'
 import {
   pickProductReference,
   loadProductReference,
@@ -18,7 +18,7 @@ interface GeneratePrintImageBody {
   variationSeed?: number
 }
 
-const CACHE_VERSION = 1
+const CACHE_VERSION = 2 // bumped for gpt-image-2 backend swap
 const MANIFEST_PATH = path.resolve(process.cwd(), 'server', 'refManifest.json')
 
 interface ManifestEntry {
@@ -111,6 +111,7 @@ function buildImagePrompt(pieceType: PieceType, userPrompt: string, flavor: stri
     `USER BRIEF: ${userPrompt}`,
     HARD_CONSTRAINTS,
     cfg.outputLine,
+    'Text filter. Photorealism.',
   ]
     .filter(Boolean)
     .join('\n\n')
@@ -151,6 +152,7 @@ export async function generatePrintImageHandler(req: Request, res: Response): Pr
 
     const hash = hashKey({
       v: CACHE_VERSION,
+      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
       pieceType,
       prompt,
       flavor,

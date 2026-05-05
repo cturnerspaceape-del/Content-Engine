@@ -5,11 +5,14 @@ interface ResearchPanelProps {
   loading: boolean
   error: string | null
   result: ResearchResult | null
-  // Index of the currently-active seed. Recommendation defaults to 0.
+  // Index of the currently-active seed. -1 means "none picked yet" — the
+  // user must explicitly choose a strategy before Generate is enabled.
   activeIdx: number
-  // Fired when the user picks a different idea card.
+  // Fired when the user picks an idea card.
   onPickSeed: (idx: number, seed: ResearchedSeed) => void
   // Fired with the fresh recommendation + candidates after a successful fetch.
+  // Callers should NOT auto-select index 0 — leave activeIdx at -1 so the
+  // user picks the strategy they like best.
   onResearched: (rec: ResearchedSeed, candidates: ResearchedSeed[]) => void
   fetchTrends: (scope?: ResearchScope) => Promise<ResearchResult | null>
   // Scope passed into fetchTrends each click (e.g. EmailLab passes emailType).
@@ -63,14 +66,16 @@ export default function ResearchPanel({
   }
 
   const seeds = seedsFromResult(result)
-  const activeSafe = Math.min(Math.max(0, activeIdx), seeds.length - 1)
+  // -1 (or any out-of-range index) means "nothing picked yet" — every card
+  // renders unselected and the parent's Generate button stays disabled.
+  const activeSafe = activeIdx >= 0 && activeIdx < seeds.length ? activeIdx : -1
 
   return (
     <PanelShell>
       <div className="flex flex-col gap-3 w-full">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] uppercase tracking-[0.18em] font-bold" style={{ color: 'var(--muted)' }}>
-            Trend ideas
+            Pick a strategy
           </p>
           <button
             onClick={() => void handleFetch()}
@@ -81,34 +86,22 @@ export default function ResearchPanel({
           </button>
         </div>
 
-        <RecommendationCard
-          seed={seeds[0]}
-          isActive={activeSafe === 0}
-          isRecommended
-          onClick={() => onPickSeed(0, seeds[0])}
-        />
-
-        {seeds.length > 1 && (
-          <div
-            className="grid gap-2"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              alignItems: 'start',
-            }}
-          >
-            {seeds.slice(1).map((seed, i) => {
-              const idx = i + 1
-              return (
-                <AlternateCard
-                  key={seed.subcategory + idx}
-                  seed={seed}
-                  isActive={activeSafe === idx}
-                  onClick={() => onPickSeed(idx, seed)}
-                />
-              )
-            })}
-          </div>
-        )}
+        <div
+          className="grid gap-2"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            alignItems: 'stretch',
+          }}
+        >
+          {seeds.map((seed, idx) => (
+            <StrategyCard
+              key={seed.subcategory + idx}
+              seed={seed}
+              isActive={activeSafe === idx}
+              onClick={() => onPickSeed(idx, seed)}
+            />
+          ))}
+        </div>
 
         {error && (
           <p className="text-[11px] text-center" style={{ color: '#fb923c' }}>
@@ -128,7 +121,7 @@ function PanelShell({ children }: { children: React.ReactNode }) {
         background: 'var(--panel)',
         border: '1px solid var(--border)',
         padding: 18,
-        maxWidth: 640,
+        maxWidth: 720,
         boxShadow: 'var(--shadow-sm)',
       }}
     >
@@ -200,15 +193,13 @@ function LoadingState() {
   )
 }
 
-function RecommendationCard({
+function StrategyCard({
   seed,
   isActive,
-  isRecommended,
   onClick,
 }: {
   seed: ResearchedSeed
   isActive: boolean
-  isRecommended: boolean
   onClick: () => void
 }) {
   return (
@@ -216,79 +207,17 @@ function RecommendationCard({
       onClick={onClick}
       className="text-left rounded-xl transition-all hover:scale-[1.01]"
       style={{
-        position: 'relative',
-        padding: '16px 18px',
+        padding: '14px 16px',
         background: isActive
           ? 'linear-gradient(135deg, rgba(236,72,153,.14), rgba(139,92,246,.10))'
           : 'var(--panel-2)',
         border: isActive ? '1.5px solid #ec4899' : '1px solid var(--border)',
         boxShadow: isActive ? '0 6px 20px -10px rgba(236,72,153,.5)' : 'none',
         cursor: 'pointer',
-      }}
-    >
-      {isRecommended && (
-        <div
-          className="text-[10px] font-bold uppercase tracking-wider"
-          style={{
-            position: 'absolute',
-            top: 10,
-            right: 12,
-            color: '#ec4899',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          ⭐ Recommended
-        </div>
-      )}
-      <div
-        className="text-[10px] font-bold uppercase tracking-wider mb-1"
-        style={{ color: 'var(--muted)' }}
-      >
-        {seed.pillar}
-      </div>
-      <div className="text-base font-bold mb-1.5" style={{ color: 'var(--text)' }}>
-        {seed.subcategory}
-      </div>
-      <p className="text-xs leading-relaxed mb-2" style={{ color: 'var(--text)', opacity: 0.85 }}>
-        {seed.angle}
-      </p>
-      {seed.sourceBrands.length > 0 && (
-        <p className="text-[10px]" style={{ color: 'var(--muted)' }}>
-          Inspired by{' '}
-          <span style={{ color: 'var(--text)', fontWeight: 600 }}>
-            {seed.sourceBrands.join(', ')}
-          </span>
-        </p>
-      )}
-    </button>
-  )
-}
-
-function AlternateCard({
-  seed,
-  isActive,
-  onClick,
-}: {
-  seed: ResearchedSeed
-  isActive: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="text-left rounded-xl transition-all hover:scale-[1.01]"
-      style={{
-        padding: '12px 14px',
-        background: isActive ? 'rgba(236,72,153,.10)' : 'var(--panel-2)',
-        border: isActive ? '1.5px solid #ec4899' : '1px solid var(--border)',
-        cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
-        gap: 4,
+        gap: 6,
       }}
-      title={seed.angle}
     >
       <div
         className="text-[10px] font-bold uppercase tracking-wider"
@@ -296,15 +225,20 @@ function AlternateCard({
       >
         {seed.pillar}
       </div>
-      <div className="text-xs font-bold" style={{ color: 'var(--text)' }}>
+      <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>
         {seed.subcategory}
       </div>
-      <p
-        className="text-[11px] leading-snug"
-        style={{ color: 'var(--text)', opacity: 0.75 }}
-      >
+      <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text)', opacity: 0.8 }}>
         {seed.angle}
       </p>
+      {seed.sourceBrands.length > 0 && (
+        <p className="text-[10px] mt-auto" style={{ color: 'var(--muted)' }}>
+          Inspired by{' '}
+          <span style={{ color: 'var(--text)', fontWeight: 600 }}>
+            {seed.sourceBrands.join(', ')}
+          </span>
+        </p>
+      )}
     </button>
   )
 }

@@ -17,7 +17,9 @@ export interface BuildPromptInput {
   pillar: string
   subcategory: string
   theme: FlavorTheme
-  shotTemplate: ShotTemplate
+  // Optional: omitted when a research-driven shotBrief is the sole authority
+  // for the visual recipe (single-image research path).
+  shotTemplate?: ShotTemplate
   inspoRefCount: number
   brandRefCount: number
   variationSeed?: number
@@ -32,6 +34,11 @@ export interface BuildPromptInput {
   // visual treatment (e.g. "passport-booth headshot") wins over the generic
   // shot template's scene/lighting/camera defaults.
   researchShotBrief?: string
+  // Literal trailing line appended verbatim as the final non-empty line of
+  // the prompt. Visual labs (Image / Carousel / Print) pass
+  // 'Text filter. Photorealism.' so every visual generation ends with that
+  // directive. Email image gen omits this.
+  appendSuffix?: string
 }
 
 // ─── Fixed sections ───
@@ -94,6 +101,7 @@ export function buildPrompt({
   researchAngle,
   researchNotes,
   researchShotBrief,
+  appendSuffix,
 }: BuildPromptInput): string {
   const strain = theme.strainType || 'Hybrid'
   const mood = extractMoodWords(hook, caption, pillar, subcategory).join(', ')
@@ -102,7 +110,9 @@ export function buildPrompt({
 
   // 1. GOAL (one line)
   sections.push(
-    `GOAL: Generate a 1080x1080 Instagram post for Space Ape executing the shot brief "${shotTemplate.name}".`,
+    shotTemplate
+      ? `GOAL: Generate a 1080x1080 Instagram post for Space Ape executing the shot brief "${shotTemplate.name}".`
+      : `GOAL: Generate a 1080x1080 Instagram post for Space Ape executing the SHOT BRIEF below.`,
   )
 
   // 1b. CAROUSEL CONTEXT (only present for Carousel Lounge slides)
@@ -148,7 +158,7 @@ export function buildPrompt({
     sections.push(
       `SHOT BRIEF (research-driven — execute this exact treatment, override any conflicting defaults):\n  ${trimmedResearchBrief.replace(/\n+/g, '\n  ')}`,
     )
-  } else {
+  } else if (shotTemplate) {
     sections.push(`SHOT BRIEF — "${shotTemplate.name}":\n${buildShotBrief(shotTemplate)}`)
   }
 
@@ -176,9 +186,15 @@ export function buildPrompt({
   sections.push('Output: one 1080x1080 image.')
 
   // Throwaway variation token — only present when caller wants a fresh generation.
-  // Gemini treats this as low-signal context but it nudges sampling to a different path.
+  // Treated as low-signal context but nudges sampling to a different path.
   if (typeof variationSeed === 'number') {
     sections.push(`Variation token: ${variationSeed}`)
+  }
+
+  // Suffix lands as the literal final line of the prompt.
+  const suffix = typeof appendSuffix === 'string' ? appendSuffix.trim() : ''
+  if (suffix.length > 0) {
+    sections.push(suffix)
   }
 
   return sections.join('\n\n')

@@ -524,7 +524,9 @@ export async function generateContentForPostAsync(
 
   const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
 
-  const shotTemplateId = format === 'Single Image'
+  // Single Image with a research brief flies on the brief alone — no random
+  // shot template, since the brief is the authoritative visual recipe.
+  const shotTemplateId = format === 'Single Image' && !research?.shotBrief
     ? pickShotTemplate(pillar, subcategory).id
     : undefined
   const layoutTemplate = format === 'Carousel'
@@ -700,7 +702,11 @@ export function generateReelLoungePost(item: ContentItem, reelArcId?: string): C
   }
 }
 
-export async function generateReelLoungePostAsync(item: ContentItem, reelArcId?: string): Promise<ContentItem> {
+export async function generateReelLoungePostAsync(
+  item: ContentItem,
+  reelArcId?: string,
+  research?: ResearchContext,
+): Promise<ContentItem> {
   const titleParts = item.title.split(' — ')
   const pillarSubcat = titleParts[1] || ''
   const pillar = pillarSubcat.split(':')[0]?.trim() || 'Lifestyle'
@@ -715,6 +721,8 @@ export async function generateReelLoungePostAsync(item: ContentItem, reelArcId?:
     subcategory,
     flavor,
     platform: 'IG',
+    researchAngle: research?.angle,
+    researchNotes: research?.notes,
   })
 
   const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
@@ -734,6 +742,13 @@ export async function generateReelLoungePostAsync(item: ContentItem, reelArcId?:
       reelArcId: arc.id,
       reelSeed,
       durationSeconds: arc.durationSeconds,
+      ...(research?.angle ? { researchAngle: research.angle } : {}),
+      ...(research?.notes ? { researchNotes: research.notes } : {}),
+      ...(research?.shotBrief ? { researchShotBrief: research.shotBrief } : {}),
+      ...(research?.sourceUrls?.length ? { researchSourceUrls: research.sourceUrls } : {}),
+      ...(research?.sourceImageUrls?.length
+        ? { researchSourceImageUrls: research.sourceImageUrls }
+        : {}),
     },
   }
 }

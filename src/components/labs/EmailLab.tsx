@@ -76,10 +76,11 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     null,
   )
 
-  // Active research seed index — reset to 0 whenever the user changes
-  // emailType (since research is scoped to the type and switching slots in
-  // a different cached set).
-  const [activeResearchIdx, setActiveResearchIdx] = useState(0)
+  // Active research seed index. -1 = nothing picked yet — Generate stays
+  // disabled until the user explicitly chooses one of the 3 strategies.
+  // Resets to -1 whenever the user changes emailType (research is scoped
+  // to the type, so switching slots into a different cached set).
+  const [activeResearchIdx, setActiveResearchIdx] = useState(-1)
 
   const historicalContext = useMemo(() => buildHistoricalContext(campaign), [campaign])
 
@@ -92,7 +93,7 @@ export default function EmailLab({ onBack }: EmailLabProps) {
 
   // Reset active idx when the type-scoped result switches under us.
   useEffect(() => {
-    setActiveResearchIdx(0)
+    setActiveResearchIdx(-1)
   }, [campaign.emailType])
 
   // Open the lab to a clean slate — drop the current draft and any cached
@@ -107,8 +108,8 @@ export default function EmailLab({ onBack }: EmailLabProps) {
     ? [researchResult.recommendation, ...researchResult.candidates].slice(0, 3)
     : []
   const activeResearchSeed: ResearchedSeed | null =
-    researchSeeds.length > 0
-      ? researchSeeds[Math.min(activeResearchIdx, researchSeeds.length - 1)]
+    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
+      ? researchSeeds[activeResearchIdx]
       : null
 
   const html = useMemo(() => (campaign.email ? composeHtml(campaign.email) : ''), [campaign.email])
@@ -124,7 +125,7 @@ export default function EmailLab({ onBack }: EmailLabProps) {
       email: null,
       cache: {},
     }))
-    setActiveResearchIdx(0)
+    setActiveResearchIdx(-1)
   }
 
   const runGenerate = async (audience: AudienceType, emailType: EmailType, force: boolean) => {
@@ -180,9 +181,9 @@ export default function EmailLab({ onBack }: EmailLabProps) {
   }
 
   const handleResearched = () => {
-    // Reset active idx so the recommendation is highlighted; the seeds are
-    // sourced from researchResult, so no local copy needed.
-    setActiveResearchIdx(0)
+    // Don't auto-select — user picks the strategy they like best. Seeds
+    // are sourced from researchResult, so no local copy is needed.
+    setActiveResearchIdx(-1)
   }
 
   const handlePickSeed = (idx: number) => {
@@ -499,7 +500,8 @@ export default function EmailLab({ onBack }: EmailLabProps) {
           <div className="flex flex-wrap justify-center gap-2 items-start">
             <button
               onClick={handleGenerate}
-              disabled={busy || sendBusy}
+              disabled={busy || sendBusy || !activeResearchSeed}
+              title={!activeResearchSeed ? 'Run Research first and pick a strategy' : ''}
               className="text-sm font-bold px-6 py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: 'linear-gradient(135deg, #f59e0b, #d97706)',
