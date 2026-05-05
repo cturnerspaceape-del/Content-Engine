@@ -100,6 +100,11 @@ export interface ContentItem {
     // generic Space Ape mood pool.
     researchAngle?: string
     researchNotes?: string
+    // URLs from the picked research seed. The server resolves these to
+    // actual trend imagery and feeds it to Gemini as inspo refs in place
+    // of the static manifest pool.
+    researchSourceUrls?: string[]
+    researchSourceImageUrls?: string[]
   }
 }
 

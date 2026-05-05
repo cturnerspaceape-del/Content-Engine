@@ -153,7 +153,16 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
 
   const handleGenerate = async () => {
     if (!activeResearchSeed) return
-    const research = { angle: activeResearchSeed.angle, notes: activeResearchSeed.sourceNotes }
+    const research = {
+      angle: activeResearchSeed.angle,
+      notes: activeResearchSeed.sourceNotes,
+      ...(activeResearchSeed.sourceUrls?.length
+        ? { sourceUrls: activeResearchSeed.sourceUrls }
+        : {}),
+      ...(activeResearchSeed.sourceImageUrls?.length
+        ? { sourceImageUrls: activeResearchSeed.sourceImageUrls }
+        : {}),
+    }
     const seed = toCarouselArcSeed(activeResearchSeed)
     const generated = await generateCarouselLoungePostAsync(item, seed.arcId, research)
     setItem(decorateTitle(generated, formatCarouselSeedTitle(SEED_PREFIX, seed)))

@@ -493,6 +493,10 @@ export function generateContentForPost(item: ContentItem): ContentItem {
 export interface ResearchContext {
   angle?: string
   notes?: string
+  // Trend URLs picked from the research seed. Server-side, /api/generate-*
+  // resolves these to images and uses them as inspo refs.
+  sourceUrls?: string[]
+  sourceImageUrls?: string[]
 }
 
 export async function generateContentForPostAsync(
@@ -546,6 +550,10 @@ export async function generateContentForPostAsync(
       ...(slideCount !== undefined && { slideCount }),
       ...(research?.angle ? { researchAngle: research.angle } : {}),
       ...(research?.notes ? { researchNotes: research.notes } : {}),
+      ...(research?.sourceUrls?.length ? { researchSourceUrls: research.sourceUrls } : {}),
+      ...(research?.sourceImageUrls?.length
+        ? { researchSourceImageUrls: research.sourceImageUrls }
+        : {}),
     },
   }
 }
@@ -636,6 +644,10 @@ export async function generateCarouselLoungePostAsync(
       carouselSeed,
       ...(research?.angle ? { researchAngle: research.angle } : {}),
       ...(research?.notes ? { researchNotes: research.notes } : {}),
+      ...(research?.sourceUrls?.length ? { researchSourceUrls: research.sourceUrls } : {}),
+      ...(research?.sourceImageUrls?.length
+        ? { researchSourceImageUrls: research.sourceImageUrls }
+        : {}),
     },
   }
 }

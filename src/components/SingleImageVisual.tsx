@@ -20,6 +20,10 @@ interface SingleImageVisualProps {
   // TREND CONTEXT section.
   researchAngle?: string
   researchNotes?: string
+  // URLs from the picked seed. Server downloads images from these and
+  // uses them as inspo refs in place of the static manifest pool.
+  researchSourceUrls?: string[]
+  researchSourceImageUrls?: string[]
   // Persisted generation result. If either is defined, the mount-fetch is
   // skipped — that's the core cost-safety invariant: only a click can fire a
   // new /api call (a click clears these via onResult(null, null)).
@@ -58,10 +62,18 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
     variationSeed,
     researchAngle,
     researchNotes,
+    researchSourceUrls,
+    researchSourceImageUrls,
     imageUrl,
     imageError,
     onResult,
   } = props
+
+  // Stable join keys for URL arrays — referential identity may change on
+  // every render even when the values match, so we hash to strings for
+  // useMemo deps.
+  const urlsKey = (researchSourceUrls ?? []).join('|')
+  const imageUrlsKey = (researchSourceImageUrls ?? []).join('|')
 
   const body = useMemo(
     () => ({
@@ -74,8 +86,11 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
+      ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
-    [flavor, hook, caption, pillar, subcategory, shotTemplateId, variationSeed, researchAngle, researchNotes],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [flavor, hook, caption, pillar, subcategory, shotTemplateId, variationSeed, researchAngle, researchNotes, urlsKey, imageUrlsKey],
   )
 
   const [localUrl, setLocalUrl] = useState<string | null>(imageUrl ?? null)

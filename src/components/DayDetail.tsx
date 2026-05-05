@@ -12,8 +12,8 @@ import IGSlotPanel from './scheduler/IGSlotPanel'
 import TextPostSlotPanel from './scheduler/TextPostSlotPanel'
 import EmailSlotPanel from './scheduler/EmailSlotPanel'
 import PrintSlotPanel from './scheduler/PrintSlotPanel'
-import DayResearchButton from './scheduler/DayResearchButton'
-import { loadDayResearch, pickedSeed } from '../lib/research/dayResearch'
+import SlotResearchButton from './scheduler/SlotResearchButton'
+import { loadSlotResearch, pickedSeed, slotKey as buildSlotKey } from '../lib/research/slotResearch'
 import type { ResearchedSeed } from '../lib/research/types'
 import { cadenceForDate } from '../data/printCadence'
 
@@ -99,16 +99,6 @@ export default function DayDetail({
   const totalDone = dayLogged.length
   const totalScheduled = dayScheduled.length
 
-  // Day-level research seed. Picked on the Scheduler week-view (or here in
-  // the header) and routed into every slot panel's Generate button so all
-  // platforms anchor to the same trend signal for this day.
-  const [dayResearch, setDayResearch] = useState<ResearchedSeed | null>(
-    () => pickedSeed(loadDayResearch(dateKey)),
-  )
-  useEffect(() => {
-    setDayResearch(pickedSeed(loadDayResearch(dateKey)))
-  }, [dateKey])
-
   const longDate = date.toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
   })
@@ -169,27 +159,10 @@ export default function DayDetail({
 
           <div style={{ width: 80 }} />
         </div>
-        {/* Day-level research strip — sets the trend angle every slot's
-            Generate button will anchor to. */}
-        <div className="px-4 pb-3 max-w-[1200px] mx-auto flex items-center justify-center">
-          <DayResearchButton dateKey={dateKey} onChange={setDayResearch} />
-        </div>
       </div>
 
       {/* Body */}
       <div className="px-4 py-5 max-w-[1200px] mx-auto flex flex-col gap-3">
-        {!dayResearch && (
-          <div
-            className="text-[11px] italic text-center px-3 py-2 rounded-lg"
-            style={{
-              color: 'var(--muted)',
-              background: 'var(--panel-2)',
-              border: '1px dashed var(--border)',
-            }}
-          >
-            🔍 No trend signal locked in for this day yet — click Research up top to anchor every slot to a fresh trend.
-          </div>
-        )}
         {cadence.map((entry, i) => {
           const slotIndex = cadence.slice(0, i).filter((e) => e.platform === entry.platform).length
           const platformLogged = loggedByPlatform.get(entry.platform) ?? []
@@ -208,7 +181,6 @@ export default function DayDetail({
               dateKey={dateKey}
               done={isDone}
               scheduled={matchedScheduled}
-              dayResearch={dayResearch}
               onSchedule={onSchedule}
               onUpdateSchedule={onUpdateSchedule}
               onUnschedule={onUnschedule}
@@ -246,7 +218,6 @@ interface CadenceCardProps {
   dateKey: string
   done: boolean
   scheduled?: ScheduledPost
-  dayResearch: ResearchedSeed | null
   onSchedule: (post: ScheduledPost) => void
   onUpdateSchedule: (post: ScheduledPost) => void
   onUnschedule: (id: string) => void
@@ -254,8 +225,18 @@ interface CadenceCardProps {
 }
 
 function CadenceCard({
-  entry, slotIndex, dateKey, done, scheduled, dayResearch, onSchedule, onUpdateSchedule, onUnschedule, onOpenPrintLab,
+  entry, slotIndex, dateKey, done, scheduled, onSchedule, onUpdateSchedule, onUnschedule, onOpenPrintLab,
 }: CadenceCardProps) {
+  const slotKey = useMemo(
+    () => buildSlotKey({ dateKey, platform: entry.platform, format: entry.format, slotIndex }),
+    [dateKey, entry.platform, entry.format, slotIndex],
+  )
+  const [slotResearch, setSlotResearch] = useState<ResearchedSeed | null>(
+    () => pickedSeed(loadSlotResearch(slotKey)),
+  )
+  useEffect(() => {
+    setSlotResearch(pickedSeed(loadSlotResearch(slotKey)))
+  }, [slotKey])
   const recs = TIME_RECOMMENDATIONS[entry.platform] ?? []
   const recommendedTime = recs[slotIndex] ?? recs[0]
   const defaultTime = recommendedTime ?? '10:00'
@@ -420,7 +401,7 @@ function CadenceCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap ml-auto">
+        <div className="flex items-center gap-2 flex-wrap ml-auto" style={{ position: 'relative' }}>
           {scheduled && !done && (
             <div
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold"
@@ -440,6 +421,9 @@ function CadenceCard({
                 ×
               </button>
             </div>
+          )}
+          {!done && (
+            <SlotResearchButton slotKey={slotKey} onChange={setSlotResearch} />
           )}
           {!done && (
             <button
@@ -551,7 +535,7 @@ function CadenceCard({
             <IGSlotPanel
               format={igFormat}
               item={scheduled?.item}
-              dayResearch={dayResearch}
+              slotResearch={slotResearch}
               onChange={handleItemChange}
             />
           )
@@ -561,7 +545,7 @@ function CadenceCard({
             <EmailSlotPanel
               scheduled={scheduled}
               ensureSchedule={ensureSchedule}
-              dayResearch={dayResearch}
+              slotResearch={slotResearch}
               onChange={onUpdateSchedule}
             />
           )
@@ -576,7 +560,7 @@ function CadenceCard({
               platform={entry.platform}
               scheduled={scheduled}
               ensureSchedule={ensureSchedule}
-              dayResearch={dayResearch}
+              slotResearch={slotResearch}
               onChange={onUpdateSchedule}
             />
           )

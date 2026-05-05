@@ -12,6 +12,13 @@ export interface ResearchedSeed {
   // Raw observation Claude pulled from web_search. Kept verbatim so users can
   // see *why* this angle was recommended.
   sourceNotes: string
+  // Page URLs (≤3) Claude saw in its web_search results. Server resolves
+  // these to og:image at generation time so the image model gets actual
+  // trend imagery instead of the default local moodboard.
+  sourceUrls?: string[]
+  // Direct image URLs (≤3) Claude lifted from search results — used first
+  // because no HTML resolution hop is needed.
+  sourceImageUrls?: string[]
 }
 
 export interface ResearchResult {

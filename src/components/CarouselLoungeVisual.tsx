@@ -18,6 +18,10 @@ interface CarouselLoungeVisualProps {
   // TREND CONTEXT section.
   researchAngle?: string
   researchNotes?: string
+  // URLs from the picked seed. Server downloads images from these and
+  // uses them as inspo refs in place of the static manifest pool.
+  researchSourceUrls?: string[]
+  researchSourceImageUrls?: string[]
   // Persisted per-slide results. A slot that has either a URL or an error set
   // will NOT be auto-fetched on mount — the guard is the whole cost-safety story.
   slideUrls?: (string | null)[]
@@ -98,6 +102,8 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     variationSeed,
     researchAngle,
     researchNotes,
+    researchSourceUrls,
+    researchSourceImageUrls,
     slideUrls,
     slideErrors,
     slideVariationSeeds,
@@ -105,6 +111,9 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
   } = props
   const theme = getFlavorTheme(flavor)
   const arc = getCarouselArc(arcId)
+
+  const urlsKey = (researchSourceUrls ?? []).join('|')
+  const imageUrlsKey = (researchSourceImageUrls ?? []).join('|')
 
   const body = useMemo(
     () => ({
@@ -118,8 +127,11 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
+      ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
-    [flavor, hook, caption, pillar, subcategory, arcId, carouselSeed, variationSeed, researchAngle, researchNotes],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [flavor, hook, caption, pillar, subcategory, arcId, carouselSeed, variationSeed, researchAngle, researchNotes, urlsKey, imageUrlsKey],
   )
 
   // Seed local state from persisted results so a refresh/remount re-renders

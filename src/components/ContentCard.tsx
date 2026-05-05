@@ -466,6 +466,12 @@ export default function ContentCard({
                   : {})}
                 {...(item.generatedVisual.researchAngle ? { researchAngle: item.generatedVisual.researchAngle } : {})}
                 {...(item.generatedVisual.researchNotes ? { researchNotes: item.generatedVisual.researchNotes } : {})}
+                {...(item.generatedVisual.researchSourceUrls?.length
+                  ? { researchSourceUrls: item.generatedVisual.researchSourceUrls }
+                  : {})}
+                {...(item.generatedVisual.researchSourceImageUrls?.length
+                  ? { researchSourceImageUrls: item.generatedVisual.researchSourceImageUrls }
+                  : {})}
                 {...(item.generatedVisual.imageUrl ? { imageUrl: item.generatedVisual.imageUrl } : {})}
                 {...(item.generatedVisual.imageError ? { imageError: item.generatedVisual.imageError } : {})}
                 onResult={(url, error) => {
@@ -490,6 +496,12 @@ export default function ContentCard({
                   carouselSeed={item.generatedVisual.carouselSeed ?? 0}
                   {...(item.generatedVisual.researchAngle ? { researchAngle: item.generatedVisual.researchAngle } : {})}
                   {...(item.generatedVisual.researchNotes ? { researchNotes: item.generatedVisual.researchNotes } : {})}
+                  {...(item.generatedVisual.researchSourceUrls?.length
+                    ? { researchSourceUrls: item.generatedVisual.researchSourceUrls }
+                    : {})}
+                  {...(item.generatedVisual.researchSourceImageUrls?.length
+                    ? { researchSourceImageUrls: item.generatedVisual.researchSourceImageUrls }
+                    : {})}
                   {...(item.generatedVisual.slideUrls ? { slideUrls: item.generatedVisual.slideUrls } : {})}
                   {...(item.generatedVisual.slideErrors ? { slideErrors: item.generatedVisual.slideErrors } : {})}
                   {...(item.generatedVisual.slideVariationSeeds

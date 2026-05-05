@@ -97,7 +97,9 @@ Return ONLY a JSON object with this exact shape (no markdown fences, no commenta
       "subcategory": "<short noun phrase>",
       "angle": "<1-2 sentences telling Space Ape's caption writer how to frame the post>",
       "sourceBrands": ["<which admired brand inspired this — pick from the list above, can be multiple>"],
-      "sourceNotes": "<short observation from web_search: what the brand actually did, with a date or campaign name where possible>"
+      "sourceNotes": "<short observation from web_search: what the brand actually did, with a date or campaign name where possible>",
+      "sourceUrls": ["<page URLs from your web_search results that show this trend in action — up to 3, only include URLs you actually retrieved; omit the field if none>"],
+      "sourceImageUrls": ["<direct image URLs (jpg/png/webp) from your web_search results — up to 3, only include if you actually saw them in results; omit if none. These will be downloaded as visual references for image generation, so prefer hero/lookbook/campaign shots over thumbnails>"]
     }
   ]
 }`
@@ -109,6 +111,27 @@ interface RawSeed {
   angle?: unknown
   sourceBrands?: unknown
   sourceNotes?: unknown
+  sourceUrls?: unknown
+  sourceImageUrls?: unknown
+}
+
+const MAX_URLS_PER_SEED = 3
+
+function normalizeUrlList(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const entry of raw) {
+    if (typeof entry !== 'string') continue
+    const trimmed = entry.trim()
+    if (!trimmed) continue
+    if (!/^https?:\/\//i.test(trimmed)) continue
+    if (seen.has(trimmed)) continue
+    seen.add(trimmed)
+    out.push(trimmed)
+    if (out.length >= MAX_URLS_PER_SEED) break
+  }
+  return out
 }
 
 function extractJson(raw: string): unknown {
@@ -135,7 +158,17 @@ function normalizeSeed(raw: RawSeed): ResearchedSeed | null {
     .map((b) => b.trim())
 
   if (!pillar || !subcategory || !angle) return null
-  return { pillar, subcategory, angle, sourceBrands, sourceNotes }
+  const sourceUrls = normalizeUrlList(raw.sourceUrls)
+  const sourceImageUrls = normalizeUrlList(raw.sourceImageUrls)
+  return {
+    pillar,
+    subcategory,
+    angle,
+    sourceBrands,
+    sourceNotes,
+    ...(sourceUrls.length > 0 ? { sourceUrls } : {}),
+    ...(sourceImageUrls.length > 0 ? { sourceImageUrls } : {}),
+  }
 }
 
 async function callAnthropic(format: ResearchFormat, scope: ScopeArgs): Promise<ResearchResult> {

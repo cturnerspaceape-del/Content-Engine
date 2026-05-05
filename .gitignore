@@ -24,6 +24,9 @@ server/.publish-errors.jsonl
 # AI-generated assets (derived, not source)
 public/generated/
 
+# Trend imagery downloaded by /api/research-trends → resolveResearchInspo
+public/research-inspo/
+
 # Reference image payloads (heavy, user-curated)
 public/references/inspo/*
 public/references/brand/*

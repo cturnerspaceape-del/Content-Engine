@@ -7,7 +7,6 @@ import {
   type CadenceEntry,
 } from '../data/postingCadence'
 import { cadenceForDate, totalDemandForDate } from '../data/printCadence'
-import DayResearchButton from './scheduler/DayResearchButton'
 
 const DAY_ORDER: DayOfWeek[] = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
@@ -356,9 +355,6 @@ function WeekView({ weekDates, today, postsByDate, scheduledByDate, onOpenDay }:
             aria-label={`Open ${d.toLocaleDateString()}`}
           >
             <DayHeader date={d} isToday={isToday} />
-            <div className="mt-2">
-              <DayResearchButton dateKey={isoDate(d)} compact />
-            </div>
             <div className="flex flex-row flex-wrap md:flex-col gap-1.5 mt-2">
               {cadence.map((entry, i) => (
                 <DemandPill

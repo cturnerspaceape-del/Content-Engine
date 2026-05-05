@@ -164,7 +164,16 @@ export default function ImageLab({ onBack }: ImageLabProps) {
 
   const handleGenerate = async () => {
     if (!activeResearchSeed) return
-    const research = { angle: activeResearchSeed.angle, notes: activeResearchSeed.sourceNotes }
+    const research = {
+      angle: activeResearchSeed.angle,
+      notes: activeResearchSeed.sourceNotes,
+      ...(activeResearchSeed.sourceUrls?.length
+        ? { sourceUrls: activeResearchSeed.sourceUrls }
+        : {}),
+      ...(activeResearchSeed.sourceImageUrls?.length
+        ? { sourceImageUrls: activeResearchSeed.sourceImageUrls }
+        : {}),
+    }
     const generated = await generateContentForPostAsync(item, research)
     const seedTitle = formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(activeResearchSeed))
     setItem(decorateTitle(generated, seedTitle))

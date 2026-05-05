@@ -12,6 +12,7 @@ import {
 } from './referenceImages'
 import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './gemini'
+import { resolveResearchInspo } from './researchInspo'
 
 interface GenerateBody {
   flavor?: string
@@ -23,11 +24,17 @@ interface GenerateBody {
   variationSeed?: number
   researchAngle?: string
   researchNotes?: string
+  // When present, the image generator tries to fetch real-world trend
+  // imagery from these URLs and uses them in place of the static inspo
+  // refs picked from refManifest.json. Falls back to static refs if all
+  // URLs fail to resolve to images.
+  researchSourceUrls?: string[]
+  researchSourceImageUrls?: string[]
 }
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 4 // bumped for TREND CONTEXT section (research-aware prompts)
+const CACHE_VERSION = 5 // bumped for research-driven inspo refs
 
 export async function generateSingleImageHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -41,6 +48,8 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       variationSeed,
       researchAngle,
       researchNotes,
+      researchSourceUrls,
+      researchSourceImageUrls,
     } = (req.body ?? {}) as GenerateBody
 
     if (!flavor || !hook || !caption || !pillar || !subcategory) {
@@ -59,10 +68,16 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       : pickShotTemplate(pillar, subcategory)
 
     const productFile = pickProductReference(flavor)
-    const [inspoKeys, brandKeys] = await Promise.all([
+    const [inspoKeys, brandKeys, researchInspo] = await Promise.all([
       pickInspoRefs(shotTemplate, INSPO_REF_COUNT),
       pickBrandRefs(shotTemplate, BRAND_REF_COUNT),
+      resolveResearchInspo({
+        sourceImageUrls: researchSourceImageUrls,
+        sourceUrls: researchSourceUrls,
+        max: INSPO_REF_COUNT,
+      }),
     ])
+    const useResearchInspo = researchInspo.length > 0
 
     // variationSeed in the cache key only when set — keeps the default path cache-friendly.
     const hash = hashKey({
@@ -74,13 +89,23 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       subcategory,
       shotTemplate: shotTemplate.id,
       productRef: productFile,
-      inspoRefs: [...inspoKeys].sort(),
+      inspoRefs: useResearchInspo ? [] : [...inspoKeys].sort(),
       brandRefs: [...brandKeys].sort(),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       // Trend signal participates in the cache key so a new picked seed busts
       // any prior cached PNG that was rendered without trend context.
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      // Sorted URL set so two callers passing the same trend imagery hit the
+      // same cache slot regardless of array order.
+      ...(useResearchInspo
+        ? {
+            researchInspoUrls: [
+              ...(researchSourceImageUrls ?? []),
+              ...(researchSourceUrls ?? []),
+            ].sort(),
+          }
+        : {}),
     })
     const { absPath, publicUrl } = cachePath(hash)
 
@@ -97,8 +122,16 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
 
     const references: ReferenceImage[] = []
     if (productFile) references.push(await loadProductReference(productFile))
-    const loadedInspo = await Promise.all(inspoKeys.map(loadReferenceByManifestKey))
-    references.push(...loadedInspo.filter((r): r is ReferenceImage => r !== null))
+    let inspoRefCount: number
+    if (useResearchInspo) {
+      references.push(...researchInspo)
+      inspoRefCount = researchInspo.length
+    } else {
+      const loadedInspo = await Promise.all(inspoKeys.map(loadReferenceByManifestKey))
+      const filtered = loadedInspo.filter((r): r is ReferenceImage => r !== null)
+      references.push(...filtered)
+      inspoRefCount = filtered.length
+    }
     const loadedBrand = await Promise.all(brandKeys.map(loadReferenceByManifestKey))
     references.push(...loadedBrand.filter((r): r is ReferenceImage => r !== null))
 
@@ -110,7 +143,7 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       subcategory,
       theme,
       shotTemplate,
-      inspoRefCount: inspoKeys.length,
+      inspoRefCount,
       brandRefCount: brandKeys.length,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
@@ -118,7 +151,10 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
     })
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`\n[generate-single-image] prompt for ${shotTemplate.id} (${flavor}):\n${prompt}\n`)
+      const inspoLabel = useResearchInspo ? `research(${inspoRefCount})` : `static(${inspoRefCount})`
+      console.log(
+        `\n[generate-single-image] inspo source: ${inspoLabel} brand(${brandKeys.length}) — shot=${shotTemplate.id} flavor=${flavor}\n${prompt}\n`,
+      )
     }
 
     const png = await generateImage({ prompt, references })

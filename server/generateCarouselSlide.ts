@@ -13,6 +13,7 @@ import {
 } from './referenceImages'
 import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './gemini'
+import { resolveResearchInspo } from './researchInspo'
 
 interface GenerateBody {
   flavor?: string
@@ -26,11 +27,13 @@ interface GenerateBody {
   variationSeed?: number
   researchAngle?: string
   researchNotes?: string
+  researchSourceUrls?: string[]
+  researchSourceImageUrls?: string[]
 }
 
 const INSPO_REF_COUNT = 2
 const BRAND_REF_COUNT = 2
-const CACHE_VERSION = 2 // bumped for TREND CONTEXT section (research-aware prompts)
+const CACHE_VERSION = 3 // bumped for research-driven inspo refs
 
 export async function generateCarouselSlideHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -46,6 +49,8 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       variationSeed,
       researchAngle,
       researchNotes,
+      researchSourceUrls,
+      researchSourceImageUrls,
     } = (req.body ?? {}) as GenerateBody
 
     if (
@@ -89,10 +94,16 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       : pickShotTemplate(pillar, subcategory)
 
     const productFile = pickProductReference(flavor)
-    const [inspoKeys, brandKeys] = await Promise.all([
+    const [inspoKeys, brandKeys, researchInspo] = await Promise.all([
       pickInspoRefs(shotTemplate, INSPO_REF_COUNT),
       pickBrandRefs(shotTemplate, BRAND_REF_COUNT),
+      resolveResearchInspo({
+        sourceImageUrls: researchSourceImageUrls,
+        sourceUrls: researchSourceUrls,
+        max: INSPO_REF_COUNT,
+      }),
     ])
+    const useResearchInspo = researchInspo.length > 0
 
     const hash = hashKey({
       v: CACHE_VERSION,
@@ -107,11 +118,19 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       carouselSeed,
       shotTemplate: shotTemplate.id,
       productRef: productFile,
-      inspoRefs: [...inspoKeys].sort(),
+      inspoRefs: useResearchInspo ? [] : [...inspoKeys].sort(),
       brandRefs: [...brandKeys].sort(),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
       ...(researchNotes ? { researchNotes } : {}),
+      ...(useResearchInspo
+        ? {
+            researchInspoUrls: [
+              ...(researchSourceImageUrls ?? []),
+              ...(researchSourceUrls ?? []),
+            ].sort(),
+          }
+        : {}),
     })
     const { absPath, publicUrl } = cachePath(hash, 'carousel-slide')
 
@@ -130,8 +149,16 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
 
     const references: ReferenceImage[] = []
     if (productFile) references.push(await loadProductReference(productFile))
-    const loadedInspo = await Promise.all(inspoKeys.map(loadReferenceByManifestKey))
-    references.push(...loadedInspo.filter((r): r is ReferenceImage => r !== null))
+    let inspoRefCount: number
+    if (useResearchInspo) {
+      references.push(...researchInspo)
+      inspoRefCount = researchInspo.length
+    } else {
+      const loadedInspo = await Promise.all(inspoKeys.map(loadReferenceByManifestKey))
+      const filtered = loadedInspo.filter((r): r is ReferenceImage => r !== null)
+      references.push(...filtered)
+      inspoRefCount = filtered.length
+    }
     const loadedBrand = await Promise.all(brandKeys.map(loadReferenceByManifestKey))
     references.push(...loadedBrand.filter((r): r is ReferenceImage => r !== null))
 
@@ -143,7 +170,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       subcategory,
       theme,
       shotTemplate,
-      inspoRefCount: inspoKeys.length,
+      inspoRefCount,
       brandRefCount: brandKeys.length,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchAngle ? { researchAngle } : {}),
@@ -158,8 +185,9 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
     })
 
     if (process.env.NODE_ENV !== 'production') {
+      const inspoLabel = useResearchInspo ? `research(${inspoRefCount})` : `static(${inspoRefCount})`
       console.log(
-        `\n[generate-carousel-slide] arc=${arcId} slide=${slideIndex + 1}/${arc.slides.length} role=${slideSpec.role} shot=${shotTemplate.id} (${flavor})\n${prompt}\n`,
+        `\n[generate-carousel-slide] arc=${arcId} slide=${slideIndex + 1}/${arc.slides.length} role=${slideSpec.role} shot=${shotTemplate.id} (${flavor}) inspo=${inspoLabel}\n${prompt}\n`,
       )
     }
 

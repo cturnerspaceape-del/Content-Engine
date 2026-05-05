@@ -23,10 +23,10 @@ import type { SpaceApeFlavor } from '../../remotion/types'
 interface IGSlotPanelProps {
   format: InstagramFormat
   item: ContentItem | undefined
-  // Day-level research seed picked on the Scheduler. When set, the IG slot's
-  // Generate button anchors caption + image to this trend signal instead of
-  // falling back to the generic PILLAR_IMAGE_SEEDS rotation.
-  dayResearch?: ResearchedSeed | null
+  // Per-slot research seed picked from this card's Research button. When
+  // set, Generate anchors caption + image to this trend signal instead of
+  // the generic PILLAR_IMAGE_SEEDS rotation.
+  slotResearch?: ResearchedSeed | null
   onChange: (item: ContentItem) => void
   onPosted?: (item: ContentItem) => void
 }
@@ -59,17 +59,25 @@ async function runGenerate(
   return generateContentForPostAsync(seedItem, research)
 }
 
-export default function IGSlotPanel({ format, item, dayResearch, onChange, onPosted }: IGSlotPanelProps) {
+export default function IGSlotPanel({ format, item, slotResearch, onChange, onPosted }: IGSlotPanelProps) {
   const [busy, setBusy] = useState(false)
   const [posting, setPosting] = useState(false)
   const [postErr, setPostErr] = useState<string | null>(null)
   const gv = item?.generatedVisual
 
-  // When the day has a locked-in trend seed, derive the IG seed title and
+  // When the slot has a locked-in trend seed, derive the IG seed title and
   // arcId from it (via the existing adapters) instead of the cookie-cutter
-  // PILLAR_IMAGE_SEEDS pool. Same path the labs use.
-  const researchPayload: ResearchContext | undefined = dayResearch
-    ? { angle: dayResearch.angle, notes: dayResearch.sourceNotes }
+  // PILLAR_IMAGE_SEEDS pool. Same path the labs use. URLs from the seed
+  // ride along so the server can resolve them to inspo refs at gen time.
+  const researchPayload: ResearchContext | undefined = slotResearch
+    ? {
+        angle: slotResearch.angle,
+        notes: slotResearch.sourceNotes,
+        ...(slotResearch.sourceUrls?.length ? { sourceUrls: slotResearch.sourceUrls } : {}),
+        ...(slotResearch.sourceImageUrls?.length
+          ? { sourceImageUrls: slotResearch.sourceImageUrls }
+          : {}),
+      }
     : undefined
 
   const handleGenerate = async () => {
@@ -78,21 +86,21 @@ export default function IGSlotPanel({ format, item, dayResearch, onChange, onPos
       const prefix = SEED_PREFIX_BY_FORMAT[format]
       let seedTitle: string
       let arcId: string | undefined
-      if (dayResearch) {
+      if (slotResearch) {
         // Anchor seed to the picked trend so caption + image use the same
         // pillar/subcategory the user picked on the Scheduler.
         seedTitle = formatPillarSeedTitle(prefix, {
-          pillar: dayResearch.pillar,
-          subcategory: dayResearch.subcategory,
+          pillar: slotResearch.pillar,
+          subcategory: slotResearch.subcategory,
         })
         if (format === 'Carousel') {
-          arcId = toCarouselArcSeed(dayResearch).arcId
+          arcId = toCarouselArcSeed(slotResearch).arcId
         }
       } else {
         const seedIdx = item ? findPillarSeedIdxFromTitle(prefix, item.title) : 0
         seedTitle = formatPillarSeedTitle(prefix, PILLAR_IMAGE_SEEDS[seedIdx])
       }
-      const seed = item && !dayResearch ? item : makeSeed(format, seedTitle)
+      const seed = item && !slotResearch ? item : makeSeed(format, seedTitle)
       const result = await runGenerate(format, seed, researchPayload, arcId)
       onChange(result)
     } finally {
@@ -108,7 +116,7 @@ export default function IGSlotPanel({ format, item, dayResearch, onChange, onPos
       const nextIdx = pickDifferentPillarSeedIdx(curIdx)
       const seedTitle = formatPillarSeedTitle(prefix, PILLAR_IMAGE_SEEDS[nextIdx])
       const seed = makeSeed(format, seedTitle)
-      // Shuffle is the "give me a different angle" path; ignore dayResearch
+      // Shuffle is the "give me a different angle" path; ignore slotResearch
       // here so the user can roll a different idea without losing the trend.
       const result = await runGenerate(format, seed)
       onChange(result)
@@ -184,6 +192,8 @@ export default function IGSlotPanel({ format, item, dayResearch, onChange, onPos
             variationSeed={gv.imageVariationSeed}
             researchAngle={gv.researchAngle}
             researchNotes={gv.researchNotes}
+            researchSourceUrls={gv.researchSourceUrls}
+            researchSourceImageUrls={gv.researchSourceImageUrls}
             imageUrl={gv.imageUrl}
             imageError={gv.imageError}
             onResult={(url, err) => updateGV({
@@ -224,6 +234,8 @@ export default function IGSlotPanel({ format, item, dayResearch, onChange, onPos
             carouselSeed={gv.carouselSeed}
             researchAngle={gv.researchAngle}
             researchNotes={gv.researchNotes}
+            researchSourceUrls={gv.researchSourceUrls}
+            researchSourceImageUrls={gv.researchSourceImageUrls}
             slideUrls={gv.slideUrls}
             slideErrors={gv.slideErrors}
             slideVariationSeeds={gv.slideVariationSeeds}

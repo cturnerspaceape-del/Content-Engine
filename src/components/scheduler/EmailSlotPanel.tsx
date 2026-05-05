@@ -11,17 +11,17 @@ import InlineSlotShell from './InlineSlotShell'
 interface EmailSlotPanelProps {
   scheduled: ScheduledPost | undefined
   ensureSchedule: () => ScheduledPost
-  // Day-level trend signal. When set, derives the email type from it and
+  // Per-slot trend signal. When set, derives the email type from it and
   // sends the angle/notes as a campaignNote so the LLM anchors copy to the
   // picked trend.
-  dayResearch?: ResearchedSeed | null
+  slotResearch?: ResearchedSeed | null
   onChange: (post: ScheduledPost) => void
 }
 
 export default function EmailSlotPanel({
   scheduled,
   ensureSchedule,
-  dayResearch,
+  slotResearch,
   onChange,
 }: EmailSlotPanelProps) {
   const [busy, setBusy] = useState(false)
@@ -42,10 +42,10 @@ export default function EmailSlotPanel({
     setError(null)
     try {
       const variationSeed = force ? Math.floor(Math.random() * 1e9) : undefined
-      const emailType = dayResearch ? toEmailType(dayResearch) : 'promo'
-      const campaignNote = dayResearch
-        ? `Trend angle: ${dayResearch.angle}${
-            dayResearch.sourceNotes ? ` (signal: ${dayResearch.sourceNotes})` : ''
+      const emailType = slotResearch ? toEmailType(slotResearch) : 'promo'
+      const campaignNote = slotResearch
+        ? `Trend angle: ${slotResearch.angle}${
+            slotResearch.sourceNotes ? ` (signal: ${slotResearch.sourceNotes})` : ''
           }`
         : undefined
       const { email: generated } = await generateEmail({
