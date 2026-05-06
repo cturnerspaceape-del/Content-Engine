@@ -50,7 +50,7 @@ const CREDITS_REGEX = /prepayment credits|RESOURCE_EXHAUSTED.*credit|billing/i
 
 function mapError(raw: string): string {
   if (CREDITS_REGEX.test(raw)) {
-    return 'Gemini prepayment credits exhausted — top up at ai.studio/projects, then retry.'
+    return 'OpenAI credits exhausted — top up at platform.openai.com, then retry.'
   }
   return raw
 }

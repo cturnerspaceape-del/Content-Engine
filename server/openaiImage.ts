@@ -26,7 +26,21 @@ async function acquire(): Promise<void> {
     inFlight++
     return
   }
-  await new Promise<void>((resolve) => waiters.push(resolve))
+  // Bounded wait so a single hung in-flight request can't permanently
+  // wedge the lab. If we can't get a slot in 2 min, fail loudly instead
+  // of queueing forever.
+  await new Promise<void>((resolve, reject) => {
+    const tid = setTimeout(() => {
+      const idx = waiters.indexOf(waiter)
+      if (idx >= 0) waiters.splice(idx, 1)
+      reject(new Error('timeout: openai image concurrency slot not available within 120s'))
+    }, 120_000)
+    const waiter = () => {
+      clearTimeout(tid)
+      resolve()
+    }
+    waiters.push(waiter)
+  })
   inFlight++
 }
 
@@ -88,9 +102,17 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
 
   await acquire()
   try {
-    const maxAttempts = 5
+    // 3 attempts (was 5) — the 5-attempt budget was inherited from Gemini
+    // and routinely blew past the frontend's 180s total budget. Per-attempt
+    // 75s AbortController keeps the server failing slightly before the
+    // client's 90s/attempt timeout, so the user sees a real error instead
+    // of a stalled spinner. Backoff capped at 8s to bound total wall time.
+    const maxAttempts = 3
+    const PER_ATTEMPT_TIMEOUT_MS = 75_000
     let lastErr: unknown = null
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const ctrl = new AbortController()
+      const tid = setTimeout(() => ctrl.abort(), PER_ATTEMPT_TIMEOUT_MS)
       try {
         // Endpoint branch: /edits requires at least one reference image
         // (`image[]`). When refs is empty, fall back to /generations so the
@@ -113,6 +135,7 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
             method: 'POST',
             headers: { Authorization: `Bearer ${apiKey}` },
             body: form,
+            signal: ctrl.signal,
           })
         } else {
           resp = await fetch(OPENAI_GENERATIONS_URL, {
@@ -122,6 +145,7 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ model, prompt, size, n: 1 }),
+            signal: ctrl.signal,
           })
         }
 
@@ -142,14 +166,22 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
         if (!b64) throw new Error('OpenAI response contained no b64_json image data')
         return Buffer.from(b64, 'base64')
       } catch (err) {
-        lastErr = err
-        if (!isRetryableError(err) || attempt === maxAttempts) throw err
-        const backoff = 1000 * Math.pow(2, attempt) + Math.floor(Math.random() * 500)
-        const snippet = err instanceof Error ? err.message.slice(0, 200) : String(err).slice(0, 200)
+        // Map AbortError → retryable timeout so isRetryableError catches it.
+        const aborted = err instanceof Error && err.name === 'AbortError'
+        const mapped = aborted
+          ? new Error(`timeout: OpenAI image call exceeded ${PER_ATTEMPT_TIMEOUT_MS / 1000}s`)
+          : err
+        lastErr = mapped
+        if (!isRetryableError(mapped) || attempt === maxAttempts) throw mapped
+        const backoff = Math.min(8000, 1000 * Math.pow(2, attempt)) + Math.floor(Math.random() * 500)
+        const snippet =
+          mapped instanceof Error ? mapped.message.slice(0, 200) : String(mapped).slice(0, 200)
         console.warn(
           `[openaiImage.generateImage] retry ${attempt}/${maxAttempts - 1} in ${Math.round(backoff / 1000)}s: ${snippet}`,
         )
         await sleep(backoff)
+      } finally {
+        clearTimeout(tid)
       }
     }
     throw lastErr ?? new Error('OpenAI image call failed with no response')
