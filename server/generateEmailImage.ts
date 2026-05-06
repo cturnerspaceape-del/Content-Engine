@@ -1,30 +1,20 @@
-// Research-driven email image generation. Mirrors the single-image flow
-// (research-inspo → brand-ref fallback) but layers an editorial / hero-grade
-// prompt suffix so email images read magazine-marketing rather than social-UGC.
-// The `slot` field is preserved on the response (and in the cache key) so
-// hero and product cells live in separate cache slots even when given
-// identical prompts.
+// Research-driven email image generation. Mirrors the single-image / carousel
+// flow with a magazine-marketing style layered on top so email images read
+// editorial rather than social-UGC. The `slot` field is preserved on the
+// response (and in the cache key) so hero and product cells live in
+// separate cache slots even when given identical prompts.
 
 import type { Request, Response } from 'express'
 import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './openaiImage'
-import { loadReferenceByManifestKey, pickOneRandomBrandRef } from './referenceImages'
-import { resolveResearchInspo } from './researchInspo'
+import { loadRefsByKeys, pickFallbackFlavor } from './referenceImages'
+import { pickRefsForPrompt } from './pickRefsForPrompt'
+import type { SpaceApeFlavor } from '../src/remotion/types'
 
 interface GenerateEmailImageBody {
   slot: 'hero' | 'product'
-  // Research-driven prompt for this slot.
   prompt?: string
-  // Carried through onto the response so the email lab continues to know
-  // which flavor was associated with the image (used in copy + downstream
-  // cards). Optional — falls back to a random pick.
-  flavor?: string
-  // Research-resolved imagery (page URLs and direct image URLs from the
-  // selected ResearchedSeed). When provided AND a fetch succeeds, used as
-  // the reference instead of a random brand ref — same behavior as the
-  // single-image path.
-  researchSourceUrls?: string[]
-  researchSourceImageUrls?: string[]
+  flavor?: SpaceApeFlavor
   variationSeed?: number
 }
 
@@ -38,58 +28,29 @@ const EMAIL_STYLE_SUFFIX = [
   'Space Ape brand aesthetic — modern, hype-streetwear, future-cool',
 ].join(', ')
 
-const CACHE_VERSION = 4 // v4: editorial suffix + research-inspo path
-
-const FALLBACK_FLAVORS = [
-  'Amped Apple',
-  'Blue Frenzy',
-  'Blue Zlushie',
-  'Dragon Drip',
-  'Lemon Cherry Slam',
-] as const
-
-function pickFallbackFlavor(): string {
-  return FALLBACK_FLAVORS[Math.floor(Math.random() * FALLBACK_FLAVORS.length)]
-}
+const CACHE_VERSION = 5 // smart-picker rollout
 
 export async function generateEmailImageHandler(req: Request, res: Response): Promise<void> {
   try {
     const body = (req.body ?? {}) as GenerateEmailImageBody
-    const { slot, variationSeed, researchSourceUrls, researchSourceImageUrls } = body
+    const { slot, variationSeed } = body
     const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : ''
-    let { flavor } = body
+    const flavor = body.flavor ?? pickFallbackFlavor()
 
     if (!slot || !prompt) {
       res.status(400).json({ error: 'missing required fields: slot, prompt' })
       return
     }
-    if (!flavor) flavor = pickFallbackFlavor()
 
-    // Reference resolution: research inspo first, then random brand ref.
-    // Mirrors generateSingleImage / generateCarouselSlide so email images
-    // anchor to the same on-trend imagery the other formats already use.
-    const researchInspo = await resolveResearchInspo({
-      sourceImageUrls: researchSourceImageUrls,
-      sourceUrls: researchSourceUrls,
-      max: 1,
-    })
-    const useResearchInspo = researchInspo.length > 0
-    const brandRefKey = useResearchInspo ? null : await pickOneRandomBrandRef()
+    const picked = await pickRefsForPrompt({ prompt, flavor, maxRefs: 2 })
 
     const hash = hashKey({
       v: CACHE_VERSION,
       imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
       slot,
       prompt,
-      brandRef: brandRefKey,
-      ...(useResearchInspo
-        ? {
-            researchInspoUrls: [
-              ...(researchSourceImageUrls ?? []),
-              ...(researchSourceUrls ?? []),
-            ].sort(),
-          }
-        : {}),
+      flavor,
+      pickedKeys: [...picked.keys].sort(),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
     })
     const { absPath, publicUrl } = cachePath(hash, 'email-image')
@@ -99,28 +60,21 @@ export async function generateEmailImageHandler(req: Request, res: Response): Pr
       return
     }
 
-    const references: ReferenceImage[] = []
-    if (useResearchInspo) {
-      references.push(...researchInspo)
-    } else if (brandRefKey) {
-      const loaded = await loadReferenceByManifestKey(brandRefKey)
-      if (loaded) references.push(loaded)
-    }
+    const refs: ReferenceImage[] = await loadRefsByKeys(picked.keys)
+    const hasProductRef = picked.keys.some((k) => k.startsWith('product/'))
 
-    const fullPrompt = `${prompt}\n\n${EMAIL_STYLE_SUFFIX}`
+    const anchorClause = hasProductRef
+      ? '\n\nUse the reference image(s) above as visual anchors. Render the exact vape device shown — match its shape, label, color, and graphics precisely. Do not invent a different vape. Any aesthetic-only reference is for mood and palette guidance.'
+      : ''
+    const fullPrompt = `${prompt}\n\n${EMAIL_STYLE_SUFFIX}${anchorClause}`
 
     if (process.env.NODE_ENV !== 'production') {
-      const refLabel = useResearchInspo
-        ? `research(${references.length})`
-        : brandRefKey
-          ? `brand(${brandRefKey})`
-          : 'none'
       console.log(
-        `\n[generate-email-image] slot=${slot} ref=${refLabel}\n${fullPrompt}\n`,
+        `\n[generate-email-image] slot=${slot} flavor=${flavor} picked=[${picked.keys.join(', ') || 'none'}] reasoning=${picked.reasoning ?? '-'}\n${fullPrompt}\n`,
       )
     }
 
-    const png = await generateImage({ prompt: fullPrompt, references })
+    const png = await generateImage({ prompt: fullPrompt, references: refs })
     await writePng(absPath, png)
 
     res.json({ url: publicUrl, cached: false, hash, flavor })

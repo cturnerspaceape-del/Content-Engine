@@ -161,12 +161,13 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
   const body = useMemo(
     () => ({
       carouselSeed,
+      flavor,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
       ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [carouselSeed, variationSeed, urlsKey, imageUrlsKey],
+    [flavor, carouselSeed, variationSeed, urlsKey, imageUrlsKey],
   )
   // hasAnyPrompt drives the early-return guard below — at least one slide
   // must have something to send before we kick off any fetches.

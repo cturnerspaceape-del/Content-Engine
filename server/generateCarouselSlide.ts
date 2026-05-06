@@ -1,32 +1,25 @@
 // Research-driven carousel slide generation. Same shape as the single-image
-// flow: one selected research prompt drives every slide. Each slide call
-// sends the same prompt + the literal word "photorealistic" with one
-// random brand reference; per-slide differentiation comes from the slide
-// index and a variation seed encoded in the cache key.
-//
-// Carousel arcs / shot templates are no longer consulted on this path —
-// research output is the sole source of visual direction.
+// flow: one selected research prompt drives every slide, with an LLM picker
+// choosing 0–2 references from the unified product+brand catalog per slide.
+// Per-slide differentiation comes from slideIndex + carouselSeed in the
+// cache key so every slide resolves to a distinct cached PNG.
 
 import type { Request, Response } from 'express'
 import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './openaiImage'
-import { loadReferenceByManifestKey, pickOneRandomBrandRef } from './referenceImages'
-import { resolveResearchInspo } from './researchInspo'
+import { loadRefsByKeys, pickFallbackFlavor } from './referenceImages'
+import { pickRefsForPrompt } from './pickRefsForPrompt'
+import type { SpaceApeFlavor } from '../src/remotion/types'
 
 interface GenerateBody {
-  // Selected research prompt. Sent verbatim followed by "photorealistic".
   prompt?: string
-  // Slide identity. Same prompt across all slides; index + carouselSeed
-  // (deterministic per-carousel) participate in the cache key so every slide
-  // resolves to a distinct cached PNG.
   slideIndex?: number
   carouselSeed?: number
   variationSeed?: number
-  researchSourceUrls?: string[]
-  researchSourceImageUrls?: string[]
+  flavor?: SpaceApeFlavor
 }
 
-const CACHE_VERSION = 6 // bumped for the simplified research-only flow
+const CACHE_VERSION = 7 // smart-picker rollout
 
 export async function generateCarouselSlideHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -38,7 +31,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       })
       return
     }
-    const { slideIndex, carouselSeed, variationSeed, researchSourceUrls, researchSourceImageUrls } = body
+    const { slideIndex, carouselSeed, variationSeed } = body
     if (typeof slideIndex !== 'number' || typeof carouselSeed !== 'number') {
       res.status(400).json({
         error: 'missing required fields: slideIndex, carouselSeed',
@@ -46,13 +39,9 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       return
     }
 
-    const researchInspo = await resolveResearchInspo({
-      sourceImageUrls: researchSourceImageUrls,
-      sourceUrls: researchSourceUrls,
-      max: 1,
-    })
-    const useResearchInspo = researchInspo.length > 0
-    const brandRefKey = useResearchInspo ? null : await pickOneRandomBrandRef()
+    const flavor = body.flavor ?? pickFallbackFlavor()
+
+    const picked = await pickRefsForPrompt({ prompt, flavor, maxRefs: 2 })
 
     const hash = hashKey({
       v: CACHE_VERSION,
@@ -60,15 +49,8 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       prompt,
       slideIndex,
       carouselSeed,
-      brandRef: brandRefKey,
-      ...(useResearchInspo
-        ? {
-            researchInspoUrls: [
-              ...(researchSourceImageUrls ?? []),
-              ...(researchSourceUrls ?? []),
-            ].sort(),
-          }
-        : {}),
+      flavor,
+      pickedKeys: [...picked.keys].sort(),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
     })
     const { absPath, publicUrl } = cachePath(hash, 'carousel-slide')
@@ -78,28 +60,21 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
       return
     }
 
-    const references: ReferenceImage[] = []
-    if (useResearchInspo) {
-      references.push(...researchInspo)
-    } else if (brandRefKey) {
-      const loaded = await loadReferenceByManifestKey(brandRefKey)
-      if (loaded) references.push(loaded)
-    }
+    const refs: ReferenceImage[] = await loadRefsByKeys(picked.keys)
+    const hasProductRef = picked.keys.some((k) => k.startsWith('product/'))
 
-    const fullPrompt = `${prompt}\n\nphotorealistic`
+    const suffix = hasProductRef
+      ? '\n\nUse the reference image(s) above as visual anchors. Render the exact vape device shown — match its shape, label, color, and graphics precisely. Do not invent a different vape. Any aesthetic-only reference is for mood and palette guidance.'
+      : ''
+    const fullPrompt = `${prompt}\n\nphotorealistic${suffix}`
 
     if (process.env.NODE_ENV !== 'production') {
-      const refLabel = useResearchInspo
-        ? `research(${references.length})`
-        : brandRefKey
-          ? `brand(${brandRefKey})`
-          : 'none'
       console.log(
-        `\n[generate-carousel-slide] slide=${slideIndex} seed=${carouselSeed} ref=${refLabel}\n${fullPrompt}\n`,
+        `\n[generate-carousel-slide] slide=${slideIndex} flavor=${flavor} picked=[${picked.keys.join(', ') || 'none'}] reasoning=${picked.reasoning ?? '-'}\n${fullPrompt}\n`,
       )
     }
 
-    const png = await generateImage({ prompt: fullPrompt, references })
+    const png = await generateImage({ prompt: fullPrompt, references: refs })
     await writePng(absPath, png)
 
     res.json({ url: publicUrl, cached: false, hash })

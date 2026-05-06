@@ -1,311 +1,454 @@
 {
   "brand/bolj8566-copy.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "digital display",
+      "floating dots"
+    ],
+    "contentHash": "e2522fe0e129b0e2eb918ce9be7f623d670b8f798b66343f387268d361058bcf",
+    "containsProduct": true,
+    "productKind": "device"
   },
   "brand/bqdn1307-copy.jpeg": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "smartwatch",
+      "fruit splash",
+      "liquid splash",
+      "astronaut",
+      "space ape text"
+    ],
+    "contentHash": "c8e92cb276121ac3a0d1202161d7229692570b1710124004bbcec3dcbf3aaa87",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/cuzd0649-copy.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "space suit"
+    ],
+    "contentHash": "d6ebe9c1a97fa556c20ed4501913406f46db3319055c299219a24a4723dedbee",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/ddty6809.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "neon",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "digital display",
+      "dots",
+      "planet"
+    ],
+    "contentHash": "e31ca0fdb6c6edf47bcd20838ed00de0c1152b12370f1c181db5c0134c442fd3",
+    "containsProduct": true,
+    "productKind": "device"
   },
   "brand/ebeh8410.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "space suit"
+    ],
+    "contentHash": "697a018a08ce1b904c99b67763c1a86e1f4c0c5f830df5fa5b508ce283059ab1",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/estg4436.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "warm",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "rocket",
+      "planets",
+      "stars",
+      "dripping text"
+    ],
+    "contentHash": "7354719bef066588bd7d6d324564f60042a9a4e9f8a36977042deef2ed6edba6",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/eunf3531.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "warm",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "text logo",
+      "dripping effect"
+    ],
+    "contentHash": "dbfbfee22d917fbbcc353197fd10576963d9b8a80331c075c6e8073982d17b18",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/ewem0268.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "warm",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "energetic",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "orbs",
+      "wavy lines",
+      "typography"
+    ],
+    "contentHash": "a42b16bf89085d8460623ac9b46520665da7cd74bd5bbba88af3ba742ac2f624",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/fxmd8258.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "stars",
+      "glitter texture",
+      "space elements"
+    ],
+    "contentHash": "a12c7c4ae560418066bd357edd63dbd60b77342cb45ac2c3ccd3068cdc63d857",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/givz0871.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "energetic",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "fireworks",
+      "astronaut graphic",
+      "glowing dots",
+      "vape device"
+    ],
+    "contentHash": "9f83f8e6aa37e9c36ca7657758abadac7e03dc9e18b09a5becfa745d1ac77399",
+    "containsProduct": true,
+    "productKind": "device"
   },
   "brand/hrgu1697.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "rocket ship",
+      "stars",
+      "packaging"
+    ],
+    "contentHash": "d4212951ef989eaef22b5aaa6c4a1606be5c1c5586b582b96771939824de56cf",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/hssj7839.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "monochrome",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "stars",
+      "rocket ship",
+      "packaging design",
+      "digital display"
+    ],
+    "contentHash": "fb554ee6779946945e607289b5fa4d29a3644b30c0ef982474cb04d5a94f4f82",
+    "containsProduct": true,
+    "productKind": "both"
   },
   "brand/img_0025.jpg": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "premium",
+    "composition": "abstract",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronauts",
+      "planets",
+      "dripping text",
+      "wavy patterns"
+    ],
+    "contentHash": "a2ac69612b546d47cd0ce55a50617e64391f306b450f98d13822fd7efc150815",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/img_0027.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "neon",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "glowing dots",
+      "digital display",
+      "planets",
+      "vape device"
+    ],
+    "contentHash": "17c329891b1609e0c6efdde2184a3db7eb65addbb9a51b05dd746072999bca03",
+    "containsProduct": true,
+    "productKind": "device"
   },
   "brand/jtfj6695.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "space"
+    ],
+    "contentHash": "19279ab9fd889ef07709bdf287e459a9a29f1f026b8c4b3c176b5d852132075e",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/kqzv9865.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "stars",
+      "planets",
+      "rocket",
+      "text/typography"
+    ],
+    "contentHash": "9bab0543e82555596cb71264c49fa137b91466eb9aaddf493d75c7dcc7759b67",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/ozfk9873.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "neon",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "digital display",
+      "glowing dots",
+      "space elements",
+      "vape device"
+    ],
+    "contentHash": "291114dd9ff7d05fe2f2123fc636fe6f150003e7c7c56d26047b50d99e8f4a90",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/pjal9430.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "logo",
+      "dripping letters"
+    ],
+    "contentHash": "3662fb99e220a82c65ba508ae178fb53c634de0dd6402efa891df43b04afe5e4",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/pqmr1462.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "stars",
+      "rocket ship",
+      "planets",
+      "glowing dots"
+    ],
+    "contentHash": "56cb41fa6e90d1417a966dcd3de0a31d8d4dd57df33fc1bddc381d16e1d4cc14",
+    "containsProduct": true,
+    "productKind": "both"
   },
   "brand/prxa7070.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "dots",
+      "planet"
+    ],
+    "contentHash": "418a8aa8cc32cb894cff71ae9ab843abd56cb239aef8badce1c3bcfb60b3ab94",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/qbek1131.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "monochrome",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "outer space",
+      "stars",
+      "digital display",
+      "product packaging"
+    ],
+    "contentHash": "08915dae1ef627659342354fb40fde03da0fdeea2e40a320a3682f2ba5305796",
+    "containsProduct": true,
+    "productKind": "both"
   },
   "brand/qbjv7975.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "neon",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "neon lights",
+      "stars",
+      "text",
+      "vape device"
+    ],
+    "contentHash": "00764597d4a2eb0b432f4e39262afec4ca2e80332a6e36611e39899f4ba99cc8",
+    "containsProduct": true,
+    "productKind": "device"
   },
   "brand/qzrq4269.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "warm",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "stars",
+      "product packaging"
+    ],
+    "contentHash": "a1031a43548ca0b2e714af092581587dac5a8d98b5e86ddeefe361b6ac00b4f3",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/silz8193.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planet",
+      "dots",
+      "numerical display"
+    ],
+    "contentHash": "8e9d12232277fc270007e7add68e5562af053a6481b8e6e6eed2da6f06e04ab7",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/tqui2343.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "warm",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "swirling background",
+      "typography",
+      "branding elements"
+    ],
+    "contentHash": "0d1faaa370dd060b4e0ba90aff03b968889788f72bdd983f6558faef9fedfc21",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/trvz0889.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "stars",
+      "planets",
+      "rocket",
+      "moon"
+    ],
+    "contentHash": "ce2d4c5a8aa9c3a753694651898c531d0486b04d618b546ec8eab69c4d4ab7b4",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/ttsr8372.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "neon",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "glowing dots",
+      "digital display",
+      "space elements"
+    ],
+    "contentHash": "6108795dfe56c1121c9bc17cfb05962d9e81d1408b1218afa31146d039a73d4a",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/tulh6228.jpeg": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
-    "composition": "centered-hero",
-    "mood": "premium",
+    "composition": "abstract",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronauts",
+      "planets",
+      "logo text"
+    ],
+    "contentHash": "158fa14a0ff6499520b2a042004dc17332cb139c7ff2099864a59152b6420f17",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/tyvm7598.jpeg": {
     "kind": "brand",
@@ -320,90 +463,131 @@
   },
   "brand/ufko0448.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
+      "dripping logo",
       "vape device",
-      "logo"
-    ]
+      "astronaut graphic",
+      "water splash",
+      "blueberries"
+    ],
+    "contentHash": "293d01aba071578bf5246c8e6bba2d6b0fe5830ed366be1764bca8a107dc3cac",
+    "containsProduct": true,
+    "productKind": "device"
   },
   "brand/uotr5637.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "surreal",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "mysterious",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "blue space background"
+    ],
+    "contentHash": "32c82cd1662a1605a7c17172aa8062472228de3716e4147b05911ef46310c005",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/uzfc6463.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "dreamy",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "stars",
+      "rocket",
+      "glitter"
+    ],
+    "contentHash": "63aef0cb18238259aeadb13a144a502259451d761fb71009aa652f4875675edf",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/vumb2635.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "warm",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "logo",
+      "dripping effect",
+      "bubbly font",
+      "solid background"
+    ],
+    "contentHash": "ad85b5c362468641f5e21535d05fc1a6cb6b8ea94eb769fc4e21316b1349e767",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/xayu2612.png": {
     "kind": "brand",
-    "vibe": "minimal",
+    "vibe": "playful",
     "palette": "high-contrast",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "stars",
+      "planets",
+      "rocket ship",
+      "sparkles"
+    ],
+    "contentHash": "9bb7ae0fa896b5a9bbcda69f1fe6b99092cd8b7831ce43a2616ebb2ab8517495",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/xhjl1921.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "monochrome",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "stars",
+      "planets",
+      "rocket",
+      "packaging"
+    ],
+    "contentHash": "73b138debba8092f682f2da1dadc6e083e23ccfe0480ab68765aa4be1a412dfb",
+    "containsProduct": true,
+    "productKind": "packaging"
   },
   "brand/yfsp7319.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "cool",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "logo",
+      "dripping text"
+    ],
+    "contentHash": "9051897335e5e039f198998fa1b639b68dd4430ad6f4408444e878bcfd5d3e81",
+    "containsProduct": false,
+    "productKind": "none"
   },
   "brand/ylek5492-copy-copy.png": {
     "kind": "brand",
-    "vibe": "minimal",
-    "palette": "high-contrast",
+    "vibe": "playful",
+    "palette": "monochrome",
     "composition": "centered-hero",
-    "mood": "premium",
+    "mood": "fun",
     "subjectMotifs": [
-      "vape device",
-      "logo"
-    ]
+      "astronaut",
+      "planets",
+      "stars",
+      "rocket"
+    ],
+    "contentHash": "2b38f70f5f2244a42904fa44c456c406736b0e518120b25921a664d3382d2dcc",
+    "containsProduct": false,
+    "productKind": "none"
   }
 }

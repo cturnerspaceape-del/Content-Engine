@@ -1,33 +1,28 @@
-// Research-driven single-image generation. The user picks one of three
-// research-LLM-produced prompts; this handler sends that prompt verbatim
-// (plus the literal word "photorealistic") to the image model with one
-// random reference picked from the brand pool. No brand bible, no
-// reference key, no shot templates — research output is the sole source
-// of visual direction.
-//
-// Non-research generation is deliberately unsupported: the handler
-// rejects 400 if the `prompt` field is missing or empty.
+// Research-driven single-image generation. The handler asks an LLM picker
+// to pick 0–2 reference keys (from the unified product+brand catalog) for
+// THIS specific prompt, then sends those refs + the prompt to the image
+// model. The picker may return zero refs for purely conceptual prompts —
+// generation falls through to /v1/images/generations cleanly.
 
 import type { Request, Response } from 'express'
 import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './openaiImage'
-import { loadReferenceByManifestKey, pickOneRandomBrandRef } from './referenceImages'
-import { resolveResearchInspo } from './researchInspo'
+import { loadRefsByKeys, pickFallbackFlavor } from './referenceImages'
+import { pickRefsForPrompt } from './pickRefsForPrompt'
+import type { SpaceApeFlavor } from '../src/remotion/types'
 
 interface GenerateBody {
-  // The selected research prompt (was researchShotBrief). The image model
-  // receives this verbatim followed by the literal word "photorealistic".
+  // The selected research prompt. The image model receives this verbatim
+  // followed by an anchor clause (only when product refs were picked).
   prompt?: string
-  // Optional research-resolved imagery. When provided AND a fetch succeeds,
-  // we use the trend image as the reference instead of the random brand
-  // ref. Lets a passport-booth seed anchor visually to the actual research
-  // hit when one exists.
-  researchSourceUrls?: string[]
-  researchSourceImageUrls?: string[]
+  // Optional flavor anchor. The picker uses it as a hint when the prompt
+  // doesn't name a flavor explicitly. Falls back to a random allowlisted
+  // flavor when missing.
+  flavor?: SpaceApeFlavor
   variationSeed?: number
 }
 
-const CACHE_VERSION = 9 // bumped for the simplified research-only flow
+const CACHE_VERSION = 10 // smart-picker rollout
 
 export async function generateSingleImageHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -40,32 +35,17 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       return
     }
 
-    const { researchSourceUrls, researchSourceImageUrls, variationSeed } = body
+    const { variationSeed } = body
+    const flavor = body.flavor ?? pickFallbackFlavor()
 
-    // Reference resolution: try research source URLs first; if none resolve,
-    // fall back to one random brand ref. Either way we send exactly one
-    // reference image (or zero, if nothing's available).
-    const researchInspo = await resolveResearchInspo({
-      sourceImageUrls: researchSourceImageUrls,
-      sourceUrls: researchSourceUrls,
-      max: 1,
-    })
-    const useResearchInspo = researchInspo.length > 0
-    const brandRefKey = useResearchInspo ? null : await pickOneRandomBrandRef()
+    const picked = await pickRefsForPrompt({ prompt, flavor, maxRefs: 2 })
 
     const hash = hashKey({
       v: CACHE_VERSION,
       imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
       prompt,
-      brandRef: brandRefKey,
-      ...(useResearchInspo
-        ? {
-            researchInspoUrls: [
-              ...(researchSourceImageUrls ?? []),
-              ...(researchSourceUrls ?? []),
-            ].sort(),
-          }
-        : {}),
+      flavor,
+      pickedKeys: [...picked.keys].sort(),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
     })
     const { absPath, publicUrl } = cachePath(hash)
@@ -75,26 +55,24 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
       return
     }
 
-    const references: ReferenceImage[] = []
-    if (useResearchInspo) {
-      references.push(...researchInspo)
-    } else if (brandRefKey) {
-      const loaded = await loadReferenceByManifestKey(brandRefKey)
-      if (loaded) references.push(loaded)
-    }
+    const refs: ReferenceImage[] = await loadRefsByKeys(picked.keys)
+    const hasProductRef = picked.keys.some((k) => k.startsWith('product/'))
 
-    const fullPrompt = `${prompt}\n\nphotorealistic`
+    // Anchor clause only when a product ref is actually being sent — for
+    // ref-less / aesthetic-only generations the binding instruction would
+    // be misleading.
+    const suffix = hasProductRef
+      ? '\n\nUse the reference image(s) above as visual anchors. Render the exact vape device shown — match its shape, label, color, and graphics precisely. Do not invent a different vape. Any aesthetic-only reference is for mood and palette guidance.'
+      : ''
+    const fullPrompt = `${prompt}\n\nphotorealistic${suffix}`
 
     if (process.env.NODE_ENV !== 'production') {
-      const refLabel = useResearchInspo
-        ? `research(${references.length})`
-        : brandRefKey
-          ? `brand(${brandRefKey})`
-          : 'none'
-      console.log(`\n[generate-single-image] ref=${refLabel}\n${fullPrompt}\n`)
+      console.log(
+        `\n[generate-single-image] flavor=${flavor} picked=[${picked.keys.join(', ') || 'none'}] reasoning=${picked.reasoning ?? '-'}\n${fullPrompt}\n`,
+      )
     }
 
-    const png = await generateImage({ prompt: fullPrompt, references })
+    const png = await generateImage({ prompt: fullPrompt, references: refs })
     await writePng(absPath, png)
 
     res.json({ url: publicUrl, cached: false, hash })

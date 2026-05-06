@@ -17,6 +17,8 @@ const PRODUCTS_DIR = path.join(PUBLIC_DIR, 'products')
 const REFERENCES_DIR = path.join(PUBLIC_DIR, 'references')
 const MANIFEST_PATH = path.resolve(process.cwd(), 'server', 'refManifest.json')
 
+export type ProductKind = 'device' | 'packaging' | 'both' | 'none'
+
 export interface ManifestEntry {
   kind: 'inspo' | 'brand'
   vibe: Vibe
@@ -25,6 +27,10 @@ export interface ManifestEntry {
   subjectMotifs: string[]
   mood: Mood
   contentHash?: string // SHA256 of raw file bytes, set by ingest/classify for dedup
+  // Set by classifyReferences. Older entries from sync-refs lack these fields;
+  // callers must default missing values to false / 'none' (treat as aesthetic-only).
+  containsProduct?: boolean
+  productKind?: ProductKind
 }
 
 export type RefManifest = Record<string, ManifestEntry>
@@ -171,4 +177,134 @@ export async function loadReferenceByManifestKey(key: string): Promise<Reference
     console.warn(`[refs] missing: ${key} (${msg})`)
     return null
   }
+}
+
+// ─── Unified catalog (brand + product) for the LLM picker ───
+
+// A few flavor names to fall back to when a handler has none from the body.
+// Kept in sync with the email handler's prior local list — moved here so all
+// three image labs share one allowlist.
+const FALLBACK_FLAVORS: SpaceApeFlavor[] = [
+  'Amped Apple',
+  'Blue Frenzy',
+  'Blue Zlushie',
+  'Dragon Drip',
+  'Lemon Cherry Slam',
+]
+
+export function pickFallbackFlavor(): SpaceApeFlavor {
+  return FALLBACK_FLAVORS[Math.floor(Math.random() * FALLBACK_FLAVORS.length)]
+}
+
+// Compact entry surfaced to the picker. Brand entries fill the classifier
+// fields; synthetic product entries fill flavor/format/shotKind from
+// flavorThemes (no Gemini call needed).
+export interface CatalogEntry {
+  key: string                     // "brand/foo.png" or "product/2g-lcs-device-master.png"
+  source: 'brand' | 'product'
+  flavor?: SpaceApeFlavor
+  format?: '2G' | '4G'
+  shotKind?: string               // device-master, device-angled, lifestyle-packaging-and-device, etc.
+  containsProduct: boolean
+  productKind: ProductKind
+  // Aesthetic tags (brand entries from classifier; product entries empty).
+  vibe?: Vibe
+  palette?: Palette
+  composition?: Composition
+  mood?: Mood
+  motifs?: string[]
+}
+
+function inferShotKind(filename: string): string {
+  const lower = filename.toLowerCase()
+  if (lower.includes('device-master')) return 'device-master'
+  if (lower.includes('device-angled')) return 'device-angled'
+  if (lower.includes('lifestyle-packaging-and-device') || lower.includes('lifestyle-package-and-device')) {
+    return 'lifestyle-packaging-and-device'
+  }
+  if (lower.includes('lifestyle-shot-device') || lower.includes('lifestyle-shott-device')) {
+    return 'lifestyle-shot-device'
+  }
+  if (lower.includes('lifestyle-and-device') || lower.includes('lifestyle-device')) {
+    return 'lifestyle-shot-device'
+  }
+  return 'device'
+}
+
+function inferProductKind(shotKind: string): ProductKind {
+  if (shotKind.includes('packaging') || shotKind.includes('package')) return 'both'
+  return 'device'
+}
+
+// Synthetic catalog entries for every file in flavorThemes[*].productImages.
+// Pulls flavor/format/shotKind directly from the curated theme registry —
+// no filename parsing, no IO. Cached for the process lifetime since
+// flavorThemes is static.
+let productCatalogCache: CatalogEntry[] | null = null
+
+export function buildProductManifest(): CatalogEntry[] {
+  if (productCatalogCache) return productCatalogCache
+  const out: CatalogEntry[] = []
+  for (const [flavorName, theme] of Object.entries(flavorThemes)) {
+    const flavor = flavorName as SpaceApeFlavor
+    for (const filename of theme.productImages) {
+      const shotKind = inferShotKind(filename)
+      out.push({
+        key: `product/${filename}`,
+        source: 'product',
+        flavor,
+        format: theme.format,
+        shotKind,
+        containsProduct: true,
+        productKind: inferProductKind(shotKind),
+      })
+    }
+  }
+  productCatalogCache = out
+  return out
+}
+
+// Merge of brand-pool manifest + synthetic product manifest. Used by the picker.
+export async function getUnifiedCatalog(): Promise<CatalogEntry[]> {
+  const manifest = await loadManifest()
+  const brand: CatalogEntry[] = Object.entries(manifest)
+    .filter(([, entry]) => entry.kind === 'brand')
+    .map(([key, entry]) => ({
+      key,
+      source: 'brand' as const,
+      // Brand entries don't have a flavor — they're moodboard.
+      containsProduct: entry.containsProduct ?? false,
+      productKind: entry.productKind ?? 'none',
+      vibe: entry.vibe,
+      palette: entry.palette,
+      composition: entry.composition,
+      mood: entry.mood,
+      motifs: entry.subjectMotifs,
+    }))
+  return [...buildProductManifest(), ...brand]
+}
+
+// Routes "brand/foo.png" → public/references/brand/foo.png
+//        "product/foo.png" → public/products/foo.png
+// Drops keys that fail to load (file missing, decode error, etc.) with a warn.
+export async function loadRefsByKeys(keys: string[]): Promise<ReferenceImage[]> {
+  const out: ReferenceImage[] = []
+  for (const key of keys) {
+    if (key.startsWith('product/')) {
+      const filename = key.slice('product/'.length)
+      try {
+        const ref = await loadProductReference(filename)
+        out.push(ref)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.warn(`[refs] missing product: ${filename} (${msg})`)
+      }
+    } else if (key.startsWith('brand/') || key.startsWith('inspo/')) {
+      const ref = await loadReferenceByManifestKey(key)
+      if (ref) out.push(ref)
+    } else {
+      console.warn(`[refs] unknown key prefix: ${key}`)
+    }
+  }
+  return out
 }

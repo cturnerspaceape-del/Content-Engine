@@ -87,12 +87,13 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
   const body = useMemo(
     () => ({
       prompt: researchShotBrief ?? '',
+      flavor,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
       ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [variationSeed, researchShotBrief, urlsKey, imageUrlsKey],
+    [flavor, variationSeed, researchShotBrief, urlsKey, imageUrlsKey],
   )
 
   const [localUrl, setLocalUrl] = useState<string | null>(imageUrl ?? null)

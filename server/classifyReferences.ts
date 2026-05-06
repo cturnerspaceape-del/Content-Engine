@@ -158,8 +158,18 @@ async function main(): Promise<void> {
   }
   if (pruned > 0) console.log(`[classify] pruned ${pruned} stale manifest entries`)
 
-  const toClassify = allFiles.filter(({ key }) => !manifest[key])
-  console.log(`[classify] ${allFiles.length} files on disk, ${toClassify.length} new to classify (model: ${model})`)
+  // Classify when either the entry is missing OR predates the product-content
+  // tagging (containsProduct / productKind fields). Older sync-refs entries
+  // are valid for aesthetic tags but lack the product-anchor signal we need
+  // for caption-aware ref selection.
+  const toClassify = allFiles.filter(({ key }) => {
+    const entry = manifest[key]
+    if (!entry) return true
+    if (typeof entry.containsProduct !== 'boolean') return true
+    if (typeof entry.productKind !== 'string') return true
+    return false
+  })
+  console.log(`[classify] ${allFiles.length} files on disk, ${toClassify.length} need (re)classification (model: ${model})`)
 
   let done = 0
   let failed = 0
@@ -197,6 +207,8 @@ async function main(): Promise<void> {
         mood: tags.mood,
         subjectMotifs: tags.subjectMotifs,
         contentHash,
+        containsProduct: tags.containsProduct,
+        productKind: tags.productKind,
       }
       manifest[key] = entry
       if (sidecarTags) await deleteSidecar(absPath)
