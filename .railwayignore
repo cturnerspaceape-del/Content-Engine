@@ -1,3 +1,10 @@
 node_modules/
 dist/
 .git/
+# Cached gen output — regenerated on demand
+public/generated/
+# Reference image payloads — pulled from R2 at build via REFS_TARBALL_URL
+public/refs.tar.gz
+public/references/
+# Trend imagery — fetched on demand by /api/research-trends
+public/research-inspo/
