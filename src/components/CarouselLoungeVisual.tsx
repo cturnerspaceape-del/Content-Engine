@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getFlavorTheme } from '../remotion/flavorThemes'
 import type { SpaceApeFlavor } from '../remotion/types'
 import { getCarouselArc } from '../data/carouselArcs'
+import GeneratingPlaceholder from './ui/GeneratingPlaceholder'
+import ImageEditModal from './ImageEditModal'
 
 interface CarouselLoungeVisualProps {
   flavor: SpaceApeFlavor
@@ -20,7 +22,12 @@ interface CarouselLoungeVisualProps {
   researchNotes?: string
   // Executable photo brief from the picked seed — replaces the generic
   // shot template in the SHOT BRIEF section of the Gemini prompt.
+  // Used as the fallback per-slide prompt when researchSlides isn't set.
   researchShotBrief?: string
+  // Research-driven per-slide briefs. When provided (length >= 2), each
+  // slide's prompt is its own brief, and slideCount equals slides.length.
+  // Supersedes the static carouselArcs.ts template + single shotBrief.
+  researchSlides?: { brief: string }[]
   // URLs from the picked seed. Server downloads images from these and
   // uses them as inspo refs in place of the static manifest pool.
   researchSourceUrls?: string[]
@@ -54,6 +61,8 @@ function mapError(raw: string): string {
   return raw
 }
 
+const PER_SLIDE_TIMEOUT_MS = 90_000
+
 async function fetchSlide(
   body: Record<string, unknown>,
   isCancelled: () => boolean,
@@ -61,11 +70,14 @@ async function fetchSlide(
   let lastErr = 'generation failed'
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     if (isCancelled()) return { url: null, error: null }
+    const ctrl = new AbortController()
+    const timeoutId = window.setTimeout(() => ctrl.abort(), PER_SLIDE_TIMEOUT_MS)
     try {
       const r = await fetch('/api/generate-carousel-slide', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        signal: ctrl.signal,
       })
       const data = (await r.json()) as SlideResponse | { error: string }
       if (isCancelled()) return { url: null, error: null }
@@ -82,8 +94,15 @@ async function fetchSlide(
         return { url: null, error: mapError(lastErr) }
       }
     } catch (err) {
-      lastErr = err instanceof Error ? err.message : String(err)
+      const aborted = err instanceof Error && err.name === 'AbortError'
+      lastErr = aborted
+        ? 'Slide timed out — click Reroll to try again.'
+        : err instanceof Error
+          ? err.message
+          : String(err)
       if (attempt === MAX_ATTEMPTS) return { url: null, error: mapError(lastErr) }
+    } finally {
+      window.clearTimeout(timeoutId)
     }
     // Exponential backoff so queued slides have room to breathe under load.
     const backoff = 1000 * Math.pow(2, attempt - 1)
@@ -106,6 +125,7 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     researchAngle,
     researchNotes,
     researchShotBrief,
+    researchSlides,
     researchSourceUrls,
     researchSourceImageUrls,
     slideUrls,
@@ -118,22 +138,40 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
 
   const urlsKey = (researchSourceUrls ?? []).join('|')
   const imageUrlsKey = (researchSourceImageUrls ?? []).join('|')
+  const slidesKey = (researchSlides ?? []).map((s) => s.brief).join('|')
 
-  // Research-only flow: every slide uses the picked seed's shotBrief as its
-  // prompt. Per-slide variation comes from slideIndex + carouselSeed in the
-  // server's cache key (and from any per-slot variationSeed bumped via
-  // reroll). Old fields (flavor/hook/caption/pillar/arcId) are intentionally
-  // dropped — server only consumes prompt + slide identity + optional URLs.
+  // Per-slide prompt resolution. Research-driven flow: each slide's prompt
+  // is its own brief from the selected research result. Legacy flow: all
+  // slides share the seed's shotBrief.
+  const promptForSlide = (slideIndex: number): string => {
+    const slideBrief = researchSlides?.[slideIndex]?.brief
+    if (slideBrief) {
+      // Concatenate the overall shot brief (when present) with the per-slide
+      // direction so cohesion across the arc is preserved while each slide
+      // still drives its own beat.
+      return researchShotBrief ? `${researchShotBrief}\n\n${slideBrief}` : slideBrief
+    }
+    return researchShotBrief ?? ''
+  }
+
+  // Per-slide variation still comes from slideIndex + carouselSeed in the
+  // server's cache key (and from any per-slot variationSeed bumped via reroll).
+  // Old fields (flavor/hook/caption/pillar/arcId) are intentionally dropped —
+  // server only consumes prompt + slide identity + optional URLs.
   const body = useMemo(
     () => ({
-      prompt: researchShotBrief ?? '',
       carouselSeed,
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
       ...(researchSourceUrls?.length ? { researchSourceUrls } : {}),
       ...(researchSourceImageUrls?.length ? { researchSourceImageUrls } : {}),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [carouselSeed, variationSeed, researchShotBrief, urlsKey, imageUrlsKey],
+    [carouselSeed, variationSeed, urlsKey, imageUrlsKey],
+  )
+  // hasAnyPrompt drives the early-return guard below — at least one slide
+  // must have something to send before we kick off any fetches.
+  const hasAnyPrompt = Boolean(
+    researchShotBrief || (researchSlides && researchSlides.some((s) => s.brief)),
   )
 
   // Seed local state from persisted results so a refresh/remount re-renders
@@ -156,6 +194,7 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
   // flight simultaneously — the server semaphore handles fairness.
   const [rerollingIndices, setRerollingIndices] = useState<Set<number>>(() => new Set())
   const [current, setCurrent] = useState(0)
+  const [editingSlide, setEditingSlide] = useState<number | null>(null)
   // Mount-cancel ref — shared by the initial fetch loop and any in-flight reroll,
   // so unmount cancels both.
   const cancelledRef = useRef(false)
@@ -183,8 +222,8 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     setCurrent(0)
     const isCancelled = () => cancelledRef.current
 
-    // Research-only flow: nothing fires until a prompt is in hand.
-    if (!body.prompt) {
+    // Research-only flow: nothing fires until at least one prompt is in hand.
+    if (!hasAnyPrompt) {
       return () => {
         cancelledRef.current = true
       }
@@ -196,9 +235,14 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
       // Only unresolved slots fire a fetch. This is the cost-safety invariant.
       if (seededUrls[slideIndex] || seededErrors[slideIndex]) continue
 
+      const slidePrompt = promptForSlide(slideIndex)
+      // Skip slides that have no prompt to send — no point firing an empty call.
+      if (!slidePrompt) continue
+
       const slotSeed = slideVariationSeeds?.[slideIndex]
       const fetchBody = {
         ...body,
+        prompt: slidePrompt,
         slideIndex,
         ...(typeof slotSeed === 'number' ? { variationSeed: slotSeed } : {}),
       }
@@ -229,7 +273,7 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     // we only re-read them when the underlying brief (body) or slideCount changes.
     // Otherwise a parent-triggered persist would re-trigger this effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [body, slideCount])
+  }, [body, slideCount, researchShotBrief, slidesKey, hasAnyPrompt])
 
   const handleReroll = (slideIndex: number) => {
     // Idempotent per slide: don't double-fire for the same index, but allow
@@ -255,7 +299,11 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     })
 
     const isCancelled = () => cancelledRef.current
-    fetchSlide({ ...body, slideIndex, variationSeed: seed }, isCancelled).then(({ url, error }) => {
+    const slidePrompt = promptForSlide(slideIndex)
+    fetchSlide(
+      { ...body, prompt: slidePrompt, slideIndex, variationSeed: seed },
+      isCancelled,
+    ).then(({ url, error }) => {
       if (isCancelled()) return
       if (url) {
         setUrls((prev) => {
@@ -364,32 +412,62 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
           onNext={() => setCurrent((s) => Math.min(slideCount - 1, s + 1))}
         />
 
-        {/* Per-slide reroll — keeps other slides untouched; fires one fresh Gemini call */}
+        {/* Per-slide reroll — keeps other slides untouched; fires one fresh image call */}
         {showRerollButton && (
-          <button
-            onClick={() => handleReroll(current)}
-            title="Regenerate just this slide with a fresh variation (~$0.05)"
+          <div
             style={{
               position: 'absolute',
               bottom: 24,
               right: 8,
-              background: 'rgba(251,146,60,0.92)',
-              color: '#1a1a1a',
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: '0.04em',
-              padding: '6px 10px',
-              borderRadius: 8,
-              border: 'none',
-              cursor: 'pointer',
               display: 'flex',
-              alignItems: 'center',
               gap: 6,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
             }}
           >
-            🎲 Reroll
-          </button>
+            {currentUrl && (
+              <button
+                onClick={() => setEditingSlide(current)}
+                title="Edit just this slide"
+                style={{
+                  background: 'rgba(245,158,11,0.92)',
+                  color: '#1a1a1a',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                }}
+              >
+                ✏️ Edit
+              </button>
+            )}
+            <button
+              onClick={() => handleReroll(current)}
+              title="Regenerate just this slide with a fresh variation (~$0.05)"
+              style={{
+                background: 'rgba(251,146,60,0.92)',
+                color: '#1a1a1a',
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.04em',
+                padding: '6px 10px',
+                borderRadius: 8,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              }}
+            >
+              🎲 Reroll
+            </button>
+          </div>
         )}
       </div>
 
@@ -404,6 +482,29 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
         theme={theme}
         arcRoles={arc?.slides.map((s) => s.role) ?? []}
       />
+      {editingSlide !== null && urls[editingSlide] && (
+        <ImageEditModal
+          label={`slide ${editingSlide + 1}`}
+          imageUrl={urls[editingSlide]!}
+          kind="carousel-slide"
+          onCancel={() => setEditingSlide(null)}
+          onApplied={(newUrl) => {
+            const idx = editingSlide
+            setUrls((prev) => {
+              const next = prev.slice()
+              next[idx] = newUrl
+              return next
+            })
+            setErrors((prev) => {
+              const next = prev.slice()
+              next[idx] = null
+              return next
+            })
+            onSlideResultRef.current(idx, newUrl, null, undefined)
+            setEditingSlide(null)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -424,7 +525,36 @@ function SlidePlaceholder({
   status: 'generating' | 'failed' | 'unavailable'
 }) {
   const statusLabel =
-    status === 'failed' ? 'Slide failed' : status === 'unavailable' ? 'Slide unavailable' : 'Generating…'
+    status === 'failed' ? 'Slide failed' : status === 'unavailable' ? 'Slide unavailable' : null
+  // While generating: show the futuristic loader as the backdrop with the
+  // slide-number badge overlaid. On failure/unavailable: keep the existing
+  // typographic placeholder so the error context stays readable.
+  if (status === 'generating') {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <GeneratingPlaceholder variant="tile" />
+        <div
+          style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.85)',
+            background: 'rgba(0,0,0,0.45)',
+            padding: '4px 8px',
+            borderRadius: 6,
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          {slideNumber} / {slideTotal}
+          {role ? <span style={{ opacity: 0.7 }}> · {role.replace(/-/g, ' ')}</span> : null}
+        </div>
+      </div>
+    )
+  }
   return (
     <div
       style={{
@@ -442,7 +572,6 @@ function SlidePlaceholder({
         position: 'relative',
       }}
     >
-      {/* Big slide position number — dominant, so the user instantly sees which slide this is */}
       <div
         style={{
           fontSize: 88,
@@ -450,8 +579,7 @@ function SlidePlaceholder({
           lineHeight: 1,
           letterSpacing: '-0.04em',
           color: theme.primaryColor,
-          opacity: status === 'generating' ? 0.9 : 0.45,
-          animation: status === 'generating' ? 'pulse 1.6s ease-in-out infinite' : undefined,
+          opacity: 0.45,
         }}
       >
         {slideNumber}
@@ -474,11 +602,12 @@ function SlidePlaceholder({
           {role.replace(/-/g, ' ')}
         </div>
       ) : null}
-      <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.6, marginTop: 2 }}>{statusLabel}</div>
+      {statusLabel ? (
+        <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.6, marginTop: 2 }}>{statusLabel}</div>
+      ) : null}
       {error ? (
         <div style={{ fontSize: 10, opacity: 0.55, maxWidth: 260, marginTop: 4 }}>{error}</div>
       ) : null}
-      <style>{`@keyframes pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }`}</style>
     </div>
   )
 }

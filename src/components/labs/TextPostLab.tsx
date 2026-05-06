@@ -25,11 +25,20 @@ interface TextPostLabProps {
 }
 
 const PLATFORM_LABELS: Record<TunerPlatform, string> = {
-  'IG/FB': 'IG/FB',
+  'IG/FB': 'Meta',
   X: 'X',
   Threads: 'Threads',
   TikTok: 'TikTok',
   'YouTube Shorts': 'Shorts',
+}
+
+// Per-platform char ceiling for clipping the canonical post. Threads (500)
+// is the soft cap we generate to; X (280) clamps at copy time. IG/FB has no
+// hard text limit but sticks with the Threads-length payload.
+const PLATFORM_CHAR_LIMITS: Partial<Record<TunerPlatform, number>> = {
+  X: 280,
+  Threads: 500,
+  'IG/FB': 500,
 }
 
 export default function TextPostLab({ onBack }: TextPostLabProps) {
@@ -105,6 +114,31 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
   // is now `handleGenerate` below. Picking a research card just stages the
   // angle; the preview stays empty until Generate is clicked.
 
+  // Cross-post toggle reactivity: when the user (un)checks a platform after
+  // generating, re-replicate the canonical post into the new selection set
+  // so the preview matches the checkboxes without forcing a regenerate.
+  useEffect(() => {
+    setVariants((prev) => {
+      const existing = Object.values(prev).find((v): v is PlatformVariant => Boolean(v))
+      if (!existing) return prev
+      const next: Partial<Record<TunerPlatform, PlatformVariant>> = {}
+      for (const platform of selectedPlatforms) {
+        const limit = PLATFORM_CHAR_LIMITS[platform] ?? existing.charLimit
+        const text = existing.caption
+        const capped =
+          text.length <= limit ? text : text.slice(0, limit - 1).trimEnd() + '…'
+        next[platform] = {
+          platform,
+          caption: capped,
+          hashtags: existing.hashtags,
+          charLimit: limit,
+        }
+      }
+      return next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPlatforms.join('|')])
+
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
     const seeds = [rec, ...candidates].slice(0, 3)
     setResearchSeeds(seeds)
@@ -120,18 +154,37 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     setVariants({})
   }
 
+  // Replicate one canonical caption + hashtags across every selected
+  // platform's variant slot, clipping each to that platform's char limit.
+  // Lets MultiPlatformPreview keep its per-platform layout while the user-
+  // facing model is "one post, cross-posted everywhere I check."
+  const replicate = (canonical: PlatformVariant): Partial<Record<TunerPlatform, PlatformVariant>> => {
+    const next: Partial<Record<TunerPlatform, PlatformVariant>> = {}
+    for (const platform of selectedPlatforms) {
+      const limit = PLATFORM_CHAR_LIMITS[platform] ?? canonical.charLimit
+      const text = canonical.caption
+      const capped = text.length <= limit ? text : text.slice(0, limit - 1).trimEnd() + '…'
+      next[platform] = {
+        platform,
+        caption: capped,
+        hashtags: canonical.hashtags,
+        charLimit: limit,
+      }
+    }
+    return next
+  }
+
+  // Generate ONE post (tuned to X's 280-char ceiling so it fits everywhere),
+  // then mirror it into each selected platform's preview slot. The cross-post
+  // checkboxes (selectedPlatforms) decide who sees the same post — they no
+  // longer trigger separate generations.
   const handleGenerate = async () => {
     if (!activeResearchSeed) return
     const source: TunerSource = buildSource(archetype)
-    const optimistic: Partial<Record<TunerPlatform, PlatformVariant>> = {}
-    for (const platform of selectedPlatforms) optimistic[platform] = tuneFor(platform, source)
-    setVariants(optimistic)
-    const upgrades = await Promise.all(
-      selectedPlatforms.map(async (p) => [p, await tuneForAsync(p, source)] as const),
-    )
-    const next: Partial<Record<TunerPlatform, PlatformVariant>> = {}
-    for (const [p, v] of upgrades) next[p] = v
-    setVariants(next)
+    const optimistic = tuneFor('X', source)
+    setVariants(replicate(optimistic))
+    const canonical = await tuneForAsync('X', source)
+    setVariants(replicate(canonical))
   }
 
   const [toast, setToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(null)
@@ -234,7 +287,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
             ✍️ Text Post Lab
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-            One thought, tuned for X &amp; Threads
+            One post — cross-post to X, Threads, &amp; Meta
           </p>
         </div>
 
@@ -276,7 +329,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
                   color: 'white',
                 }}
               >
-                ⚡ {Object.keys(variants).length > 0 ? 'Regenerate' : 'Generate'} (all platforms)
+                ⚡ {Object.keys(variants).length > 0 ? 'Regenerate' : 'Generate'} post
               </button>
             </div>
 

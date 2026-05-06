@@ -343,23 +343,29 @@ export default function ContentCard({
     if (onVisualResult) onVisualResult(patch)
   }
 
-  // Resolve slide count. When the item was made by Carousel Lounge it carries
-  // arcId — the authoritative slide count lives in carouselArcs.ts (the server
-  // rejects slideIndex >= arc.slides.length with a 400, so the client MUST
-  // match). For the legacy non-Lounge path, fall back to the content-driven
-  // buildSlideArc helper.
+  // Resolve slide count. Priority order:
+  //   1. Research-driven slides (slideCount == researchSlides.length) — wins
+  //      when the selected research result defined the arc itself.
+  //   2. Static Lounge arc lookup via carouselArcs.ts.
+  //   3. Legacy non-Lounge buildSlideArc fallback.
+  // Server validates slideIndex against the array length, so client must match.
   const gv = item.generatedVisual
   const loungeArc = gv?.arcId ? getCarouselArc(gv.arcId) : undefined
-  const arcLength = loungeArc
-    ? loungeArc.slides.length
-    : gv
-      ? buildSlideArc(
-          gv.hook,
-          gv.caption,
-          gv.flavor || 'Amped Apple',
-          getFlavorTheme(gv.flavor || 'Amped Apple').strainType || '',
-        ).length
-      : 7
+  const arcLength =
+    gv?.researchSlides && gv.researchSlides.length >= 2
+      ? gv.researchSlides.length
+      : loungeArc
+        ? loungeArc.slides.length
+        : gv?.slideCount && gv.slideCount >= 2
+          ? gv.slideCount
+          : gv
+            ? buildSlideArc(
+                gv.hook,
+                gv.caption,
+                gv.flavor || 'Amped Apple',
+                getFlavorTheme(gv.flavor || 'Amped Apple').strainType || '',
+              ).length
+            : 7
   const slideCount = arcLength
 
   useEffect(() => {
@@ -496,6 +502,12 @@ export default function ContentCard({
                   carouselSeed={item.generatedVisual.carouselSeed ?? 0}
                   {...(item.generatedVisual.researchAngle ? { researchAngle: item.generatedVisual.researchAngle } : {})}
                   {...(item.generatedVisual.researchNotes ? { researchNotes: item.generatedVisual.researchNotes } : {})}
+                  {...(item.generatedVisual.researchShotBrief
+                    ? { researchShotBrief: item.generatedVisual.researchShotBrief }
+                    : {})}
+                  {...(item.generatedVisual.researchSlides?.length
+                    ? { researchSlides: item.generatedVisual.researchSlides }
+                    : {})}
                   {...(item.generatedVisual.researchSourceUrls?.length
                     ? { researchSourceUrls: item.generatedVisual.researchSourceUrls }
                     : {})}

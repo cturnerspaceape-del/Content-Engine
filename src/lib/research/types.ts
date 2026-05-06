@@ -25,6 +25,11 @@ export interface ResearchedSeed {
   // visual treatment dominates the brand's default moodboard. Only seeded
   // for visual formats (image, carousel, reel, print).
   shotBrief?: string
+  // Carousel-only: per-slide visual briefs (length 2-7). When present, the
+  // selected ResearchedSeed defines both the carousel's slide count and what
+  // each slide visually depicts — supersedes the static carouselArcs.ts
+  // template lookup.
+  slides?: { brief: string }[]
 }
 
 export interface ResearchResult {

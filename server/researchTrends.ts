@@ -27,10 +27,10 @@ const FORMAT_PLAYBOOKS: Record<ResearchFormat, string> = {
   Voice: confident one-liner energy — group-chat dispatch, not a brochure.
   Structure: one frame does the whole job — hook + payoff in a single image.
   Winning patterns: drop reveal hero, mood-board flat-lay, sticker-pop product portrait, "future cool" still life.`,
-  carousel: `A multi-slide Instagram carousel arc (5-7 slides).
+  carousel: `A multi-slide Instagram carousel arc (2-7 slides — pick the count that best fits your angle).
   Composition: cohesive palette + lighting across slides so the set reads as one shoot; anchor product hero appears in slide 1 and the payoff slide.
   Voice: group-chat narrator — short captions per slide, build a beat.
-  Structure: slide 1 = pattern interrupt / hook, slides 2-5 = build (one beat per slide), slide 6 = payoff or reveal, slide 7 = CTA.
+  Structure: slide 1 = pattern interrupt / hook, middle slides = build (one beat per slide), final slide = payoff / CTA. For shorter arcs (2-3 slides), collapse into hook + payoff or hook + build + payoff.
   Winning patterns: before/after reveals, day-in-the-life arcs, drop tease build-up, "5 things" / numbered list, founder annotations on a single shoot.`,
   reel: `A short vertical Instagram/TikTok reel (9:16, 7-15s).
   Composition: 9:16 portrait, captions-on by default, hook frame designed to read in 3 seconds with zero context.
@@ -119,6 +119,18 @@ function buildPrompt(format: ResearchFormat, scope: ScopeArgs): string {
       "shotBrief": "<1-3 short lines describing the EXACT visual treatment the image model should execute. Be specific and executable — name the scene, framing, lighting, camera/film stock, and any styling notes. Examples: 'passport-booth headshot, harsh overhead flash, neutral-blue backdrop, ID-card cropping' or '90s disposable-cam nightlife snapshot, on-camera flash, motion blur, low-saturation greens'. Do NOT use vague mood words like 'cool' or 'editorial'. This replaces the brand's default shot template, so write it as a directive, not a description.">`
     : ''
 
+  // Carousel only: each seed defines its own arc — both length (2-7 slides)
+  // and per-slide visual content. Each brief becomes the prompt for that
+  // slide's image generation, so write them as executable photo directives,
+  // not as captions.
+  const slidesLine = format === 'carousel'
+    ? `,
+      "slides": [
+        { "brief": "<executable photo directive for slide 1 — scene, framing, lighting, styling. Same specificity bar as shotBrief; this drives that slide's image gen prompt directly.>" }
+        // 2-7 entries total. Length is YOUR choice based on the angle: tight 3-slide arcs and longer 6-7 slide build-ups are both valid. The full set must read as one cohesive shoot — same palette, lighting register, and styling logic across slides — varying scene/subject/framing per slide to build the beat described in your structure.
+      ]`
+    : ''
+
   return `You're researching trend signals for Space Ape, an ultra-premium cannabis live-resin vape brand. Their voice is "cool Charlie Sheen" — confident, fun, cosmic, sticker-pop. Founder admires these brands as creative references:
 
 ${brandList}
@@ -144,7 +156,7 @@ Return ONLY a JSON object with this exact shape (no markdown fences, no commenta
       "sourceBrands": ["<which admired brand inspired this — pick from the list above, can be multiple>"],
       "sourceNotes": "<short observation from web_search: what the brand actually did, with a date or campaign name where possible>",
       "sourceUrls": ["<page URLs from your web_search results that show this trend in action — up to 3, only include URLs you actually retrieved; omit the field if none>"],
-      "sourceImageUrls": ["<direct image URLs (jpg/png/webp) from your web_search results — up to 3, only include if you actually saw them in results; omit if none. These will be downloaded as visual references for image generation, so prefer hero/lookbook/campaign shots over thumbnails>"]${shotBriefLine}
+      "sourceImageUrls": ["<direct image URLs (jpg/png/webp) from your web_search results — up to 3, only include if you actually saw them in results; omit if none. These will be downloaded as visual references for image generation, so prefer hero/lookbook/campaign shots over thumbnails>"]${shotBriefLine}${slidesLine}
     }
   ]
 }`
@@ -159,9 +171,28 @@ interface RawSeed {
   sourceUrls?: unknown
   sourceImageUrls?: unknown
   shotBrief?: unknown
+  slides?: unknown
 }
 
 const MAX_URLS_PER_SEED = 3
+const CAROUSEL_MIN_SLIDES = 2
+const CAROUSEL_MAX_SLIDES = 7
+
+function normalizeSlides(raw: unknown): { brief: string }[] | null {
+  if (!Array.isArray(raw)) return null
+  const out: { brief: string }[] = []
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue
+    const briefRaw = (entry as { brief?: unknown }).brief
+    if (typeof briefRaw !== 'string') continue
+    const brief = briefRaw.trim()
+    if (!brief) continue
+    out.push({ brief })
+    if (out.length >= CAROUSEL_MAX_SLIDES) break
+  }
+  if (out.length < CAROUSEL_MIN_SLIDES) return null
+  return out
+}
 
 function normalizeUrlList(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
@@ -207,6 +238,7 @@ function normalizeSeed(raw: RawSeed): ResearchedSeed | null {
   const sourceUrls = normalizeUrlList(raw.sourceUrls)
   const sourceImageUrls = normalizeUrlList(raw.sourceImageUrls)
   const shotBrief = typeof raw.shotBrief === 'string' ? raw.shotBrief.trim() : ''
+  const slides = normalizeSlides(raw.slides)
   return {
     pillar,
     subcategory,
@@ -216,6 +248,7 @@ function normalizeSeed(raw: RawSeed): ResearchedSeed | null {
     ...(sourceUrls.length > 0 ? { sourceUrls } : {}),
     ...(sourceImageUrls.length > 0 ? { sourceImageUrls } : {}),
     ...(shotBrief.length > 0 ? { shotBrief } : {}),
+    ...(slides ? { slides } : {}),
   }
 }
 

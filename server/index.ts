@@ -9,6 +9,7 @@ import { generateEmailImageHandler } from './generateEmailImage'
 import { generatePrintImageHandler } from './generatePrintImage'
 import { generateCaptionHandler } from './generateCaption'
 import { researchTrendsHandler } from './researchTrends'
+import { editImageHandler } from './editImage'
 import { publishToInstagramHandler, getInstagramAccountHandler } from './instagramHandler'
 import { getInstagramDebugHandler } from './instagramDebugHandler'
 import { publishToFacebookHandler, getFacebookAccountHandler } from './facebookHandler'
@@ -40,6 +41,7 @@ if (process.env.DISABLE_GENERATION === '1') {
   app.post('/api/generate-print-image', deny)
   app.post('/api/generate-caption', deny)
   app.post('/api/research-trends', deny)
+  app.post('/api/edit-image', deny)
   console.warn('[api] DISABLE_GENERATION=1 — all generate-* routes return 503')
 } else {
   app.post('/api/generate-single-image', generateSingleImageHandler)
@@ -50,6 +52,7 @@ if (process.env.DISABLE_GENERATION === '1') {
   app.post('/api/generate-print-image', generatePrintImageHandler)
   app.post('/api/generate-caption', generateCaptionHandler)
   app.post('/api/research-trends', researchTrendsHandler)
+  app.post('/api/edit-image', editImageHandler)
 }
 
 // Instagram publishing — always enabled (the kill-switch covers cost-accruing

@@ -3,6 +3,10 @@ import EmailTypePicker from '../email/EmailTypePicker'
 import AudienceToggle from '../email/AudienceToggle'
 import EmailPreview from '../email/EmailPreview'
 import EmailEditor, { type ReRollTarget } from '../email/EmailEditor'
+import ScheduleModal, { buildTakenSlots } from '../ScheduleModal'
+import ImageEditModal from '../ImageEditModal'
+import GeneratingPlaceholder from '../ui/GeneratingPlaceholder'
+import type { ScheduledPost } from '../../types'
 import { usePersistedState } from '../../utils/persistedState'
 import { composeHtml } from '../../lib/email/composeHtml'
 import { generateEmail, generateEmailImage } from '../../lib/email/api'
@@ -22,6 +26,8 @@ import type { ResearchedSeed } from '../../lib/research/types'
 
 interface EmailLabProps {
   onBack: () => void
+  scheduledPosts: ScheduledPost[]
+  onSchedulePost: (post: ScheduledPost) => void
 }
 
 const DEFAULT_CAMPAIGN: EmailCampaign = {
@@ -51,7 +57,7 @@ function buildHistoricalContext(campaign: EmailCampaign): string | undefined {
   return items.length > 0 ? items.join('\n') : undefined
 }
 
-export default function EmailLab({ onBack }: EmailLabProps) {
+export default function EmailLab({ onBack, scheduledPosts, onSchedulePost }: EmailLabProps) {
   const [campaign, setCampaign] = usePersistedState<EmailCampaign>(
     'sl:emailLab:campaign',
     () => DEFAULT_CAMPAIGN,
@@ -75,6 +81,27 @@ export default function EmailLab({ onBack }: EmailLabProps) {
   const [sendStatus, setSendStatus] = useState<{ kind: 'sent' | 'error'; text: string } | null>(
     null,
   )
+  const [schedulingOpen, setSchedulingOpen] = useState(false)
+  const [editingTarget, setEditingTarget] = useState<ReRollTarget | null>(null)
+
+  const handleConfirmSchedule = (date: string, time: string) => {
+    if (!campaign.email) return
+    const post: ScheduledPost = {
+      id: `sched-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      date,
+      time,
+      platform: 'Email',
+      format: campaign.emailType,
+      idea: campaign.email.subject ?? campaign.campaignName,
+      email: campaign.email,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    }
+    onSchedulePost(post)
+    setSchedulingOpen(false)
+    setSendStatus({ kind: 'sent', text: `📅 Locked in for ${date} at ${time}` })
+    window.setTimeout(() => setSendStatus(null), 4000)
+  }
 
   // Active research seed index. -1 = nothing picked yet — Generate stays
   // disabled until the user explicitly chooses one of the 3 strategies.
@@ -150,7 +177,10 @@ export default function EmailLab({ onBack }: EmailLabProps) {
         variationSeed,
         campaignNote,
       })
-      const hydrated = await hydrateImages(email)
+      const hydrated = await hydrateImages(email, undefined, {
+        sourceUrls: activeResearchSeed?.sourceUrls,
+        sourceImageUrls: activeResearchSeed?.sourceImageUrls,
+      })
       setCampaign((cur) => ({
         ...cur,
         audienceType: audience,
@@ -276,7 +306,13 @@ export default function EmailLab({ onBack }: EmailLabProps) {
 
       const variationSeed = Math.floor(Math.random() * 1e9)
       try {
-        const r = await generateEmailImage({ slot, prompt, variationSeed })
+        const r = await generateEmailImage({
+          slot,
+          prompt,
+          variationSeed,
+          researchSourceUrls: activeResearchSeed?.sourceUrls,
+          researchSourceImageUrls: activeResearchSeed?.sourceImageUrls,
+        })
         setCampaign((curCampaign) => {
           if (!curCampaign.email) return curCampaign
           const sections = curCampaign.email.sections.map((s, i) => {
@@ -425,6 +461,7 @@ export default function EmailLab({ onBack }: EmailLabProps) {
                 email={campaign.email}
                 onChange={handleEdit}
                 onReRollImage={handleReRollImage}
+                onEditImage={(target) => setEditingTarget(target)}
                 busyKeys={reRollBusy}
               />
             ) : (
@@ -509,7 +546,7 @@ export default function EmailLab({ onBack }: EmailLabProps) {
                 boxShadow: 'var(--shadow-md)',
               }}
             >
-              {busy ? 'Generating…' : campaign.email ? '⚡ Regenerate' : '⚡ Generate email'}
+              {busy ? <GeneratingPlaceholder variant="inline" /> : campaign.email ? '⚡ Regenerate' : '⚡ Generate email'}
             </button>
             <button
               onClick={() => void handleSend()}
@@ -530,6 +567,19 @@ export default function EmailLab({ onBack }: EmailLabProps) {
               }}
             >
               {sendBusy ? 'Sending…' : '📤 Send'}
+            </button>
+            <button
+              onClick={() => setSchedulingOpen(true)}
+              disabled={!campaign.email || busy || sendBusy}
+              title={!campaign.email ? 'Generate an email first' : 'Schedule for later'}
+              className="text-sm font-bold px-6 py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: campaign.email ? 'rgba(139,92,246,.1)' : 'rgba(148,163,184,.1)',
+                color: campaign.email ? '#8b5cf6' : 'var(--muted)',
+                border: campaign.email ? '1px solid #8b5cf6' : '1px solid var(--border)',
+              }}
+            >
+              📅 Schedule
             </button>
           </div>
 
@@ -564,6 +614,68 @@ export default function EmailLab({ onBack }: EmailLabProps) {
           )}
         </div>
       </div>
+      {schedulingOpen && (
+        <ScheduleModal
+          label="this email"
+          platform="Email"
+          takenSlots={buildTakenSlots(scheduledPosts)}
+          onCancel={() => setSchedulingOpen(false)}
+          onConfirm={handleConfirmSchedule}
+        />
+      )}
+      {editingTarget &&
+        (() => {
+          const section = campaign.email?.sections[editingTarget.sectionIdx]
+          if (!section) return null
+          const url =
+            editingTarget.cellIdx == null
+              ? (section.data as HeroSectionData).imageUrl
+              : (section.data as ProductSectionData).cells[editingTarget.cellIdx]
+                  ?.imageUrl
+          if (!url) return null
+          const targetForClosure = editingTarget
+          const label =
+            editingTarget.cellIdx == null
+              ? 'hero image'
+              : `product ${editingTarget.cellIdx + 1}`
+          return (
+            <ImageEditModal
+              label={label}
+              imageUrl={url}
+              kind="email-image"
+              onCancel={() => setEditingTarget(null)}
+              onApplied={(newUrl) => {
+                setCampaign((curCampaign) => {
+                  if (!curCampaign.email) return curCampaign
+                  const sections = curCampaign.email.sections.map((s, i) => {
+                    if (i !== targetForClosure.sectionIdx) return s
+                    if (targetForClosure.cellIdx == null) {
+                      const heroData = s.data as HeroSectionData
+                      return {
+                        ...s,
+                        data: { ...heroData, imageUrl: newUrl, imageError: undefined },
+                      } as EmailSection
+                    }
+                    const productData = s.data as ProductSectionData
+                    const cells = productData.cells.map((c, idx) =>
+                      idx === targetForClosure.cellIdx
+                        ? { ...c, imageUrl: newUrl, imageError: undefined }
+                        : c,
+                    )
+                    return { ...s, data: { ...productData, cells } } as EmailSection
+                  })
+                  const nextEmail = { ...curCampaign.email, sections }
+                  return {
+                    ...curCampaign,
+                    email: nextEmail,
+                    cache: { ...curCampaign.cache, [curCampaign.audienceType]: nextEmail },
+                  }
+                })
+                setEditingTarget(null)
+              }}
+            />
+          )
+        })()}
     </div>
   )
 }

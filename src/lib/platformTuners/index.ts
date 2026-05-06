@@ -18,6 +18,9 @@ const TUNERS: Record<TunerPlatform, (source: TunerSource) => PlatformVariant> = 
 
 // Format → platforms compatible with that format. Used by PlatformPicker
 // to grey out non-applicable destinations.
+// Text supports IG/FB as a *cross-post target* (clipboard copy → user pastes
+// into Meta apps). Generation happens once; the IG/FB checkbox just adds it
+// to the cross-post set.
 export const FORMAT_PLATFORM_COMPAT: Record<
   TunerSource['format'],
   ReadonlyArray<TunerPlatform>
@@ -25,7 +28,7 @@ export const FORMAT_PLATFORM_COMPAT: Record<
   image: ['IG/FB', 'X', 'Threads'],
   video: ['IG/FB', 'X', 'Threads', 'TikTok', 'YouTube Shorts'],
   carousel: ['IG/FB', 'X', 'Threads'],
-  text: ['X', 'Threads'],
+  text: ['X', 'Threads', 'IG/FB'],
 }
 
 export function tuneFor(platform: TunerPlatform, source: TunerSource): PlatformVariant {

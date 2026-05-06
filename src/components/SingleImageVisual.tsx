@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Player } from '@remotion/player'
 import { SingleImage } from '../remotion/compositions'
 import type { SingleImageProps, SpaceApeFlavor } from '../remotion/types'
+import GeneratingPlaceholder from './ui/GeneratingPlaceholder'
 
 // Cast for @remotion/player's LooseComponentType constraint.
 const SingleImageComponent = SingleImage as unknown as React.FC<Record<string, unknown>>
@@ -136,14 +137,18 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
     setLocalUrl(null)
     setLocalError(null)
 
+    const PER_ATTEMPT_TIMEOUT_MS = 90_000
     const run = async () => {
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         if (cancelledRef.current) return
+        const ctrl = new AbortController()
+        const timeoutId = window.setTimeout(() => ctrl.abort(), PER_ATTEMPT_TIMEOUT_MS)
         try {
           const r = await fetch('/api/generate-single-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
+            signal: ctrl.signal,
           })
           const data = (await r.json()) as GenerateResponse | { error: string }
           if (cancelledRef.current) return
@@ -169,12 +174,19 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
           }
         } catch (err) {
           if (cancelledRef.current) return
-          const msg = err instanceof Error ? err.message : String(err)
+          const aborted = err instanceof Error && err.name === 'AbortError'
+          const msg = aborted
+            ? 'Generation timed out — try again.'
+            : err instanceof Error
+              ? err.message
+              : String(err)
           if (attempt === MAX_ATTEMPTS) {
             setLocalError(msg)
             onResultRef.current(null, msg)
             return
           }
+        } finally {
+          window.clearTimeout(timeoutId)
         }
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
@@ -210,49 +222,34 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
         style={{ width: '100%', height: '100%' }}
         inputProps={playerInputProps as unknown as Record<string, unknown>}
       />
-      {!localUrl && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            gap: 12,
-            color: '#fff',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-            pointerEvents: 'none',
-            padding: 24,
-            textAlign: 'center',
-            fontFamily: 'Inter, system-ui, sans-serif',
-          }}
-        >
-          {localError ? (
-            <>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>Generation failed</div>
-              <div style={{ fontSize: 12, opacity: 0.9, maxWidth: 360, lineHeight: 1.4 }}>
-                {localError}
-              </div>
-              <div style={{ fontSize: 11, opacity: 0.7 }}>Click Reroll to try again.</div>
-            </>
-          ) : (
-            <>
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.2)',
-                  animation: 'pulse-sil 1.6s ease-in-out infinite',
-                }}
-              />
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Generating image…</div>
-              <style>{`@keyframes pulse-sil { 0%,100% { transform: scale(0.9); opacity: 0.5; } 50% { transform: scale(1.05); opacity: 1; } }`}</style>
-            </>
-          )}
-        </div>
-      )}
+      {!localUrl &&
+        (localError ? (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: 12,
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+              pointerEvents: 'none',
+              padding: 24,
+              textAlign: 'center',
+              fontFamily: 'Inter, system-ui, sans-serif',
+            }}
+          >
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Generation failed</div>
+            <div style={{ fontSize: 12, opacity: 0.9, maxWidth: 360, lineHeight: 1.4 }}>
+              {localError}
+            </div>
+            <div style={{ fontSize: 11, opacity: 0.7 }}>Click Reroll to try again.</div>
+          </div>
+        ) : (
+          <GeneratingPlaceholder variant="tile" />
+        ))}
     </div>
   )
 }

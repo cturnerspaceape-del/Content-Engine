@@ -53,6 +53,8 @@ export async function generateEmailImage(args: {
   prompt: string
   flavor?: string
   variationSeed?: number
+  researchSourceUrls?: string[]
+  researchSourceImageUrls?: string[]
 }): Promise<GenerateEmailImageResponse> {
   const res = await fetch('/api/generate-email-image', {
     method: 'POST',

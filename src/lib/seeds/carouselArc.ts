@@ -4,6 +4,10 @@ export interface CarouselArcSeed {
   arcId: string
   pillar: ContentPillar
   subcategory: string
+  // Research-driven per-slide briefs. When present, supersedes the static
+  // arc lookup — slide count and per-slide visual content come from the
+  // user-selected ResearchedSeed.
+  slides?: { brief: string }[]
 }
 
 // Seed pool mirrors the nine carousel arcs from src/data/carouselArcs.ts.

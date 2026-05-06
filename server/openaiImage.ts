@@ -4,6 +4,7 @@
 // generateEmailImage) don't care which model is rendering.
 
 const OPENAI_EDITS_URL = 'https://api.openai.com/v1/images/edits'
+const OPENAI_GENERATIONS_URL = 'https://api.openai.com/v1/images/generations'
 
 function isRetryableError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err)
@@ -70,28 +71,45 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
     let lastErr: unknown = null
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        // Rebuild FormData each attempt — Blob streams are single-use.
-        const form = new FormData()
-        form.set('model', model)
-        form.set('prompt', prompt)
-        form.set('size', size)
-        form.set('n', '1')
-        for (let i = 0; i < refs.length; i++) {
-          const ref = refs[i]
-          const bytes = Buffer.from(ref.base64, 'base64')
-          const blob = new Blob([bytes], { type: ref.mime })
-          form.append('image[]', blob, extToFilename(ref.mime, i))
+        // Endpoint branch: /edits requires at least one reference image
+        // (`image[]`). When refs is empty, fall back to /generations so the
+        // call doesn't 400 with "Missing required parameter: 'image'".
+        let resp: Response
+        if (refs.length > 0) {
+          // Rebuild FormData each attempt — Blob streams are single-use.
+          const form = new FormData()
+          form.set('model', model)
+          form.set('prompt', prompt)
+          form.set('size', size)
+          form.set('n', '1')
+          for (let i = 0; i < refs.length; i++) {
+            const ref = refs[i]
+            const bytes = Buffer.from(ref.base64, 'base64')
+            const blob = new Blob([bytes], { type: ref.mime })
+            form.append('image[]', blob, extToFilename(ref.mime, i))
+          }
+          resp = await fetch(OPENAI_EDITS_URL, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${apiKey}` },
+            body: form,
+          })
+        } else {
+          resp = await fetch(OPENAI_GENERATIONS_URL, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ model, prompt, size, n: 1 }),
+          })
         }
-
-        const resp = await fetch(OPENAI_EDITS_URL, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${apiKey}` },
-          body: form,
-        })
 
         if (!resp.ok) {
           const text = await resp.text().catch(() => '')
-          throw new Error(`OpenAI ${resp.status} ${resp.statusText}: ${text.slice(0, 400)}`)
+          const endpoint = refs.length > 0 ? 'edits' : 'generations'
+          throw new Error(
+            `OpenAI ${resp.status} ${resp.statusText} (${endpoint}): ${text.slice(0, 400)}`,
+          )
         }
 
         const json = (await resp.json()) as {

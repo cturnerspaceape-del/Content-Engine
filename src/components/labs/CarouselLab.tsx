@@ -3,7 +3,8 @@ import ContentCard from '../ContentCard'
 import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
 import PostConfirmModal from '../PostConfirmModal'
-import type { ContentItem, ContentPillar, PostDestination } from '../../types'
+import ScheduleModal, { buildTakenSlots } from '../ScheduleModal'
+import type { ContentItem, ContentPillar, PostDestination, ScheduledPost } from '../../types'
 import { generateCarouselLoungePostAsync } from '../../data/instagramContentTemplates'
 import { getCarouselArc } from '../../data/carouselArcs'
 import { usePersistedState } from '../../utils/persistedState'
@@ -23,6 +24,8 @@ import { platformColors } from '../PlatformContentItem'
 
 interface CarouselLabProps {
   onBack: () => void
+  scheduledPosts: ScheduledPost[]
+  onSchedulePost: (post: ScheduledPost) => void
 }
 
 const SEED_PREFIX = 'Carousel Lab'
@@ -66,7 +69,7 @@ function tunerSourceFromItem(item: ContentItem): TunerSource {
 
 const PLACEHOLDER_TITLE = `${SEED_PREFIX} — awaiting research`
 
-export default function CarouselLab({ onBack }: CarouselLabProps) {
+export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: CarouselLabProps) {
   const [item, setItem] = usePersistedState<ContentItem>(
     'sl:carouselLab:item',
     () => makeSeed(PLACEHOLDER_TITLE),
@@ -172,9 +175,17 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
       ...(activeResearchSeed.sourceImageUrls?.length
         ? { sourceImageUrls: activeResearchSeed.sourceImageUrls }
         : {}),
+      ...(activeResearchSeed.slides?.length
+        ? { slides: activeResearchSeed.slides }
+        : {}),
     }
     const seed = toCarouselArcSeed(activeResearchSeed)
-    const generated = await generateCarouselLoungePostAsync(item, seed.arcId, research)
+    // Drop any prior generation when slide count changes — stale slideUrls
+    // sized for a different arc would freeze the new tiles.
+    const baseItem: ContentItem = item.generatedVisual
+      ? { ...item, generatedVisual: undefined }
+      : item
+    const generated = await generateCarouselLoungePostAsync(baseItem, seed.arcId, research)
     setItem(decorateTitle(generated, formatCarouselSeedTitle(SEED_PREFIX, seed)))
     setVariants({})
   }
@@ -242,6 +253,26 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
   const [postToast, setPostToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(
     null,
   )
+  const [schedulingOpen, setSchedulingOpen] = useState(false)
+
+  const handleConfirmSchedule = (date: string, time: string) => {
+    if (!item.generatedVisual?.slideUrls?.length) return
+    const post: ScheduledPost = {
+      id: `sched-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      date,
+      time,
+      platform: 'Instagram',
+      format: 'Carousel',
+      idea: item.title,
+      item,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    }
+    onSchedulePost(post)
+    setSchedulingOpen(false)
+    setPostToast({ kind: 'success', text: `📅 Locked in for ${date} at ${time}` })
+    window.setTimeout(() => setPostToast(null), 4000)
+  }
 
   const nonIgSelected = selectedPlatforms.filter((p) => p !== 'IG/FB')
 
@@ -420,20 +451,33 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
             </div>
 
             {item.generatedVisual?.slideUrls?.length ? (
-              <button
-                onClick={handleUnifiedPost}
-                disabled={postBusy}
-                className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                style={{
-                  background: 'rgba(59,130,246,.1)',
-                  border: '1px solid var(--accent)',
-                  color: 'var(--accent)',
-                }}
-              >
-                {postBusy
-                  ? 'Posting…'
-                  : `📤 Post to ${selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(', ')}`}
-              </button>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={handleUnifiedPost}
+                  disabled={postBusy}
+                  className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  style={{
+                    background: 'rgba(59,130,246,.1)',
+                    border: '1px solid var(--accent)',
+                    color: 'var(--accent)',
+                  }}
+                >
+                  {postBusy
+                    ? 'Posting…'
+                    : `📤 Post to ${selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(', ')}`}
+                </button>
+                <button
+                  onClick={() => setSchedulingOpen(true)}
+                  className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"
+                  style={{
+                    background: 'rgba(139,92,246,.1)',
+                    border: '1px solid #8b5cf6',
+                    color: '#8b5cf6',
+                  }}
+                >
+                  📅 Schedule
+                </button>
+              </div>
             ) : null}
 
             {postToast && (
@@ -467,6 +511,15 @@ export default function CarouselLab({ onBack }: CarouselLabProps) {
               setPostError(null)
             }}
             onConfirm={onConfirmUnifiedPost}
+          />
+        )}
+        {schedulingOpen && (
+          <ScheduleModal
+            label="this carousel"
+            platform="Instagram"
+            takenSlots={buildTakenSlots(scheduledPosts)}
+            onCancel={() => setSchedulingOpen(false)}
+            onConfirm={handleConfirmSchedule}
           />
         )}
       </div>

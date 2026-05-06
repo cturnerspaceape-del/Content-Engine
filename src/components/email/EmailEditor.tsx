@@ -19,6 +19,7 @@ interface EmailEditorProps {
   email: GeneratedEmail
   onChange: (next: GeneratedEmail) => void
   onReRollImage?: (target: ReRollTarget) => void
+  onEditImage?: (target: ReRollTarget) => void
   busyKeys?: ReadonlySet<string>
 }
 
@@ -84,6 +85,7 @@ export default function EmailEditor({
   email,
   onChange,
   onReRollImage,
+  onEditImage,
   busyKeys,
 }: EmailEditorProps) {
   return (
@@ -125,6 +127,7 @@ export default function EmailEditor({
           sectionIdx={idx}
           onPatch={(patch) => onChange(patchSection(email, idx, patch))}
           onReRollImage={onReRollImage}
+          onEditImage={onEditImage}
           busyKeys={busyKeys}
         />
       ))}
@@ -137,12 +140,14 @@ function ImageRow({
   imageError,
   busy,
   onReRoll,
+  onEdit,
   label,
 }: {
   imageUrl?: string
   imageError?: string
   busy: boolean
   onReRoll?: () => void
+  onEdit?: () => void
   label?: string
 }) {
   return (
@@ -217,15 +222,30 @@ function ImageRow({
           </div>
         )}
       </div>
-      {onReRoll && (
-        <button
-          onClick={onReRoll}
-          disabled={busy}
-          style={busy ? reRollBusyStyle : reRollBtnStyle}
-        >
-          {busy ? '…' : '🔀 Re-roll'}
-        </button>
-      )}
+      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        {onEdit && imageUrl && (
+          <button
+            onClick={onEdit}
+            disabled={busy}
+            style={
+              busy
+                ? { ...reRollBusyStyle, background: 'rgba(245,158,11,0.18)', color: '#f59e0b', borderColor: '#f59e0b55' }
+                : { ...reRollBtnStyle, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', borderColor: '#f59e0b55' }
+            }
+          >
+            ✏️ Edit
+          </button>
+        )}
+        {onReRoll && (
+          <button
+            onClick={onReRoll}
+            disabled={busy}
+            style={busy ? reRollBusyStyle : reRollBtnStyle}
+          >
+            {busy ? '…' : '🔀 Re-roll'}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -235,12 +255,14 @@ function SectionEditor({
   sectionIdx,
   onPatch,
   onReRollImage,
+  onEditImage,
   busyKeys,
 }: {
   section: EmailSection
   sectionIdx: number
   onPatch: (patch: Record<string, unknown>) => void
   onReRollImage?: (target: ReRollTarget) => void
+  onEditImage?: (target: ReRollTarget) => void
   busyKeys?: ReadonlySet<string>
 }) {
   const data = section.data as unknown as Record<string, unknown>
@@ -260,6 +282,7 @@ function SectionEditor({
             imageError={hero.imageError}
             busy={heroBusy}
             onReRoll={onReRollImage ? () => onReRollImage({ sectionIdx }) : undefined}
+            onEdit={onEditImage ? () => onEditImage({ sectionIdx }) : undefined}
             label="Hero image"
           />
           <input
@@ -330,6 +353,11 @@ function SectionEditor({
                     onReRoll={
                       onReRollImage
                         ? () => onReRollImage({ sectionIdx, cellIdx })
+                        : undefined
+                    }
+                    onEdit={
+                      onEditImage
+                        ? () => onEditImage({ sectionIdx, cellIdx })
                         : undefined
                     }
                     label={cell.name}

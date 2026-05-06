@@ -11,6 +11,10 @@ import type {
 export async function hydrateImages(
   email: GeneratedEmail,
   flavor?: string,
+  research?: {
+    sourceUrls?: string[]
+    sourceImageUrls?: string[]
+  },
 ): Promise<GeneratedEmail> {
   const tasks: Array<Promise<void>> = []
   const next: GeneratedEmail = {
@@ -20,13 +24,27 @@ export async function hydrateImages(
     ),
   }
 
+  // Per-email freshness: a single seed applied to every slot guarantees
+  // each Generate call hashes to a fresh cache entry, so two different
+  // email runs never share the same image.
+  const variationSeed = Date.now()
+  const researchSourceUrls = research?.sourceUrls
+  const researchSourceImageUrls = research?.sourceImageUrls
+
   for (const section of next.sections) {
     if (section.kind === 'hero') {
       const data = section.data as HeroSectionData
       const prompt = data.imagePrompt
       if (prompt && !data.imageUrl) {
         tasks.push(
-          generateEmailImage({ slot: 'hero', prompt, flavor })
+          generateEmailImage({
+            slot: 'hero',
+            prompt,
+            flavor,
+            variationSeed,
+            researchSourceUrls,
+            researchSourceImageUrls,
+          })
             .then((r) => {
               data.imageUrl = r.url
             })
@@ -43,7 +61,14 @@ export async function hydrateImages(
         const prompt = cell.imagePrompt
         if (prompt && !cell.imageUrl) {
           tasks.push(
-            generateEmailImage({ slot: 'product', prompt, flavor })
+            generateEmailImage({
+              slot: 'product',
+              prompt,
+              flavor,
+              variationSeed,
+              researchSourceUrls,
+              researchSourceImageUrls,
+            })
               .then((r) => {
                 cell.imageUrl = r.url
               })

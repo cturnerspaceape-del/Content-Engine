@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import GeneratingPlaceholder from '../ui/GeneratingPlaceholder'
 
 interface InlineSlotShellProps {
   hasContent: boolean
@@ -39,7 +40,7 @@ export default function InlineSlotShell({
             opacity: busy ? 0.6 : 1,
           }}
         >
-          {busy ? 'Generating…' : generateLabel}
+          {busy ? <GeneratingPlaceholder variant="inline" /> : generateLabel}
         </button>
         <p className="text-[10px] mt-2 italic" style={{ color: 'var(--muted)' }}>
           {emptyHint}
@@ -85,7 +86,7 @@ export default function InlineSlotShell({
               opacity: busy ? 0.6 : 1,
             }}
           >
-            {busy ? 'Working…' : '↻ Regen'}
+            {busy ? <GeneratingPlaceholder variant="inline" /> : '↻ Regen'}
           </button>
         )}
       </div>

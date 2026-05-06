@@ -500,6 +500,10 @@ export interface ResearchContext {
   // resolves these to images and uses them as inspo refs.
   sourceUrls?: string[]
   sourceImageUrls?: string[]
+  // Carousel-only: per-slide briefs from the selected research result.
+  // When present, the carousel arc length AND per-slide prompts come from
+  // research, superseding the static carouselArcs.ts template.
+  slides?: { brief: string }[]
 }
 
 export async function generateContentForPostAsync(
@@ -618,7 +622,14 @@ export async function generateCarouselLoungePostAsync(
   const pillar = pillarSubcat.split(':')[0]?.trim() || 'Product Centric'
   const subcategory = pillarSubcat.split(':')[1]?.trim() || ''
 
+  // Research-driven path: when the selected seed carries per-slide briefs,
+  // they define both slide count and per-slide content. Otherwise fall back
+  // to the static arc lookup.
+  const researchSlides = research?.slides && research.slides.length >= 2
+    ? research.slides.slice(0, 7)
+    : null
   const arc = (arcId && getCarouselArc(arcId)) || pickCarouselArc(pillar, subcategory)
+  const slideCount = researchSlides ? researchSlides.length : arc.slides.length
   const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
   const carouselSeed = Math.floor(Math.random() * 100_000)
 
@@ -645,7 +656,7 @@ export async function generateCarouselLoungePostAsync(
       subcategory,
       format: 'Carousel' as InstagramFormat,
       flavor,
-      slideCount: arc.slides.length,
+      slideCount,
       arcId: arc.id,
       carouselSeed,
       ...(research?.angle ? { researchAngle: research.angle } : {}),
@@ -655,6 +666,7 @@ export async function generateCarouselLoungePostAsync(
       ...(research?.sourceImageUrls?.length
         ? { researchSourceImageUrls: research.sourceImageUrls }
         : {}),
+      ...(researchSlides ? { researchSlides } : {}),
     },
   }
 }

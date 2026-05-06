@@ -145,7 +145,11 @@ export default function App() {
         )}
         {view === 'image-lab' && (
           <div className="fade-in">
-            <ImageLab onBack={() => switchView('home')} />
+            <ImageLab
+              onBack={() => switchView('home')}
+              scheduledPosts={scheduledPosts}
+              onSchedulePost={handleSchedulePost}
+            />
           </div>
         )}
         {view === 'reel-lab' && (
@@ -160,12 +164,20 @@ export default function App() {
         )}
         {view === 'carousel-lab' && (
           <div className="fade-in">
-            <CarouselLab onBack={() => switchView('home')} />
+            <CarouselLab
+              onBack={() => switchView('home')}
+              scheduledPosts={scheduledPosts}
+              onSchedulePost={handleSchedulePost}
+            />
           </div>
         )}
         {view === 'email-lab' && (
           <div className="fade-in">
-            <EmailLab onBack={() => switchView('home')} />
+            <EmailLab
+              onBack={() => switchView('home')}
+              scheduledPosts={scheduledPosts}
+              onSchedulePost={handleSchedulePost}
+            />
           </div>
         )}
         {view === 'print-lab' && (

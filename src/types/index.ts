@@ -108,6 +108,11 @@ export interface ContentItem {
     // of the static manifest pool.
     researchSourceUrls?: string[]
     researchSourceImageUrls?: string[]
+    // Carousel Lounge only — research-driven per-slide briefs. When present,
+    // CarouselLoungeVisual uses `researchSlides.length` as the slide count
+    // and `researchSlides[i].brief` as that slide's image prompt, replacing
+    // the static carouselArcs.ts template.
+    researchSlides?: { brief: string }[]
   }
 }
 

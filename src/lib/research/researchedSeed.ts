@@ -13,10 +13,19 @@ export function toPillarImageSeed(rs: ResearchedSeed): PillarImageSeed {
   return { pillar: rs.pillar, subcategory: rs.subcategory }
 }
 
-// Pick a carousel arc whose pillar affinity matches the researched seed.
-// Falls back to the first arc if no match — every existing arc has affinity
-// for at least one pillar so this should rarely trigger.
+// Build a carousel seed from a ResearchedSeed. When the seed carries a
+// per-slide `slides` array, that defines the arc — both length and content
+// come from research. Otherwise fall back to picking a static arc by
+// pillar affinity (legacy path, kept as defensive default).
 export function toCarouselArcSeed(rs: ResearchedSeed): CarouselArcSeed {
+  if (rs.slides && rs.slides.length >= 2) {
+    return {
+      arcId: 'research-driven',
+      pillar: rs.pillar,
+      subcategory: rs.subcategory,
+      slides: rs.slides,
+    }
+  }
   const matching = CAROUSEL_ARCS.find((a) => a.pillarAffinity.includes(rs.pillar))
   const arcId = matching?.id ?? CAROUSEL_ARCS[0].id
   return { arcId, pillar: rs.pillar, subcategory: rs.subcategory }

@@ -1,13 +1,15 @@
-// Research-driven email image generation. Mirrors the simplified
-// single-image flow: prompt verbatim + "photorealistic" + one random
-// brand ref. The `slot` field is preserved on the response (and in the
-// cache key) so hero and product cells live in separate cache slots
-// even when given identical prompts.
+// Research-driven email image generation. Mirrors the single-image flow
+// (research-inspo → brand-ref fallback) but layers an editorial / hero-grade
+// prompt suffix so email images read magazine-marketing rather than social-UGC.
+// The `slot` field is preserved on the response (and in the cache key) so
+// hero and product cells live in separate cache slots even when given
+// identical prompts.
 
 import type { Request, Response } from 'express'
 import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './openaiImage'
 import { loadReferenceByManifestKey, pickOneRandomBrandRef } from './referenceImages'
+import { resolveResearchInspo } from './researchInspo'
 
 interface GenerateEmailImageBody {
   slot: 'hero' | 'product'
@@ -17,10 +19,26 @@ interface GenerateEmailImageBody {
   // which flavor was associated with the image (used in copy + downstream
   // cards). Optional — falls back to a random pick.
   flavor?: string
+  // Research-resolved imagery (page URLs and direct image URLs from the
+  // selected ResearchedSeed). When provided AND a fetch succeeds, used as
+  // the reference instead of a random brand ref — same behavior as the
+  // single-image path.
+  researchSourceUrls?: string[]
+  researchSourceImageUrls?: string[]
   variationSeed?: number
 }
 
-const CACHE_VERSION = 3 // bumped for the simplified research-only flow
+// Editorial / hero-grade direction layered on top of the research prompt so
+// email images read magazine-marketing rather than social-UGC.
+const EMAIL_STYLE_SUFFIX = [
+  'photorealistic',
+  'premium editorial product photography',
+  'clean composition, soft studio lighting',
+  'magazine-grade hero image',
+  'Space Ape brand aesthetic — modern, hype-streetwear, future-cool',
+].join(', ')
+
+const CACHE_VERSION = 4 // v4: editorial suffix + research-inspo path
 
 const FALLBACK_FLAVORS = [
   'Amped Apple',
@@ -37,7 +55,7 @@ function pickFallbackFlavor(): string {
 export async function generateEmailImageHandler(req: Request, res: Response): Promise<void> {
   try {
     const body = (req.body ?? {}) as GenerateEmailImageBody
-    const { slot, variationSeed } = body
+    const { slot, variationSeed, researchSourceUrls, researchSourceImageUrls } = body
     const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : ''
     let { flavor } = body
 
@@ -47,7 +65,16 @@ export async function generateEmailImageHandler(req: Request, res: Response): Pr
     }
     if (!flavor) flavor = pickFallbackFlavor()
 
-    const brandRefKey = await pickOneRandomBrandRef()
+    // Reference resolution: research inspo first, then random brand ref.
+    // Mirrors generateSingleImage / generateCarouselSlide so email images
+    // anchor to the same on-trend imagery the other formats already use.
+    const researchInspo = await resolveResearchInspo({
+      sourceImageUrls: researchSourceImageUrls,
+      sourceUrls: researchSourceUrls,
+      max: 1,
+    })
+    const useResearchInspo = researchInspo.length > 0
+    const brandRefKey = useResearchInspo ? null : await pickOneRandomBrandRef()
 
     const hash = hashKey({
       v: CACHE_VERSION,
@@ -55,6 +82,14 @@ export async function generateEmailImageHandler(req: Request, res: Response): Pr
       slot,
       prompt,
       brandRef: brandRefKey,
+      ...(useResearchInspo
+        ? {
+            researchInspoUrls: [
+              ...(researchSourceImageUrls ?? []),
+              ...(researchSourceUrls ?? []),
+            ].sort(),
+          }
+        : {}),
       ...(typeof variationSeed === 'number' ? { variationSeed } : {}),
     })
     const { absPath, publicUrl } = cachePath(hash, 'email-image')
@@ -65,16 +100,23 @@ export async function generateEmailImageHandler(req: Request, res: Response): Pr
     }
 
     const references: ReferenceImage[] = []
-    if (brandRefKey) {
+    if (useResearchInspo) {
+      references.push(...researchInspo)
+    } else if (brandRefKey) {
       const loaded = await loadReferenceByManifestKey(brandRefKey)
       if (loaded) references.push(loaded)
     }
 
-    const fullPrompt = `${prompt}\n\nphotorealistic`
+    const fullPrompt = `${prompt}\n\n${EMAIL_STYLE_SUFFIX}`
 
     if (process.env.NODE_ENV !== 'production') {
+      const refLabel = useResearchInspo
+        ? `research(${references.length})`
+        : brandRefKey
+          ? `brand(${brandRefKey})`
+          : 'none'
       console.log(
-        `\n[generate-email-image] slot=${slot} ref=${brandRefKey ?? 'none'}\n${fullPrompt}\n`,
+        `\n[generate-email-image] slot=${slot} ref=${refLabel}\n${fullPrompt}\n`,
       )
     }
 

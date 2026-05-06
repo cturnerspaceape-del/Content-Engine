@@ -3,7 +3,9 @@ import ContentCard from '../ContentCard'
 import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
 import PostConfirmModal from '../PostConfirmModal'
-import type { ContentItem, ContentPillar, PostDestination } from '../../types'
+import ScheduleModal, { buildTakenSlots } from '../ScheduleModal'
+import ImageEditModal from '../ImageEditModal'
+import type { ContentItem, ContentPillar, PostDestination, ScheduledPost } from '../../types'
 import { generateContentForPostAsync } from '../../data/instagramContentTemplates'
 import { usePersistedState } from '../../utils/persistedState'
 import { postItemToSocials, summarizeSocialsResult } from '../../lib/postToInstagram'
@@ -22,6 +24,8 @@ import { platformColors } from '../PlatformContentItem'
 
 interface ImageLabProps {
   onBack: () => void
+  scheduledPosts: ScheduledPost[]
+  onSchedulePost: (post: ScheduledPost) => void
 }
 
 const SEED_PREFIX = 'Single Image'
@@ -58,7 +62,7 @@ function tunerSourceFromItem(item: ContentItem): TunerSource {
 
 const PLACEHOLDER_TITLE = `${SEED_PREFIX} — awaiting research`
 
-export default function ImageLab({ onBack }: ImageLabProps) {
+export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: ImageLabProps) {
   const [item, setItem] = usePersistedState<ContentItem>(
     'sl:imageLab:item',
     () => makeSeed(PLACEHOLDER_TITLE),
@@ -244,6 +248,27 @@ export default function ImageLab({ onBack }: ImageLabProps) {
   const [postToast, setPostToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(
     null,
   )
+  const [schedulingOpen, setSchedulingOpen] = useState(false)
+  const [editingOpen, setEditingOpen] = useState(false)
+
+  const handleConfirmSchedule = (date: string, time: string) => {
+    if (!item.generatedVisual?.imageUrl) return
+    const post: ScheduledPost = {
+      id: `sched-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      date,
+      time,
+      platform: 'Instagram',
+      format: 'Single Image',
+      idea: item.title,
+      item,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    }
+    onSchedulePost(post)
+    setSchedulingOpen(false)
+    setPostToast({ kind: 'success', text: `📅 Locked in for ${date} at ${time}` })
+    window.setTimeout(() => setPostToast(null), 4000)
+  }
 
   const nonIgSelected = selectedPlatforms.filter((p) => p !== 'IG/FB')
 
@@ -418,20 +443,44 @@ export default function ImageLab({ onBack }: ImageLabProps) {
             </div>
 
             {item.generatedVisual?.imageUrl && (
-              <button
-                onClick={handleUnifiedPost}
-                disabled={postBusy}
-                className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                style={{
-                  background: 'rgba(59,130,246,.1)',
-                  border: '1px solid var(--accent)',
-                  color: 'var(--accent)',
-                }}
-              >
-                {postBusy
-                  ? 'Posting…'
-                  : `📤 Post to ${selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(', ')}`}
-              </button>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={handleUnifiedPost}
+                  disabled={postBusy}
+                  className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  style={{
+                    background: 'rgba(59,130,246,.1)',
+                    border: '1px solid var(--accent)',
+                    color: 'var(--accent)',
+                  }}
+                >
+                  {postBusy
+                    ? 'Posting…'
+                    : `📤 Post to ${selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(', ')}`}
+                </button>
+                <button
+                  onClick={() => setEditingOpen(true)}
+                  className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"
+                  style={{
+                    background: 'rgba(245,158,11,.1)',
+                    border: '1px solid #f59e0b',
+                    color: '#f59e0b',
+                  }}
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  onClick={() => setSchedulingOpen(true)}
+                  className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"
+                  style={{
+                    background: 'rgba(139,92,246,.1)',
+                    border: '1px solid #8b5cf6',
+                    color: '#8b5cf6',
+                  }}
+                >
+                  📅 Schedule
+                </button>
+              </div>
             )}
 
             {postToast && (
@@ -465,6 +514,37 @@ export default function ImageLab({ onBack }: ImageLabProps) {
               setPostError(null)
             }}
             onConfirm={onConfirmUnifiedPost}
+          />
+        )}
+        {schedulingOpen && (
+          <ScheduleModal
+            label="this image"
+            platform="Instagram"
+            takenSlots={buildTakenSlots(scheduledPosts)}
+            onCancel={() => setSchedulingOpen(false)}
+            onConfirm={handleConfirmSchedule}
+          />
+        )}
+        {editingOpen && item.generatedVisual?.imageUrl && (
+          <ImageEditModal
+            label="this image"
+            imageUrl={item.generatedVisual.imageUrl}
+            kind="single-image"
+            onCancel={() => setEditingOpen(false)}
+            onApplied={(newUrl) => {
+              setItem((cur) => {
+                if (!cur.generatedVisual) return cur
+                return {
+                  ...cur,
+                  generatedVisual: {
+                    ...cur.generatedVisual,
+                    imageUrl: newUrl,
+                    imageError: undefined,
+                  },
+                }
+              })
+              setEditingOpen(false)
+            }}
           />
         )}
       </div>
