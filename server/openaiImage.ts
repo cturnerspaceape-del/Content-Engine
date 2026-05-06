@@ -3,6 +3,8 @@
 // sites (generateSingleImage, generateCarouselSlide, generatePrintImage,
 // generateEmailImage) don't care which model is rendering.
 
+import sharp from 'sharp'
+
 const OPENAI_EDITS_URL = 'https://api.openai.com/v1/images/edits'
 const OPENAI_GENERATIONS_URL = 'https://api.openai.com/v1/images/generations'
 
@@ -44,15 +46,29 @@ export interface GenerateImageInput {
   references: ReferenceImage[]
 }
 
-function extToFilename(mime: string, idx: number): string {
-  const ext = mime.includes('png')
-    ? 'png'
-    : mime.includes('webp')
-      ? 'webp'
-      : mime.includes('jpeg') || mime.includes('jpg')
-        ? 'jpg'
-        : 'png'
-  return `ref_${idx}.${ext}`
+// OpenAI's /v1/images/edits 400s on anything it can't decode cleanly: AVIF,
+// animated WebP/GIF, CMYK JPEGs, or bytes whose actual format doesn't match
+// the multipart filename/MIME (researchInspo.ts mislabels mismatches as PNG
+// — leftover from the Gemini backend that tolerated it). Sharp ignores the
+// claimed MIME, decodes from raw bytes, takes the first frame of any
+// animation, normalizes to sRGB RGB(A), caps dimensions, re-encodes as PNG.
+async function normalizeReferenceForOpenAI(ref: ReferenceImage): Promise<ReferenceImage | null> {
+  try {
+    const bytes = Buffer.from(ref.base64, 'base64')
+    const png = await sharp(bytes, { failOn: 'none', animated: false })
+      .rotate()
+      .resize({ width: 2048, height: 2048, fit: 'inside', withoutEnlargement: true })
+      .toColorspace('srgb')
+      .png()
+      .toBuffer()
+    return { mime: 'image/png', base64: png.toString('base64') }
+  } catch (err) {
+    console.warn(
+      '[openaiImage] dropped unreadable reference:',
+      err instanceof Error ? err.message : err,
+    )
+    return null
+  }
 }
 
 export async function generateImage({ prompt, references }: GenerateImageInput): Promise<Buffer> {
@@ -62,8 +78,13 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
   const size = process.env.OPENAI_IMAGE_SIZE || '1024x1024'
 
   // gpt-image-2 accepts up to 16 reference images via the edits endpoint.
-  // Trim defensively in case a caller passes more.
-  const refs = references.slice(0, 16)
+  // Trim defensively, then transcode each to clean sRGB PNG so OpenAI
+  // doesn't 400 on exotic formats / mislabeled bytes. Refs that fail to
+  // decode are dropped; if every ref drops, we fall through to /generations.
+  const trimmed = references.slice(0, 16)
+  const refs = (await Promise.all(trimmed.map(normalizeReferenceForOpenAI))).filter(
+    (r): r is ReferenceImage => r !== null,
+  )
 
   await acquire()
   try {
@@ -85,8 +106,8 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
           for (let i = 0; i < refs.length; i++) {
             const ref = refs[i]
             const bytes = Buffer.from(ref.base64, 'base64')
-            const blob = new Blob([bytes], { type: ref.mime })
-            form.append('image[]', blob, extToFilename(ref.mime, i))
+            const blob = new Blob([bytes], { type: 'image/png' })
+            form.append('image[]', blob, `ref_${i}.png`)
           }
           resp = await fetch(OPENAI_EDITS_URL, {
             method: 'POST',
