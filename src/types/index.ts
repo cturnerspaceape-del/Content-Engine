@@ -130,10 +130,8 @@ export interface DayContent {
 
 export type ViewState =
   | 'home'
-  | 'calendar'
   | 'scheduler'
   | 'day-detail'
-  | 'strategy'
   | 'postlog'
   | 'image-lab'
   | 'reel-lab'

@@ -1,4 +1,4 @@
-// OpenAI gpt-image-2 backend — drop-in replacement for the old gemini.ts
+// OpenAI gpt-image-1 backend — drop-in replacement for the old gemini.ts
 // generateImage() shape. Mirrors the same ReferenceImage interface so call
 // sites (generateSingleImage, generateCarouselSlide, generatePrintImage,
 // generateEmailImage) don't care which model is rendering.
@@ -62,10 +62,9 @@ export interface GenerateImageInput {
 
 // OpenAI's /v1/images/edits 400s on anything it can't decode cleanly: AVIF,
 // animated WebP/GIF, CMYK JPEGs, or bytes whose actual format doesn't match
-// the multipart filename/MIME (researchInspo.ts mislabels mismatches as PNG
-// — leftover from the Gemini backend that tolerated it). Sharp ignores the
-// claimed MIME, decodes from raw bytes, takes the first frame of any
-// animation, normalizes to sRGB RGB(A), caps dimensions, re-encodes as PNG.
+// the multipart filename/MIME. Sharp ignores the claimed MIME, decodes from
+// raw bytes, takes the first frame of any animation, normalizes to sRGB
+// RGB(A), caps dimensions, re-encodes as PNG.
 async function normalizeReferenceForOpenAI(ref: ReferenceImage): Promise<ReferenceImage | null> {
   try {
     const bytes = Buffer.from(ref.base64, 'base64')
@@ -88,7 +87,7 @@ async function normalizeReferenceForOpenAI(ref: ReferenceImage): Promise<Referen
 export async function generateImage({ prompt, references }: GenerateImageInput): Promise<Buffer> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
-  const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2'
+  const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1'
   const size = process.env.OPENAI_IMAGE_SIZE || '1024x1024'
 
   // gpt-image-2 accepts up to 16 reference images via the edits endpoint.
