@@ -53,6 +53,9 @@ export function VisualPreview({
             : {})}
           {...(item.generatedVisual.researchAngle ? { researchAngle: item.generatedVisual.researchAngle } : {})}
           {...(item.generatedVisual.researchNotes ? { researchNotes: item.generatedVisual.researchNotes } : {})}
+          {...(item.generatedVisual.researchShotBrief
+            ? { researchShotBrief: item.generatedVisual.researchShotBrief }
+            : {})}
           {...(item.generatedVisual.researchSourceUrls?.length
             ? { researchSourceUrls: item.generatedVisual.researchSourceUrls }
             : {})}
