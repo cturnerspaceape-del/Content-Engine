@@ -9,6 +9,7 @@ import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './openaiImage'
 import { loadRefsByKeys, pickFallbackFlavor } from './referenceImages'
 import { pickRefsForPrompt } from './pickRefsForPrompt'
+import { buildCompositeSuffix } from './compositeSuffix'
 import type { SpaceApeFlavor } from '../src/remotion/types'
 
 interface GenerateEmailImageBody {
@@ -28,7 +29,7 @@ const EMAIL_STYLE_SUFFIX = [
   'Space Ape brand aesthetic — modern, hype-streetwear, future-cool',
 ].join(', ')
 
-const CACHE_VERSION = 5 // smart-picker rollout
+const CACHE_VERSION = 6 // brand-ref-default + composite suffix
 
 export async function generateEmailImageHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -46,7 +47,7 @@ export async function generateEmailImageHandler(req: Request, res: Response): Pr
 
     const hash = hashKey({
       v: CACHE_VERSION,
-      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
+      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
       slot,
       prompt,
       flavor,
@@ -61,12 +62,7 @@ export async function generateEmailImageHandler(req: Request, res: Response): Pr
     }
 
     const refs: ReferenceImage[] = await loadRefsByKeys(picked.keys)
-    const hasProductRef = picked.keys.some((k) => k.startsWith('product/'))
-
-    const anchorClause = hasProductRef
-      ? '\n\nUse the reference image(s) above as visual anchors. Render the exact vape device shown — match its shape, label, color, and graphics precisely. Do not invent a different vape. Any aesthetic-only reference is for mood and palette guidance.'
-      : ''
-    const fullPrompt = `${prompt}\n\n${EMAIL_STYLE_SUFFIX}${anchorClause}`
+    const fullPrompt = `${prompt}\n\n${EMAIL_STYLE_SUFFIX}${buildCompositeSuffix(picked.keys)}`
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(

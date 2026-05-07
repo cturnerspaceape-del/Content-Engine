@@ -9,6 +9,7 @@ import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './openaiImage'
 import { loadRefsByKeys, pickFallbackFlavor } from './referenceImages'
 import { pickRefsForPrompt } from './pickRefsForPrompt'
+import { buildCompositeSuffix } from './compositeSuffix'
 import type { SpaceApeFlavor } from '../src/remotion/types'
 
 interface GenerateBody {
@@ -22,7 +23,7 @@ interface GenerateBody {
   variationSeed?: number
 }
 
-const CACHE_VERSION = 10 // smart-picker rollout
+const CACHE_VERSION = 11 // brand-ref-default + composite suffix
 
 export async function generateSingleImageHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -48,7 +49,7 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
 
     const hash = hashKey({
       v: CACHE_VERSION,
-      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
+      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
       prompt,
       flavor,
       pickedKeys: [...picked.keys].sort(),
@@ -65,15 +66,8 @@ export async function generateSingleImageHandler(req: Request, res: Response): P
     const refs: ReferenceImage[] = await loadRefsByKeys(picked.keys)
     const tRefs = Date.now()
     console.log(`[generate-single-image ${reqId}] refload=${tRefs - tPicker}ms count=${refs.length}`)
-    const hasProductRef = picked.keys.some((k) => k.startsWith('product/'))
 
-    // Anchor clause only when a product ref is actually being sent — for
-    // ref-less / aesthetic-only generations the binding instruction would
-    // be misleading.
-    const suffix = hasProductRef
-      ? '\n\nUse the reference image(s) above as visual anchors. Render the exact vape device shown — match its shape, label, color, and graphics precisely. Do not invent a different vape. Any aesthetic-only reference is for mood and palette guidance.'
-      : ''
-    const fullPrompt = `${prompt}\n\nphotorealistic${suffix}`
+    const fullPrompt = `${prompt}\n\nphotorealistic${buildCompositeSuffix(picked.keys)}`
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(

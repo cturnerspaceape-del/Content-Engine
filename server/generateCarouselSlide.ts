@@ -9,6 +9,7 @@ import { cachePath, exists, hashKey, writePng } from './cache'
 import { generateImage, type ReferenceImage } from './openaiImage'
 import { loadRefsByKeys, pickFallbackFlavor } from './referenceImages'
 import { pickRefsForPrompt } from './pickRefsForPrompt'
+import { buildCompositeSuffix } from './compositeSuffix'
 import type { SpaceApeFlavor } from '../src/remotion/types'
 
 interface GenerateBody {
@@ -19,7 +20,7 @@ interface GenerateBody {
   flavor?: SpaceApeFlavor
 }
 
-const CACHE_VERSION = 7 // smart-picker rollout
+const CACHE_VERSION = 8 // brand-ref-default + composite suffix
 
 export async function generateCarouselSlideHandler(req: Request, res: Response): Promise<void> {
   try {
@@ -45,7 +46,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
 
     const hash = hashKey({
       v: CACHE_VERSION,
-      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
+      imageModel: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
       prompt,
       slideIndex,
       carouselSeed,
@@ -61,12 +62,7 @@ export async function generateCarouselSlideHandler(req: Request, res: Response):
     }
 
     const refs: ReferenceImage[] = await loadRefsByKeys(picked.keys)
-    const hasProductRef = picked.keys.some((k) => k.startsWith('product/'))
-
-    const suffix = hasProductRef
-      ? '\n\nUse the reference image(s) above as visual anchors. Render the exact vape device shown — match its shape, label, color, and graphics precisely. Do not invent a different vape. Any aesthetic-only reference is for mood and palette guidance.'
-      : ''
-    const fullPrompt = `${prompt}\n\nphotorealistic${suffix}`
+    const fullPrompt = `${prompt}\n\nphotorealistic${buildCompositeSuffix(picked.keys)}`
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(
