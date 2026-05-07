@@ -1,145 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Thumbnail } from '@remotion/player'
 import type { ContentItem, PostDestination } from '../types'
-import { Carousel } from '../remotion/compositions'
 import { buildSlideArc } from '../remotion/compositions/Carousel'
 import { getCarouselArc } from '../data/carouselArcs'
 import { getFlavorTheme } from '../remotion/flavorThemes'
-import type { CarouselProps } from '../remotion/types'
-import PostConfirmModal, {
-  formatHashtagsForInput,
-  parseHashtagInput,
-  type PostConfirmOptions,
-} from './PostConfirmModal'
-import CaptionEditDialog from './CaptionEditDialog'
-
-// Cast component to satisfy Thumbnail LooseComponentType constraint
-const CarouselComponent = Carousel as unknown as React.FC<Record<string, unknown>>
+import PostConfirmModal, { type PostConfirmOptions } from './PostConfirmModal'
 import { platformColors } from './PlatformContentItem'
-import SingleImageVisual from './SingleImageVisual'
-import CarouselLoungeVisual from './CarouselLoungeVisual'
-
-const formatColors: Record<string, string> = {
-  'Carousel': '#a855f7',
-  'Reel': '#ec4899',
-  'Single Image': '#3b82f6',
-}
-
-// Gradient pairs for mock visuals
-const gradientSets = [
-  ['#667eea', '#764ba2'],
-  ['#f093fb', '#f5576c'],
-  ['#4facfe', '#00f2fe'],
-  ['#43e97b', '#38f9d7'],
-  ['#fa709a', '#fee140'],
-  ['#a18cd1', '#fbc2eb'],
-  ['#fccb90', '#d57eeb'],
-  ['#e0c3fc', '#8ec5fc'],
-]
-
-function pickGradient(seed: string) {
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
-  return gradientSets[Math.abs(h) % gradientSets.length]
-}
-
-function MockVisual({ format, pillar, accentColor }: { format: string; pillar: string; accentColor: string }) {
-  const [g1, g2] = pickGradient(pillar + format)
-  const bg = `linear-gradient(135deg, ${g1}, ${g2})`
-
-  if (format === 'Carousel') {
-    return (
-      <div className="flex gap-1.5 mb-3 overflow-hidden rounded-lg" style={{ height: 90 }}>
-        {[0, 1, 2, 3].map((i) => {
-          const [cg1, cg2] = pickGradient(pillar + format + i)
-          return (
-            <div
-              key={i}
-              className="flex-1 rounded-md flex items-center justify-center"
-              style={{
-                background: `linear-gradient(135deg, ${cg1}, ${cg2})`,
-                minWidth: 50,
-                opacity: i === 0 ? 1 : 0.7 - i * 0.15,
-              }}
-            >
-              <span className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,.7)' }}>
-                {i + 1}
-              </span>
-            </div>
-          )
-        })}
-        <div
-          className="flex items-center justify-center rounded-md px-1"
-          style={{ background: 'var(--panel-2)', minWidth: 30 }}
-        >
-          <span className="text-[9px]" style={{ color: 'var(--muted)' }}>+6</span>
-        </div>
-      </div>
-    )
-  }
-
-  // Single Image
-  return (
-    <div className="rounded-lg overflow-hidden mb-3" style={{ background: bg, height: 120, position: 'relative' }}>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div
-          className="px-3 py-1.5 rounded-full"
-          style={{ background: 'rgba(255,255,255,.25)', backdropFilter: 'blur(4px)' }}
-        >
-          <span className="text-[10px] font-bold" style={{ color: '#fff' }}>📸 1:1</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CarouselNav({ current, total, onPrev, onNext }: {
-  current: number
-  total: number
-  onPrev: () => void
-  onNext: () => void
-}) {
-  return (
-    <>
-      <div style={{
-        position: 'absolute', top: 6, right: 6,
-        background: 'rgba(0,0,0,0.5)', color: '#fff',
-        fontSize: 9, fontWeight: 700, padding: '2px 6px',
-        borderRadius: 4, letterSpacing: '0.05em',
-      }}>
-        {current + 1} / {total}
-      </div>
-      {current > 0 && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onPrev() }}
-          style={{
-            position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)',
-            width: 22, height: 22, borderRadius: '50%',
-            background: 'rgba(0,0,0,0.4)', border: 'none',
-            color: '#fff', fontSize: 10, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          ‹
-        </button>
-      )}
-      {current < total - 1 && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onNext() }}
-          style={{
-            position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
-            width: 22, height: 22, borderRadius: '50%',
-            background: 'rgba(0,0,0,0.4)', border: 'none',
-            color: '#fff', fontSize: 10, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          ›
-        </button>
-      )}
-    </>
-  )
-}
+import { formatColors } from './ContentCard/constants'
+import { VisualPreview } from './ContentCard/VisualPreview'
+import { ContentArea } from './ContentCard/ContentArea'
+import { ActionButtons } from './ContentCard/ActionButtons'
 
 type VisualPatch = Partial<NonNullable<ContentItem['generatedVisual']>>
 
@@ -190,22 +59,13 @@ export default function ContentCard({
   const formatColor = formatColors[item.contentType] || '#a855f7'
   const platformColor = platformColors[item.platform] || formatColor
   const accentColor = formatColor // used by MockVisual + hashtag color
-  const isGenerated = item.generated
-  const isLogged = item.logged
+  const isGenerated = item.generated ?? false
+  const isLogged = item.logged ?? false
 
   const [currentSlide, setCurrentSlide] = useState(0)
   const [postState, setPostState] = useState<'idle' | 'confirming' | 'posting' | 'error'>('idle')
   const [postErrorMessage, setPostErrorMessage] = useState<string | null>(item.postError ?? null)
   const [facebookWarning, setFacebookWarning] = useState<string | null>(item.facebookError ?? null)
-  const [cardEditState, setCardEditState] = useState<{
-    open: boolean
-    captionDraft: string
-    hashtagInputDraft: string
-  }>({
-    open: false,
-    captionDraft: '',
-    hashtagInputDraft: '',
-  })
   const isPosted = Boolean(item.postedToInstagram)
   const isCrossPostedFacebook = Boolean(item.postedToFacebook)
 
@@ -359,206 +219,27 @@ export default function ContentCard({
         <div className="mb-3" style={{ borderBottom: '1px solid var(--border)' }} />
 
         {/* Visual preview — Remotion compositions or mock fallback */}
-        {isGenerated && item.generatedVisual ? (
-          format === 'Single Image' ? (
-            <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1' }}>
-              <SingleImageVisual
-                flavor={(item.generatedVisual.flavor || 'Amped Apple') as React.ComponentProps<typeof SingleImageVisual>['flavor']}
-                hook={item.generatedVisual.hook}
-                caption={item.generatedVisual.caption}
-                hashtags={item.generatedVisual.hashtags}
-                pillar={item.generatedVisual.pillar}
-                subcategory={item.generatedVisual.subcategory}
-                {...(item.generatedVisual.shotTemplateId ? { shotTemplateId: item.generatedVisual.shotTemplateId } : {})}
-                {...(typeof item.generatedVisual.imageVariationSeed === 'number'
-                  ? { variationSeed: item.generatedVisual.imageVariationSeed }
-                  : {})}
-                {...(item.generatedVisual.researchAngle ? { researchAngle: item.generatedVisual.researchAngle } : {})}
-                {...(item.generatedVisual.researchNotes ? { researchNotes: item.generatedVisual.researchNotes } : {})}
-                {...(item.generatedVisual.researchSourceUrls?.length
-                  ? { researchSourceUrls: item.generatedVisual.researchSourceUrls }
-                  : {})}
-                {...(item.generatedVisual.researchSourceImageUrls?.length
-                  ? { researchSourceImageUrls: item.generatedVisual.researchSourceImageUrls }
-                  : {})}
-                {...(item.generatedVisual.imageUrl ? { imageUrl: item.generatedVisual.imageUrl } : {})}
-                {...(item.generatedVisual.imageError ? { imageError: item.generatedVisual.imageError } : {})}
-                onResult={(url, error) => {
-                  applyPatch({
-                    imageUrl: url ?? undefined,
-                    imageError: error ?? undefined,
-                  })
-                }}
-              />
-            </div>
-          ) : format === 'Carousel' ? (
-            item.generatedVisual.arcId ? (
-              <div className="mb-3">
-                <CarouselLoungeVisual
-                  flavor={(item.generatedVisual.flavor || 'Amped Apple') as CarouselProps['flavor']}
-                  hook={item.generatedVisual.hook}
-                  caption={item.generatedVisual.caption}
-                  pillar={item.generatedVisual.pillar}
-                  subcategory={item.generatedVisual.subcategory}
-                  arcId={item.generatedVisual.arcId}
-                  slideCount={slideCount}
-                  carouselSeed={item.generatedVisual.carouselSeed ?? 0}
-                  {...(item.generatedVisual.researchAngle ? { researchAngle: item.generatedVisual.researchAngle } : {})}
-                  {...(item.generatedVisual.researchNotes ? { researchNotes: item.generatedVisual.researchNotes } : {})}
-                  {...(item.generatedVisual.researchShotBrief
-                    ? { researchShotBrief: item.generatedVisual.researchShotBrief }
-                    : {})}
-                  {...(item.generatedVisual.researchSlides?.length
-                    ? { researchSlides: item.generatedVisual.researchSlides }
-                    : {})}
-                  {...(item.generatedVisual.researchSourceUrls?.length
-                    ? { researchSourceUrls: item.generatedVisual.researchSourceUrls }
-                    : {})}
-                  {...(item.generatedVisual.researchSourceImageUrls?.length
-                    ? { researchSourceImageUrls: item.generatedVisual.researchSourceImageUrls }
-                    : {})}
-                  {...(item.generatedVisual.slideUrls ? { slideUrls: item.generatedVisual.slideUrls } : {})}
-                  {...(item.generatedVisual.slideErrors ? { slideErrors: item.generatedVisual.slideErrors } : {})}
-                  {...(item.generatedVisual.slideVariationSeeds
-                    ? { slideVariationSeeds: item.generatedVisual.slideVariationSeeds }
-                    : {})}
-                  onSlideResult={(i, url, error, vseed) => {
-                    const prevUrls = item.generatedVisual?.slideUrls ?? Array(slideCount).fill(null)
-                    const prevErrors = item.generatedVisual?.slideErrors ?? Array(slideCount).fill(null)
-                    const prevSeeds = item.generatedVisual?.slideVariationSeeds ?? Array(slideCount).fill(undefined)
-                    const nextUrls = prevUrls.slice()
-                    const nextErrors = prevErrors.slice()
-                    const nextSeeds = prevSeeds.slice()
-                    nextUrls[i] = url
-                    nextErrors[i] = error
-                    nextSeeds[i] = vseed
-                    applyPatch({
-                      slideUrls: nextUrls,
-                      slideErrors: nextErrors,
-                      slideVariationSeeds: nextSeeds,
-                    })
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="rounded-lg overflow-hidden mb-3" style={{ aspectRatio: '1/1', position: 'relative' }}>
-                <Thumbnail
-                  component={CarouselComponent}
-                  compositionWidth={1080}
-                  compositionHeight={1080}
-                  durationInFrames={slideCount * 45}
-                  fps={30}
-                  frameToDisplay={Math.min(currentSlide * 45 + 30, slideCount * 45 - 1)}
-                  style={{ width: '100%', height: '100%' }}
-                  inputProps={{
-                    flavor: (item.generatedVisual.flavor || 'Amped Apple') as CarouselProps['flavor'],
-                    hook: item.generatedVisual.hook,
-                    caption: item.generatedVisual.caption,
-                    hashtags: item.generatedVisual.hashtags,
-                    pillar: item.generatedVisual.pillar,
-                    subcategory: item.generatedVisual.subcategory,
-                    layoutTemplate: item.generatedVisual.layoutTemplate || 1,
-                    slideCount: slideCount,
-                  }}
-                />
-                <CarouselNav
-                  current={currentSlide}
-                  total={slideCount}
-                  onPrev={() => setCurrentSlide(s => Math.max(0, s - 1))}
-                  onNext={() => setCurrentSlide(s => Math.min(slideCount - 1, s + 1))}
-                />
-              </div>
-            )
-          ) : (
-            <MockVisual format={format} pillar={pillar} accentColor={accentColor} />
-          )
-        ) : isGenerated ? (
-          <MockVisual format={format} pillar={pillar} accentColor={accentColor} />
-        ) : null}
+        <VisualPreview
+          item={item}
+          format={format}
+          pillar={pillar}
+          accentColor={accentColor}
+          slideCount={slideCount}
+          currentSlide={currentSlide}
+          onSlideChange={setCurrentSlide}
+          applyPatch={applyPatch}
+        />
 
         {/* Content area — checklist or generated copy */}
-        <div className="flex-1 mb-3 relative">
-          {isGenerated
-            && !isPosted
-            && !isLogged
-            && item.generatedVisual?.caption != null
-            && (format === 'Single Image' || format === 'Carousel') && (
-              <button
-                onClick={() =>
-                  setCardEditState({
-                    open: true,
-                    captionDraft: item.generatedVisual?.caption ?? '',
-                    hashtagInputDraft: formatHashtagsForInput(item.generatedVisual?.hashtags),
-                  })
-                }
-                title="Edit caption & hashtags"
-                aria-label="Edit caption and hashtags"
-                className="absolute -top-1 right-0 text-[10px] font-bold px-2 py-0.5 rounded-md transition-all hover:scale-105"
-                style={{
-                  background: 'var(--panel-2)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--border)',
-                  lineHeight: 1.2,
-                  zIndex: 1,
-                }}
-              >
-                ✎ Edit
-              </button>
-            )}
-          {isGenerated ? (
-            // Generated content sourced from generatedVisual so caption edits
-            // reflect immediately. Ungenerated / legacy items fall back to the
-            // static description split.
-            (() => {
-              const gv = item.generatedVisual
-              const generatedLines: Array<{ text: string; kind: 'hook' | 'body' | 'hashtags' }> = []
-              if (gv) {
-                if (gv.hook) generatedLines.push({ text: gv.hook, kind: 'hook' })
-                if (gv.caption) generatedLines.push({ text: gv.caption, kind: 'body' })
-                const tags = (gv.hashtags ?? []).filter((t) => typeof t === 'string' && t.length > 0)
-                if (tags.length > 0) {
-                  const tagLine = tags.map((t) => (t.startsWith('#') ? t : `#${t}`)).join(' ')
-                  generatedLines.push({ text: tagLine, kind: 'hashtags' })
-                }
-              }
-              const lines = generatedLines.length > 0
-                ? generatedLines
-                : descLines.map((text, i) => ({
-                    text,
-                    kind:
-                      i === 0 ? ('hook' as const) : text.startsWith('#') ? ('hashtags' as const) : ('body' as const),
-                  }))
-              return lines.map((row, i) => (
-                <p
-                  key={i}
-                  className={`${row.kind === 'hashtags' ? 'text-[10px]' : 'text-[11px]'} leading-snug ${i < lines.length - 1 ? 'mb-1.5' : ''}`}
-                  style={{
-                    color: row.kind === 'hashtags' ? 'var(--muted)' : 'var(--text)',
-                    fontWeight: row.kind === 'hook' ? 700 : 400,
-                    fontStyle: row.kind === 'hook' ? 'italic' : 'normal',
-                  }}
-                >
-                  {row.kind === 'hook' ? `"${row.text}"` : row.text}
-                </p>
-              ))
-            })()
-          ) : (
-            // Checklist instructions
-            descLines.map((line, i) => (
-              <div key={i} className="flex items-start gap-1.5 mb-1">
-                <span
-                  className="mt-px flex-shrink-0 text-[9px] leading-none"
-                  style={{ color: '#10b981' }}
-                >
-                  ✓
-                </span>
-                <span className="text-[11px] leading-snug" style={{ color: 'var(--text)' }}>
-                  {line}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+        <ContentArea
+          item={item}
+          format={format}
+          isGenerated={isGenerated}
+          isPosted={isPosted}
+          isLogged={isLogged}
+          descLines={descLines}
+          applyPatch={applyPatch}
+        />
 
         {/* Action buttons */}
         {isLogged || isPosted ? (
@@ -569,115 +250,22 @@ export default function ContentCard({
             {isPosted ? 'Posted ✓' : 'Logged ✓'}
           </div>
         ) : (
-          <div className="flex flex-col gap-2 mt-auto">
-            <div className="flex gap-2">
-              {!hideShuffleGenerate && (
-                <>
-                  <button
-                    onClick={onShuffle}
-                    className="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
-                    style={{
-                      background: '#10b981',
-                      color: '#ffffff',
-                      boxShadow: 'var(--shadow-sm)',
-                    }}
-                  >
-                    Shuffle
-                  </button>
-                  <button
-                    onClick={onGenerate}
-                    className="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105"
-                    style={
-                      isGenerated
-                        ? {
-                            background: 'rgba(16,185,129,.1)',
-                            border: '1px solid #10b981',
-                            color: '#10b981',
-                          }
-                        : {
-                            background: 'transparent',
-                            border: '1px solid var(--border)',
-                            color: 'var(--muted)',
-                          }
-                    }
-                  >
-                    {isGenerated ? 'Regenerate' : 'Generate'}
-                  </button>
-                </>
-              )}
-              {isGenerated && format === 'Single Image' && (
-                <button
-                  onClick={() =>
-                    applyPatch({
-                      imageUrl: undefined,
-                      imageError: undefined,
-                      imageVariationSeed: Math.floor(Math.random() * 100_000),
-                    })
-                  }
-                  title="Same brief, new output (bypasses cache, costs ~$0.15)"
-                  className={`${hideShuffleGenerate ? 'w-full' : ''} py-2 px-3 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105`}
-                  style={{
-                    background: 'rgba(251,146,60,.12)',
-                    border: '1px solid #fb923c',
-                    color: '#fb923c',
-                  }}
-                >
-                  🎲 Reroll
-                </button>
-              )}
-            </div>
-            {/* Primary action: Post to Instagram (falls back to Log Post if no onPost wired). */}
-            {!hidePostButton && (
-              <button
-                onClick={() => {
-                  if (!canPost || !hasPostableAsset) return
-                  setPostState('confirming')
-                }}
-                disabled={!canPost || !hasPostableAsset || postState === 'posting'}
-                title={
-                  !isGenerated
-                    ? 'Generate the content first'
-                    : !hasPostableAsset
-                    ? 'Waiting for the visual to finish generating'
-                    : postState === 'error'
-                    ? postErrorMessage ?? 'Post failed — click to retry'
-                    : undefined
-                }
-                className="w-full py-2 rounded-xl font-bold text-xs transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                style={
-                  postState === 'error'
-                    ? {
-                        background: 'rgba(239,68,68,.1)',
-                        border: '1px solid #ef4444',
-                        color: '#ef4444',
-                      }
-                    : {
-                        background: 'rgba(59,130,246,.1)',
-                        border: '1px solid var(--accent)',
-                        color: 'var(--accent)',
-                      }
-                }
-              >
-                {postState === 'posting'
-                  ? 'Posting…'
-                  : postState === 'error'
-                  ? 'Retry Post'
-                  : onPost
-                  ? 'Post to Instagram'
-                  : 'Log Post'}
-              </button>
-            )}
-            {!hidePostButton && postState === 'error' && postErrorMessage && (
-              <p className="text-[10px] px-1" style={{ color: '#ef4444' }}>
-                {postErrorMessage}
-              </p>
-            )}
-            {!hidePostButton && postState !== 'error' && facebookWarning && (
-              <p className="text-[10px] px-1" style={{ color: '#fb923c' }}>
-                IG posted ✓ · Facebook cross-post failed: {facebookWarning}
-              </p>
-            )}
-          </div>
+          <ActionButtons
+            format={format}
+            isGenerated={isGenerated}
+            hideShuffleGenerate={hideShuffleGenerate}
+            hidePostButton={hidePostButton}
+            onShuffle={onShuffle}
+            onGenerate={onGenerate}
+            applyPatch={applyPatch}
+            canPost={canPost}
+            hasPostableAsset={hasPostableAsset}
+            postState={postState}
+            setPostState={setPostState}
+            postErrorMessage={postErrorMessage}
+            facebookWarning={facebookWarning}
+            hasOnPost={Boolean(onPost)}
+          />
         )}
       </div>
 
@@ -692,30 +280,6 @@ export default function ContentCard({
           }}
         />
       )}
-
-      {cardEditState.open && item.generatedVisual && (
-        <CaptionEditDialog
-          captionDraft={cardEditState.captionDraft}
-          hashtagInputDraft={cardEditState.hashtagInputDraft}
-          onCaptionChange={(captionDraft) =>
-            setCardEditState((prev) => ({ ...prev, captionDraft }))
-          }
-          onHashtagsChange={(hashtagInputDraft) =>
-            setCardEditState((prev) => ({ ...prev, hashtagInputDraft }))
-          }
-          onCancel={() =>
-            setCardEditState({ open: false, captionDraft: '', hashtagInputDraft: '' })
-          }
-          onSave={() => {
-            applyPatch({
-              caption: cardEditState.captionDraft,
-              hashtags: parseHashtagInput(cardEditState.hashtagInputDraft),
-            })
-            setCardEditState({ open: false, captionDraft: '', hashtagInputDraft: '' })
-          }}
-        />
-      )}
     </div>
   )
 }
-
