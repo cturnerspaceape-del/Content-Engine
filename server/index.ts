@@ -18,7 +18,10 @@ import { sendEmailHandler } from './emailSendHandler'
 import { publishToXHandler, getXAccountHandler } from './xHandler'
 
 const app = express()
-app.use(express.json({ limit: '1mb' }))
+// 25mb so /api/edit-image can accept user-uploaded reference images and a
+// painted mask as base64 in a single JSON body (worst case ~4 high-res refs +
+// mask ≈ 15–20mb base64). All other routes send JSON well under the old 1mb.
+app.use(express.json({ limit: '25mb' }))
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })

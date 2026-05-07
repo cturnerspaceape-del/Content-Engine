@@ -55,9 +55,28 @@ export interface ReferenceImage {
   base64: string
 }
 
+export type ImageSize = '1024x1024' | '1024x1536' | '1536x1024' | '2048x2048' | 'auto'
+export type ImageQuality = 'low' | 'medium' | 'high' | 'auto'
+export type ImageBackground = 'transparent' | 'opaque' | 'auto'
+export type ImageOutputFormat = 'png' | 'jpeg' | 'webp'
+export type ImageInputFidelity = 'high' | 'low'
+export type ImageModeration = 'auto' | 'low'
+
 export interface GenerateImageInput {
   prompt: string
   references: ReferenceImage[]
+  // All optional — undefined = current behavior (server-side defaults).
+  size?: ImageSize
+  quality?: ImageQuality
+  background?: ImageBackground
+  outputFormat?: ImageOutputFormat
+  // 0–100. Only meaningful when outputFormat is jpeg or webp.
+  outputCompression?: number
+  inputFidelity?: ImageInputFidelity
+  moderation?: ImageModeration
+  // PNG with alpha=0 = regions to edit, alpha=255 = preserve.
+  // Only honored when references contain at least one image.
+  mask?: ReferenceImage
 }
 
 // OpenAI's /v1/images/edits 400s on anything it can't decode cleanly: AVIF,
@@ -84,11 +103,22 @@ async function normalizeReferenceForOpenAI(ref: ReferenceImage): Promise<Referen
   }
 }
 
-export async function generateImage({ prompt, references }: GenerateImageInput): Promise<Buffer> {
+export async function generateImage({
+  prompt,
+  references,
+  size: sizeOverride,
+  quality,
+  background,
+  outputFormat,
+  outputCompression,
+  inputFidelity,
+  moderation,
+  mask,
+}: GenerateImageInput): Promise<Buffer> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
-  const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1'
-  const size = process.env.OPENAI_IMAGE_SIZE || '1024x1024'
+  const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2'
+  const size = sizeOverride || process.env.OPENAI_IMAGE_SIZE || '1024x1024'
 
   // gpt-image-2 accepts up to 16 reference images via the edits endpoint.
   // Trim defensively, then transcode each to clean sRGB PNG so OpenAI
@@ -98,6 +128,10 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
   const refs = (await Promise.all(trimmed.map(normalizeReferenceForOpenAI))).filter(
     (r): r is ReferenceImage => r !== null,
   )
+
+  // Mask is only honored when at least one source ref survives normalization;
+  // /v1/images/edits requires `image[]` to make a mask meaningful.
+  const normalizedMask = mask && refs.length > 0 ? await normalizeReferenceForOpenAI(mask) : null
 
   await acquire()
   try {
@@ -124,11 +158,24 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
           form.set('prompt', prompt)
           form.set('size', size)
           form.set('n', '1')
+          if (quality) form.set('quality', quality)
+          if (background) form.set('background', background)
+          if (outputFormat) form.set('output_format', outputFormat)
+          if (typeof outputCompression === 'number') {
+            form.set('output_compression', String(outputCompression))
+          }
+          if (inputFidelity) form.set('input_fidelity', inputFidelity)
+          if (moderation) form.set('moderation', moderation)
           for (let i = 0; i < refs.length; i++) {
             const ref = refs[i]
             const bytes = Buffer.from(ref.base64, 'base64')
             const blob = new Blob([bytes], { type: 'image/png' })
             form.append('image[]', blob, `ref_${i}.png`)
+          }
+          if (normalizedMask) {
+            const maskBytes = Buffer.from(normalizedMask.base64, 'base64')
+            const maskBlob = new Blob([maskBytes], { type: 'image/png' })
+            form.append('mask', maskBlob, 'mask.png')
           }
           resp = await fetch(OPENAI_EDITS_URL, {
             method: 'POST',
@@ -137,13 +184,21 @@ export async function generateImage({ prompt, references }: GenerateImageInput):
             signal: ctrl.signal,
           })
         } else {
+          const body: Record<string, unknown> = { model, prompt, size, n: 1 }
+          if (quality) body.quality = quality
+          if (background) body.background = background
+          if (outputFormat) body.output_format = outputFormat
+          if (typeof outputCompression === 'number') {
+            body.output_compression = outputCompression
+          }
+          if (moderation) body.moderation = moderation
           resp = await fetch(OPENAI_GENERATIONS_URL, {
             method: 'POST',
             headers: {
               Authorization: `Bearer ${apiKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ model, prompt, size, n: 1 }),
+            body: JSON.stringify(body),
             signal: ctrl.signal,
           })
         }

@@ -1,5 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import GeneratingPlaceholder from './ui/GeneratingPlaceholder'
+import AdvancedPanel from './ImageEditModal/AdvancedPanel'
+import AspectChips from './ImageEditModal/AspectChips'
+import MaskCanvas, { type MaskCanvasHandle } from './ImageEditModal/MaskCanvas'
+import RefDropzone from './ImageEditModal/RefDropzone'
+import { PRESETS, type PresetChip } from './ImageEditModal/presets'
+import {
+  DEFAULT_ADVANCED,
+  type AdvancedSettings,
+  type ImageSize,
+  type UserRef,
+} from './ImageEditModal/types'
 
 type EditKind = 'single-image' | 'carousel-slide' | 'email-image'
 
@@ -16,20 +27,12 @@ interface ImageEditModalProps {
   onCancel: () => void
 }
 
-interface PresetChip {
-  emoji: string
-  label: string
-  prompt: string
+// Aspect → CSS aspect-ratio for the preview frame.
+function aspectRatioFor(size: ImageSize): string {
+  if (size === '1024x1536') return '2 / 3'
+  if (size === '1536x1024') return '3 / 2'
+  return '1 / 1'
 }
-
-const PRESETS: ReadonlyArray<PresetChip> = [
-  { emoji: '🌞', label: 'Brighter', prompt: 'increase brightness and exposure, lift the shadows slightly' },
-  { emoji: '✨', label: 'More vivid', prompt: 'boost color saturation and vibrance, richer tones, more punchy' },
-  { emoji: '🎬', label: 'Cinematic', prompt: 'cinematic color grade, slight teal-and-orange split, deeper blacks, filmic contrast' },
-  { emoji: '🌫️', label: 'Softer', prompt: 'soften the lighting, reduce contrast, dreamier and more diffuse' },
-  { emoji: '📸', label: 'Sharper', prompt: 'sharpen details and texture, crisper edges, more in-focus' },
-  { emoji: '🌃', label: 'Night mode', prompt: 'shift to a nighttime scene with neon-leaning lighting, keep subject identical' },
-]
 
 export default function ImageEditModal({
   label,
@@ -42,21 +45,73 @@ export default function ImageEditModal({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const submit = async (promptOverride?: string) => {
+  const [size, setSize] = useState<ImageSize>('1024x1024')
+  const [advanced, setAdvanced] = useState<AdvancedSettings>(DEFAULT_ADVANCED)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+
+  const [userRefs, setUserRefs] = useState<UserRef[]>([])
+
+  const [maskOn, setMaskOn] = useState(false)
+  const [maskTool, setMaskTool] = useState<'brush' | 'eraser'>('brush')
+  const [brushSize, setBrushSize] = useState(40)
+  const [maskHasStrokes, setMaskHasStrokes] = useState(false)
+  const maskRef = useRef<MaskCanvasHandle | null>(null)
+
+  // The mask canvas needs CSS dimensions to scale brush stroke width. Measure
+  // the preview frame on mount + whenever aspect changes.
+  const previewRef = useRef<HTMLDivElement | null>(null)
+  const [previewSize, setPreviewSize] = useState({ width: 480, height: 480 })
+  useLayoutEffect(() => {
+    const el = previewRef.current
+    if (!el) return
+    const measure = () => {
+      const rect = el.getBoundingClientRect()
+      setPreviewSize({ width: rect.width, height: rect.height })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [size])
+
+  // If the user hides the mask layer mid-edit, drop their strokes — keeping
+  // a hidden mask around would invisibly alter the next submit.
+  useEffect(() => {
+    if (!maskOn) maskRef.current?.clear()
+  }, [maskOn])
+
+  const buildBody = (overrides: { editPrompt?: string; skipMask?: boolean; skipRefs?: boolean }) => {
+    const maskBase64 =
+      !overrides.skipMask && maskOn && maskHasStrokes ? maskRef.current?.exportMask() : null
+    return {
+      imageUrl,
+      editPrompt: overrides.editPrompt ?? editPrompt.trim(),
+      kind,
+      variationSeed: Date.now(),
+      ...(maskBase64 ? { maskBase64 } : {}),
+      ...(!overrides.skipRefs && userRefs.length > 0
+        ? { userRefs: userRefs.map((r) => ({ mime: r.mime, base64: r.base64 })) }
+        : {}),
+      size,
+      quality: advanced.quality,
+      background: advanced.background,
+      inputFidelity: advanced.fidelity,
+      outputFormat: advanced.outputFormat,
+      ...(advanced.outputFormat !== 'png'
+        ? { outputCompression: advanced.outputCompression }
+        : {}),
+    }
+  }
+
+  const submit = async (overrides: { editPrompt?: string; skipMask?: boolean; skipRefs?: boolean } = {}) => {
     if (busy) return
-    const promptToSend = (promptOverride ?? editPrompt).trim()
     setBusy(true)
     setError(null)
     try {
       const r = await fetch('/api/edit-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageUrl,
-          editPrompt: promptToSend,
-          kind,
-          variationSeed: Date.now(),
-        }),
+        body: JSON.stringify(buildBody(overrides)),
       })
       const data = (await r.json()) as { url?: string; error?: string }
       if (!r.ok || !data.url) throw new Error(data.error || `HTTP ${r.status}`)
@@ -69,8 +124,20 @@ export default function ImageEditModal({
   }
 
   const applyPreset = (p: PresetChip) => {
-    void submit(p.prompt)
+    void submit({ editPrompt: p.prompt })
   }
+
+  const applyEdit = () => {
+    void submit({})
+  }
+
+  const applyVariation = () => {
+    // Variation is a clean restart of the source — no mask, no extra refs.
+    void submit({ editPrompt: '', skipMask: true, skipRefs: true })
+  }
+
+  const aspect = useMemo(() => aspectRatioFor(size), [size])
+  const canApply = !busy && (editPrompt.trim().length > 0 || maskHasStrokes || userRefs.length > 0)
 
   return (
     <div
@@ -93,7 +160,7 @@ export default function ImageEditModal({
         className="glass-panel"
         style={{
           width: '100%',
-          maxWidth: 540,
+          maxWidth: 600,
           padding: 24,
           borderRadius: 24,
           background:
@@ -120,25 +187,126 @@ export default function ImageEditModal({
           </p>
         </div>
 
-        {/* Preview */}
+        <AspectChips value={size} onChange={setSize} disabled={busy} />
+
+        {/* Preview + mask overlay */}
         <div
+          ref={previewRef}
           style={{
             position: 'relative',
             width: '100%',
-            aspectRatio: '1/1',
+            aspectRatio: aspect,
             borderRadius: 16,
             overflow: 'hidden',
-            background: 'rgba(0,0,0,0.4)',
-            marginBottom: 16,
+            background:
+              advanced.background === 'transparent'
+                ? // Checker pattern hint when sticker mode is on.
+                  'repeating-conic-gradient(rgba(255,255,255,0.06) 0% 25%, rgba(0,0,0,0.4) 0% 50%) 50% / 16px 16px'
+                : 'rgba(0,0,0,0.4)',
+            marginBottom: 8,
             border: '1px solid var(--border)',
           }}
         >
           <img
             src={imageUrl}
             alt={label}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
           />
+          <MaskCanvas
+            ref={maskRef}
+            imageUrl={imageUrl}
+            width={previewSize.width}
+            height={previewSize.height}
+            enabled={maskOn && !busy}
+            tool={maskTool}
+            brushSize={brushSize}
+            onChange={setMaskHasStrokes}
+          />
+          {maskOn && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                display: 'flex',
+                gap: 4,
+                padding: 4,
+                borderRadius: 999,
+                background: 'rgba(15,23,42,0.75)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <button
+                onClick={() => setMaskTool('brush')}
+                disabled={busy}
+                title="Paint regions to edit"
+                style={miniBtn(maskTool === 'brush', busy)}
+              >
+                🖌️
+              </button>
+              <button
+                onClick={() => setMaskTool('eraser')}
+                disabled={busy}
+                title="Erase mask strokes"
+                style={miniBtn(maskTool === 'eraser', busy)}
+              >
+                🧽
+              </button>
+              <button
+                onClick={() => maskRef.current?.clear()}
+                disabled={busy}
+                title="Clear mask"
+                style={miniBtn(false, busy)}
+              >
+                ✕
+              </button>
+              <input
+                type="range"
+                min={6}
+                max={120}
+                step={2}
+                value={brushSize}
+                disabled={busy}
+                onChange={(e) => setBrushSize(Number(e.target.value))}
+                aria-label="Brush size"
+                style={{ width: 80, accentColor: '#8b5cf6' }}
+              />
+            </div>
+          )}
           {busy && <GeneratingPlaceholder variant="tile" hint="cooking up your edit" />}
+        </div>
+
+        {/* Mask toggle */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <button
+            onClick={() => setMaskOn((v) => !v)}
+            disabled={busy}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 700,
+              border: maskOn ? '1px solid #ec4899aa' : '1px solid var(--border)',
+              background: maskOn
+                ? 'linear-gradient(135deg, rgba(236,72,153,0.25), rgba(139,92,246,0.25))'
+                : 'rgba(148,163,184,0.08)',
+              color: maskOn ? '#fff' : 'var(--text)',
+              cursor: busy ? 'not-allowed' : 'pointer',
+              opacity: busy ? 0.5 : 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span>🎨</span>
+            <span>{maskOn ? 'Painting just this part' : 'Paint to edit part of it'}</span>
+          </button>
+          {maskOn && maskHasStrokes && (
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+              ✦ mask active
+            </span>
+          )}
         </div>
 
         {/* Free-text edit input */}
@@ -146,7 +314,11 @@ export default function ImageEditModal({
           value={editPrompt}
           onChange={(e) => setEditPrompt(e.target.value)}
           disabled={busy}
-          placeholder="e.g. make the sky purple, remove the bottle, add neon signs in the background…"
+          placeholder={
+            maskOn
+              ? 'e.g. replace this with a neon sign, make this part purple…'
+              : 'e.g. make the sky purple, remove the bottle, add neon signs in the background…'
+          }
           rows={3}
           style={{
             width: '100%',
@@ -164,7 +336,7 @@ export default function ImageEditModal({
         />
 
         {/* Preset chips */}
-        <div style={{ marginBottom: 18 }}>
+        <div style={{ marginBottom: 14 }}>
           <div
             style={{
               fontSize: 10,
@@ -177,13 +349,7 @@ export default function ImageEditModal({
           >
             Quick vibes
           </div>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 6,
-            }}
-          >
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {PRESETS.map((p) => (
               <button
                 key={p.label}
@@ -214,6 +380,16 @@ export default function ImageEditModal({
             ))}
           </div>
         </div>
+
+        <RefDropzone refs={userRefs} onChange={setUserRefs} disabled={busy} />
+
+        <AdvancedPanel
+          open={advancedOpen}
+          onToggle={() => setAdvancedOpen((v) => !v)}
+          value={advanced}
+          onChange={setAdvanced}
+          disabled={busy}
+        />
 
         {error && (
           <div
@@ -255,7 +431,7 @@ export default function ImageEditModal({
             Cancel
           </button>
           <button
-            onClick={() => submit('')}
+            onClick={applyVariation}
             disabled={busy}
             title="Fresh take with the same subject &amp; composition"
             style={{
@@ -275,8 +451,8 @@ export default function ImageEditModal({
             🎲 Variation
           </button>
           <button
-            onClick={() => submit()}
-            disabled={busy || !editPrompt.trim()}
+            onClick={applyEdit}
+            disabled={!canApply}
             style={{
               flex: '2 1 auto',
               minWidth: 130,
@@ -284,17 +460,13 @@ export default function ImageEditModal({
               borderRadius: 12,
               fontSize: 13,
               fontWeight: 800,
-              background:
-                busy || !editPrompt.trim()
-                  ? 'rgba(148,163,184,0.15)'
-                  : 'linear-gradient(135deg, #1d9bf0, #8b5cf6)',
-              color: busy || !editPrompt.trim() ? 'var(--muted)' : 'white',
+              background: !canApply
+                ? 'rgba(148,163,184,0.15)'
+                : 'linear-gradient(135deg, #1d9bf0, #8b5cf6)',
+              color: !canApply ? 'var(--muted)' : 'white',
               border: 'none',
-              cursor: busy || !editPrompt.trim() ? 'not-allowed' : 'pointer',
-              boxShadow:
-                busy || !editPrompt.trim()
-                  ? 'none'
-                  : '0 6px 18px rgba(139,92,246,0.35)',
+              cursor: !canApply ? 'not-allowed' : 'pointer',
+              boxShadow: !canApply ? 'none' : '0 6px 18px rgba(139,92,246,0.35)',
             }}
           >
             ✨ Apply edit
@@ -303,4 +475,22 @@ export default function ImageEditModal({
       </div>
     </div>
   )
+}
+
+function miniBtn(active: boolean, disabled: boolean): React.CSSProperties {
+  return {
+    width: 26,
+    height: 26,
+    borderRadius: 999,
+    fontSize: 12,
+    border: 'none',
+    background: active ? 'linear-gradient(135deg, #1d9bf0, #8b5cf6)' : 'rgba(148,163,184,0.10)',
+    color: active ? '#fff' : 'var(--text)',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.5 : 1,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+  }
 }
