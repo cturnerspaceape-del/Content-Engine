@@ -167,7 +167,16 @@ export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: Ima
   }
 
   const handleGenerate = async () => {
-    if (!activeResearchSeed) return
+    if (!activeResearchSeed) {
+      console.log('[ImageLab] no activeResearchSeed — abort')
+      return
+    }
+    console.log('[ImageLab] seed:', {
+      pillar: activeResearchSeed.pillar,
+      subcat: activeResearchSeed.subcategory,
+      hasBrief: !!activeResearchSeed.shotBrief,
+      briefLen: activeResearchSeed.shotBrief?.length ?? 0,
+    })
     const research = {
       angle: activeResearchSeed.angle,
       notes: activeResearchSeed.sourceNotes,
@@ -180,6 +189,11 @@ export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: Ima
         : {}),
     }
     const generated = await generateContentForPostAsync(item, research)
+    console.log('[ImageLab] generatedVisual:', {
+      format: generated.generatedVisual?.format,
+      hasResearchShotBrief: !!generated.generatedVisual?.researchShotBrief,
+      keys: generated.generatedVisual ? Object.keys(generated.generatedVisual) : [],
+    })
     const seedTitle = formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(activeResearchSeed))
     setItem({ ...generated, title: seedTitle })
     setVariants({})

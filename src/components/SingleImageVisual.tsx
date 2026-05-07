@@ -109,9 +109,16 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
 
   useEffect(() => {
     cancelledRef.current = false
+    console.log('[SingleImageVisual] effect', {
+      hasImageUrl: !!imageUrl,
+      hasImageError: !!imageError,
+      promptLen: body.prompt?.length ?? 0,
+      bodyKeys: Object.keys(body),
+    })
     // Guard: if we already have a persisted result (URL or error), render it
     // and do NOT fire a fetch. This is the whole point of the refactor.
     if (imageUrl) {
+      console.log('[SingleImageVisual] guard: persisted imageUrl — skip fetch')
       setLocalUrl(imageUrl)
       setLocalError(null)
       return () => {
@@ -119,6 +126,7 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
       }
     }
     if (imageError) {
+      console.log('[SingleImageVisual] guard: persisted imageError — skip fetch:', imageError)
       setLocalUrl(null)
       setLocalError(imageError)
       return () => {
@@ -128,12 +136,14 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
 
     // Research-only flow: no prompt → no generation. Server would 400 anyway.
     if (!body.prompt) {
+      console.log('[SingleImageVisual] guard: empty prompt — skip fetch')
       setLocalUrl(null)
       setLocalError(null)
       return () => {
         cancelledRef.current = true
       }
     }
+    console.log('[SingleImageVisual] firing /api/generate-single-image')
 
     setLocalUrl(null)
     setLocalError(null)
