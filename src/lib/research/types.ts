@@ -1,6 +1,6 @@
 import type { ContentPillar } from '../../types'
 
-export type ResearchFormat = 'image' | 'carousel' | 'reel' | 'text' | 'email' | 'print'
+export type ResearchFormat = 'image' | 'carousel' | 'text' | 'email' | 'print'
 
 export interface ResearchedSeed {
   pillar: ContentPillar
@@ -23,7 +23,7 @@ export interface ResearchedSeed {
   // lighting / camera / styling. When present, this REPLACES the generic
   // shot template in the image prompt's SHOT BRIEF section so the trend's
   // visual treatment dominates the brand's default moodboard. Only seeded
-  // for visual formats (image, carousel, reel, print).
+  // for visual formats (image, carousel, print).
   shotBrief?: string
   // Carousel-only: per-slide visual briefs (length 2-7). When present, the
   // selected ResearchedSeed defines both the carousel's slide count and what

@@ -3,20 +3,18 @@ import {
   getBusinessAccountId,
   getBusinessUsername,
   publishCarousel,
-  publishReel,
   publishSingleImage,
   publishStory,
 } from './instagram'
 import { recordPublishError } from './publishErrorLog'
 
 type Destination = 'feed' | 'story'
-type Format = 'Single Image' | 'Reel' | 'Carousel'
+type Format = 'Single Image' | 'Carousel'
 
 interface PublishBody {
   destination?: Destination
   format?: Format
   imageUrl?: string
-  videoUrl?: string
   slideUrls?: string[]
   caption?: string
   hashtags?: string[]
@@ -31,7 +29,7 @@ export async function publishToInstagramHandler(req: Request, res: Response): Pr
     res.status(400).json({ ok: false, error: `Invalid destination: ${destination}` })
     return
   }
-  if (!format || !['Single Image', 'Reel', 'Carousel'].includes(format)) {
+  if (!format || !['Single Image', 'Carousel'].includes(format)) {
     res.status(400).json({ ok: false, error: `Invalid format: ${format}` })
     return
   }
@@ -44,24 +42,12 @@ export async function publishToInstagramHandler(req: Request, res: Response): Pr
     let result: { mediaId: string; permalink?: string }
 
     if (destination === 'story') {
-      if (format === 'Single Image') {
-        if (!body.imageUrl) throw new Error('imageUrl is required for Single Image story')
-        result = await publishStory({ imageUrl: body.imageUrl })
-      } else {
-        if (!body.videoUrl) throw new Error('videoUrl is required for Reel story')
-        result = await publishStory({ videoUrl: body.videoUrl })
-      }
+      if (!body.imageUrl) throw new Error('imageUrl is required for Single Image story')
+      result = await publishStory({ imageUrl: body.imageUrl })
     } else if (format === 'Single Image') {
       if (!body.imageUrl) throw new Error('imageUrl is required')
       result = await publishSingleImage({
         imageUrl: body.imageUrl,
-        caption: body.caption ?? '',
-        hashtags: body.hashtags,
-      })
-    } else if (format === 'Reel') {
-      if (!body.videoUrl) throw new Error('videoUrl is required for Reel')
-      result = await publishReel({
-        videoUrl: body.videoUrl,
         caption: body.caption ?? '',
         hashtags: body.hashtags,
       })

@@ -209,8 +209,7 @@ export default function PostConfirmModal({
   const v = item.generatedVisual
   const format = v?.format
   const slideCount = v?.slideUrls?.filter(Boolean).length ?? 0
-  const thumbnail = v?.imageUrl || v?.slideUrls?.find(Boolean) || v?.reelUrl
-  const isVideo = Boolean(v?.reelUrl) && !v?.imageUrl && (!v?.slideUrls || v.slideUrls.filter(Boolean).length === 0)
+  const thumbnail = v?.imageUrl || v?.slideUrls?.find(Boolean)
 
   const previewCaption = buildCaption({
     caption: editedCaption,
@@ -315,20 +314,11 @@ export default function PostConfirmModal({
               justifyContent: 'center',
             }}
           >
-            {isVideo ? (
-              <video
-                src={thumbnail}
-                style={{ width: '100%', maxHeight: 260, objectFit: 'contain' }}
-                muted
-                playsInline
-              />
-            ) : (
-              <img
-                src={thumbnail}
-                alt="Post preview"
-                style={{ width: '100%', maxHeight: 260, objectFit: 'contain' }}
-              />
-            )}
+            <img
+              src={thumbnail}
+              alt="Post preview"
+              style={{ width: '100%', maxHeight: 260, objectFit: 'contain' }}
+            />
           </div>
         )}
 

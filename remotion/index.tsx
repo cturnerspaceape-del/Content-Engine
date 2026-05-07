@@ -1,6 +1,6 @@
 import { Composition } from 'remotion'
-import { SingleImage, Carousel, Reel } from '../src/remotion/compositions'
-import type { SingleImageProps, CarouselProps, ReelProps } from '../src/remotion/types'
+import { SingleImage, Carousel } from '../src/remotion/compositions'
+import type { SingleImageProps, CarouselProps } from '../src/remotion/types'
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -38,23 +38,6 @@ export const RemotionRoot: React.FC = () => {
           subcategory: 'Product Shots',
           layoutTemplate: 1,
           slideCount: 6,
-        }}
-      />
-      <Composition<ReelProps>
-        id="Reel"
-        component={Reel}
-        durationInFrames={360}
-        fps={30}
-        width={1080}
-        height={1920}
-        defaultProps={{
-          flavor: 'Blue Frenzy',
-          hook: 'Nobody asked for this but everyone needed it',
-          caption: 'When the trend fits, you don\'t fight it — you own it.',
-          hashtags: ['#spaceape', '#reel', '#trending'],
-          pillar: 'Entertainment',
-          subcategory: 'Trends',
-          layoutTemplate: 1,
         }}
       />
     </>

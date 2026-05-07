@@ -2,7 +2,6 @@ import type { ContentItem, InstagramFormat } from '../types'
 import { flavorNames } from '../remotion/flavorThemes'
 import { pickShotTemplate } from './shotTemplates'
 import { getCarouselArc, pickCarouselArc } from './carouselArcs'
-import { getReelArc, pickReelArc } from './reelArcs'
 
 // ─── Space Ape voice: cool, fun, hype, "clean Charlie Sheen", Supreme energy ───
 // Hooks, captions, and hashtags picked independently for max variety
@@ -455,14 +454,12 @@ export function generateContentForPost(item: ContentItem): ContentItem {
   const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
 
   // Single Image: pick a visual shot template (recipe) from src/data/shotTemplates.ts.
-  // Carousel/Reel: keep the legacy numeric layoutTemplate variant system.
+  // Carousel: keep the legacy numeric layoutTemplate variant system.
   const shotTemplateId = format === 'Single Image'
     ? pickShotTemplate(pillar, subcategory).id
     : undefined
   const layoutTemplate = format === 'Carousel'
     ? Math.floor(Math.random() * 8) + 1
-    : format === 'Reel'
-    ? Math.floor(Math.random() * 6) + 1
     : undefined
   const slideCount = format === 'Carousel'
     ? Math.floor(Math.random() * 6) + 5
@@ -535,8 +532,6 @@ export async function generateContentForPostAsync(
     : undefined
   const layoutTemplate = format === 'Carousel'
     ? Math.floor(Math.random() * 8) + 1
-    : format === 'Reel'
-    ? Math.floor(Math.random() * 6) + 1
     : undefined
   const slideCount = format === 'Carousel'
     ? Math.floor(Math.random() * 6) + 5
@@ -671,96 +666,3 @@ export async function generateCarouselLoungePostAsync(
   }
 }
 
-// Reel Lounge variant: produces an AI-video Reel via Veo. Presence of
-// generatedVisual.reelArcId switches ContentCard's Reel rendering to
-// ReelLoungeVisual instead of the Remotion template.
-export function generateReelLoungePost(item: ContentItem, reelArcId?: string): ContentItem {
-  const titleParts = item.title.split(' — ')
-  const pillarSubcat = titleParts[1] || ''
-  const pillar = pillarSubcat.split(':')[0]?.trim() || 'Lifestyle'
-  const subcategory = pillarSubcat.split(':')[1]?.trim() || ''
-
-  const hookPool = subcategoryHooks[subcategory] || hooks[pillar] || hooks['Lifestyle']
-  const captionPool = subcategoryCaptions[subcategory] || captions[pillar] || captions['Lifestyle']
-  const hashtagPool = hashtagSets[pillar] || hashtagSets['Lifestyle']
-
-  const hook = hookPool[Math.floor(Math.random() * hookPool.length)]
-  const caption = captionPool[Math.floor(Math.random() * captionPool.length)]
-  const selectedHashtags = hashtagPool[Math.floor(Math.random() * hashtagPool.length)]
-
-  const arc = (reelArcId && getReelArc(reelArcId)) || pickReelArc(pillar)
-
-  const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
-  const reelSeed = Math.floor(Math.random() * 100_000)
-
-  const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
-
-  return {
-    ...item,
-    description: generatedDescription,
-    generated: true,
-    generatedVisual: {
-      hook,
-      caption,
-      hashtags: selectedHashtags,
-      pillar,
-      subcategory,
-      format: 'Reel' as InstagramFormat,
-      flavor,
-      reelArcId: arc.id,
-      reelSeed,
-      durationSeconds: arc.durationSeconds,
-    },
-  }
-}
-
-export async function generateReelLoungePostAsync(
-  item: ContentItem,
-  reelArcId?: string,
-  research?: ResearchContext,
-): Promise<ContentItem> {
-  const titleParts = item.title.split(' — ')
-  const pillarSubcat = titleParts[1] || ''
-  const pillar = pillarSubcat.split(':')[0]?.trim() || 'Lifestyle'
-  const subcategory = pillarSubcat.split(':')[1]?.trim() || ''
-
-  const arc = (reelArcId && getReelArc(reelArcId)) || pickReelArc(pillar)
-  const flavor = flavorNames[Math.floor(Math.random() * flavorNames.length)]
-  const reelSeed = Math.floor(Math.random() * 100_000)
-
-  const { hook, caption, hashtags: selectedHashtags } = await fetchCaption({
-    pillar,
-    subcategory,
-    flavor,
-    platform: 'IG',
-    researchAngle: research?.angle,
-    researchNotes: research?.notes,
-  })
-
-  const generatedDescription = [hook, '', caption, '', selectedHashtags.join(' ')].join('\n')
-
-  return {
-    ...item,
-    description: generatedDescription,
-    generated: true,
-    generatedVisual: {
-      hook,
-      caption,
-      hashtags: selectedHashtags,
-      pillar,
-      subcategory,
-      format: 'Reel' as InstagramFormat,
-      flavor,
-      reelArcId: arc.id,
-      reelSeed,
-      durationSeconds: arc.durationSeconds,
-      ...(research?.angle ? { researchAngle: research.angle } : {}),
-      ...(research?.notes ? { researchNotes: research.notes } : {}),
-      ...(research?.shotBrief ? { researchShotBrief: research.shotBrief } : {}),
-      ...(research?.sourceUrls?.length ? { researchSourceUrls: research.sourceUrls } : {}),
-      ...(research?.sourceImageUrls?.length
-        ? { researchSourceImageUrls: research.sourceImageUrls }
-        : {}),
-    },
-  }
-}

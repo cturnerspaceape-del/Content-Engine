@@ -3,9 +3,8 @@ import { getXAccount, publishItemToX } from './x'
 import { recordPublishError } from './publishErrorLog'
 
 interface PublishBody {
-  format?: 'Single Image' | 'Reel' | 'Carousel'
+  format?: 'Single Image' | 'Carousel'
   imageUrl?: string
-  videoUrl?: string
   slideUrls?: string[]
   caption?: string
   // Hashtags are optional — X tuner returns empty hashtags array; the caption
@@ -17,7 +16,7 @@ interface PublishBody {
 export async function publishToXHandler(req: Request, res: Response): Promise<void> {
   const body = req.body as PublishBody
   const format = body.format
-  if (!format || !['Single Image', 'Reel', 'Carousel'].includes(format)) {
+  if (!format || !['Single Image', 'Carousel'].includes(format)) {
     res.status(400).json({ ok: false, error: `Invalid format: ${format}` })
     return
   }
@@ -27,7 +26,6 @@ export async function publishToXHandler(req: Request, res: Response): Promise<vo
     generatedVisual: {
       format,
       imageUrl: body.imageUrl,
-      reelUrl: body.videoUrl,
       slideUrls: body.slideUrls,
     },
   }

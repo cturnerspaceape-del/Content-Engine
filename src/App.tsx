@@ -4,7 +4,6 @@ import Scheduler from './components/Scheduler'
 import DayDetail from './components/DayDetail'
 import PostLog from './components/PostLog'
 import ImageLab from './components/labs/ImageLab'
-import ReelLab from './components/labs/ReelLab'
 import TextPostLab from './components/labs/TextPostLab'
 import CarouselLab from './components/labs/CarouselLab'
 import EmailLab from './components/labs/EmailLab'
@@ -12,14 +11,16 @@ import PrintLab from './components/labs/PrintLab'
 import { usePersistedState } from './utils/persistedState'
 import type { ViewState, LoggedPost, ScheduledPost } from './types'
 
-// Migrate persisted view names from the legacy Lab routes (sil-lab,
-// x-post-lab, reel-lounge, etc.) to the new format-based Labs.
+// Migrate persisted view names from legacy Lab routes (sil-lab, x-post-lab,
+// carousel-lounge) to the new format-based Labs. Reel-lab was removed too,
+// so reel-lounge / shorts-lab / reel-lab redirect home.
 const VIEW_MIGRATIONS: Record<string, ViewState> = {
   'sil-lab': 'image-lab',
   'x-post-lab': 'text-post-lab',
-  'reel-lounge': 'reel-lab',
-  'shorts-lab': 'reel-lab',
   'carousel-lounge': 'carousel-lab',
+  'reel-lounge': 'home',
+  'shorts-lab': 'home',
+  'reel-lab': 'home',
 }
 
 export default function App() {
@@ -85,7 +86,6 @@ export default function App() {
               onPostLog={() => switchView('postlog')}
               onScheduler={() => switchView('scheduler')}
               onImageLab={() => switchView('image-lab')}
-              onReelLab={() => switchView('reel-lab')}
               onTextPostLab={() => switchView('text-post-lab')}
               onCarouselLab={() => switchView('carousel-lab')}
               onEmailLab={() => switchView('email-lab')}
@@ -133,11 +133,6 @@ export default function App() {
               scheduledPosts={scheduledPosts}
               onSchedulePost={handleSchedulePost}
             />
-          </div>
-        )}
-        {view === 'reel-lab' && (
-          <div className="fade-in">
-            <ReelLab onBack={() => switchView('home')} />
           </div>
         )}
         {view === 'text-post-lab' && (

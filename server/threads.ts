@@ -185,21 +185,6 @@ export async function publishThreadsImage(args: {
   return publishContainer(containerId)
 }
 
-export async function publishThreadsVideo(args: {
-  videoUrl: string
-  caption: string
-  hashtags?: string[]
-}): Promise<PublishResult> {
-  const text = buildThreadsText(args.caption, args.hashtags)
-  const containerId = await createContainer({
-    media_type: 'VIDEO',
-    video_url: absolutize(args.videoUrl),
-    text,
-  })
-  await waitForContainerReady(containerId)
-  return publishContainer(containerId)
-}
-
 export async function publishThreadsCarousel(args: {
   slideUrls: string[]
   caption: string

@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import { Player, Thumbnail } from '@remotion/player'
+import { Thumbnail } from '@remotion/player'
 import type { ContentItem, PostDestination } from '../types'
-import { Carousel, Reel } from '../remotion/compositions'
+import { Carousel } from '../remotion/compositions'
 import { buildSlideArc } from '../remotion/compositions/Carousel'
 import { getCarouselArc } from '../data/carouselArcs'
 import { getFlavorTheme } from '../remotion/flavorThemes'
-import type { CarouselProps, ReelProps } from '../remotion/types'
+import type { CarouselProps } from '../remotion/types'
 import PostConfirmModal, {
   formatHashtagsForInput,
   parseHashtagInput,
@@ -14,13 +13,11 @@ import PostConfirmModal, {
 } from './PostConfirmModal'
 import CaptionEditDialog from './CaptionEditDialog'
 
-// Cast components to satisfy Thumbnail/Player LooseComponentType constraint
-const ReelComponent = Reel as unknown as React.FC<Record<string, unknown>>
+// Cast component to satisfy Thumbnail LooseComponentType constraint
 const CarouselComponent = Carousel as unknown as React.FC<Record<string, unknown>>
 import { platformColors } from './PlatformContentItem'
 import SingleImageVisual from './SingleImageVisual'
 import CarouselLoungeVisual from './CarouselLoungeVisual'
-import ReelLoungeVisual from './ReelLoungeVisual'
 
 const formatColors: Record<string, string> = {
   'Carousel': '#a855f7',
@@ -49,30 +46,6 @@ function pickGradient(seed: string) {
 function MockVisual({ format, pillar, accentColor }: { format: string; pillar: string; accentColor: string }) {
   const [g1, g2] = pickGradient(pillar + format)
   const bg = `linear-gradient(135deg, ${g1}, ${g2})`
-
-  if (format === 'Reel') {
-    return (
-      <div className="rounded-lg overflow-hidden mb-3" style={{ background: bg, height: 140, position: 'relative' }}>
-        {/* Phone-style vertical video */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,.3)', backdropFilter: 'blur(4px)' }}
-          >
-            <span style={{ color: '#fff', fontSize: 16, marginLeft: 2 }}>▶</span>
-          </div>
-          <span className="text-[9px] font-bold mt-2" style={{ color: 'rgba(255,255,255,.8)' }}>REEL • 0:15</span>
-        </div>
-        {/* Bottom bar */}
-        <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 flex items-center gap-1.5" style={{ background: 'rgba(0,0,0,.3)' }}>
-          <div className="w-4 h-4 rounded-full" style={{ background: 'rgba(255,255,255,.4)' }} />
-          <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,.2)' }}>
-            <div className="h-1 rounded-full w-1/3" style={{ background: '#fff' }} />
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   if (format === 'Carousel') {
     return (
@@ -168,73 +141,6 @@ function CarouselNav({ current, total, onPrev, onNext }: {
   )
 }
 
-function ReelModal({ onClose, inputProps }: { onClose: () => void; inputProps: ReelProps }) {
-  useEffect(() => {
-    const orig = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = orig }
-  }, [])
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
-
-  return createPortal(
-    <div
-      className="fade-in"
-      style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.85)',
-        padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)',
-      }}
-      onClick={onClose}
-    >
-      <button
-        onClick={onClose}
-        aria-label="Close reel preview"
-        style={{
-          position: 'absolute',
-          top: 'max(16px, env(safe-area-inset-top))',
-          right: 'max(16px, env(safe-area-inset-right))',
-          width: 44, height: 44, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.15)', border: 'none',
-          color: '#fff', fontSize: 20, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 10,
-        }}
-      >
-        ✕
-      </button>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="card-enter"
-        style={{
-          width: '100%', maxWidth: 440,
-          aspectRatio: '9/16',
-          maxHeight: 'calc(100vh - 80px)',
-          borderRadius: 16, overflow: 'hidden',
-        }}
-      >
-        <Player
-          component={ReelComponent}
-          compositionWidth={1080}
-          compositionHeight={1920}
-          durationInFrames={450}
-          fps={30}
-          style={{ width: '100%', height: '100%' }}
-          controls
-          autoPlay
-          inputProps={inputProps}
-        />
-      </div>
-    </div>,
-    document.body
-  )
-}
-
 type VisualPatch = Partial<NonNullable<ContentItem['generatedVisual']>>
 
 interface ContentCardProps {
@@ -254,7 +160,7 @@ interface ContentCardProps {
     edits?: { caption?: string; hashtags?: string[] },
   ) => Promise<{ facebookError?: string }>
   // Controls which destinations the confirm modal exposes. Each lab owns the
-  // policy (Carousel Lounge: feed-only; Single Image / Reel: feed+story).
+  // policy (Carousel Lounge: feed-only; Single Image: feed+story).
   // Defaults to ['feed'] so components that don't opt in never surprise the user.
   allowedDestinations?: PostDestination[]
   // Called by the visual wrapper with fields to merge into the item's
@@ -288,7 +194,6 @@ export default function ContentCard({
   const isLogged = item.logged
 
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [reelModalOpen, setReelModalOpen] = useState(false)
   const [postState, setPostState] = useState<'idle' | 'confirming' | 'posting' | 'error'>('idle')
   const [postErrorMessage, setPostErrorMessage] = useState<string | null>(item.postError ?? null)
   const [facebookWarning, setFacebookWarning] = useState<string | null>(item.facebookError ?? null)
@@ -305,13 +210,11 @@ export default function ContentCard({
   const isCrossPostedFacebook = Boolean(item.postedToFacebook)
 
   const canPost = Boolean(onPost) && isGenerated && !isPosted
-  // A post is only runnable if the needed asset URL(s) exist — we can't ship
-  // a reel whose Veo job hasn't finished yet, etc.
+  // A post is only runnable if the needed asset URL(s) exist.
   const hasPostableAsset = (() => {
     const gv = item.generatedVisual
     if (!gv) return false
     if (gv.format === 'Single Image') return Boolean(gv.imageUrl)
-    if (gv.format === 'Reel') return Boolean(gv.reelUrl)
     if (gv.format === 'Carousel') {
       const good = (gv.slideUrls ?? []).filter((u): u is string => typeof u === 'string' && u.length > 0)
       return good.length >= 2
@@ -566,78 +469,6 @@ export default function ContentCard({
                 />
               </div>
             )
-          ) : format === 'Reel' ? (
-            item.generatedVisual.reelArcId ? (
-              <ReelLoungeVisual
-                flavor={(item.generatedVisual.flavor || 'Amped Apple') as ReelProps['flavor']}
-                hook={item.generatedVisual.hook}
-                caption={item.generatedVisual.caption}
-                pillar={item.generatedVisual.pillar}
-                subcategory={item.generatedVisual.subcategory}
-                reelArcId={item.generatedVisual.reelArcId}
-                reelSeed={item.generatedVisual.reelSeed ?? 0}
-                durationSeconds={item.generatedVisual.durationSeconds ?? 8}
-                {...(typeof item.generatedVisual.reelVariationSeed === 'number'
-                  ? { variationSeed: item.generatedVisual.reelVariationSeed }
-                  : {})}
-                {...(item.generatedVisual.reelUrl ? { url: item.generatedVisual.reelUrl } : {})}
-                {...(item.generatedVisual.reelError ? { error: item.generatedVisual.reelError } : {})}
-                onResult={(url, error, vseed) => {
-                  applyPatch({
-                    reelUrl: url ?? undefined,
-                    reelError: error ?? undefined,
-                    reelVariationSeed: typeof vseed === 'number' ? vseed : undefined,
-                  })
-                }}
-              />
-            ) : (
-            <div
-              className="rounded-lg overflow-hidden mb-3"
-              style={{ maxHeight: 200, position: 'relative', cursor: 'pointer' }}
-              onClick={() => setReelModalOpen(true)}
-            >
-              <Thumbnail
-                component={ReelComponent}
-                compositionWidth={1080}
-                compositionHeight={1920}
-                durationInFrames={450}
-                fps={30}
-                frameToDisplay={90}
-                style={{ width: '100%' }}
-                inputProps={{
-                  flavor: (item.generatedVisual.flavor || 'Amped Apple') as ReelProps['flavor'],
-                  hook: item.generatedVisual.hook,
-                  caption: item.generatedVisual.caption,
-                  hashtags: item.generatedVisual.hashtags,
-                  pillar: item.generatedVisual.pillar,
-                  subcategory: item.generatedVisual.subcategory,
-                  layoutTemplate: item.generatedVisual.layoutTemplate || 1,
-                }}
-              />
-              <div style={{
-                position: 'absolute', top: 6, right: 6,
-                background: 'rgba(0,0,0,0.5)', color: '#fff',
-                fontSize: 9, fontWeight: 700, padding: '2px 6px',
-                borderRadius: 4, letterSpacing: '0.05em',
-              }}>
-                9:16
-              </div>
-              <div style={{
-                position: 'absolute', inset: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(0,0,0,0.15)',
-              }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.85)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                }}>
-                  <span style={{ fontSize: 16, marginLeft: 2, color: '#1a1a1a' }}>▶</span>
-                </div>
-              </div>
-            </div>
-            )
           ) : (
             <MockVisual format={format} pillar={pillar} accentColor={accentColor} />
           )
@@ -849,21 +680,6 @@ export default function ContentCard({
           </div>
         )}
       </div>
-
-      {reelModalOpen && isGenerated && item.generatedVisual && format === 'Reel' && (
-        <ReelModal
-          onClose={() => setReelModalOpen(false)}
-          inputProps={{
-            flavor: (item.generatedVisual.flavor || 'Amped Apple') as ReelProps['flavor'],
-            hook: item.generatedVisual.hook,
-            caption: item.generatedVisual.caption,
-            hashtags: item.generatedVisual.hashtags,
-            pillar: item.generatedVisual.pillar,
-            subcategory: item.generatedVisual.subcategory,
-            layoutTemplate: item.generatedVisual.layoutTemplate || 1,
-          }}
-        />
-      )}
 
       {postState === 'confirming' && item.generatedVisual && (
         <PostConfirmModal

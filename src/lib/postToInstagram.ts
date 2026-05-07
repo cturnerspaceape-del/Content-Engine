@@ -62,9 +62,6 @@ function assertPostableAsset(item: ContentItem) {
   if (v.format === 'Single Image' && !v.imageUrl) {
     throw new Error('Image is still generating — try again in a moment.')
   }
-  if (v.format === 'Reel' && !v.reelUrl) {
-    throw new Error('Reel is still generating — try again in a moment.')
-  }
   if (v.format === 'Carousel') {
     const slides = (v.slideUrls ?? []).filter((u): u is string => typeof u === 'string' && u.length > 0)
     if (slides.length < 2) throw new Error('Carousel needs at least 2 completed slides before posting.')
@@ -80,7 +77,6 @@ function buildPublishBody(item: ContentItem): Record<string, unknown> {
     hashtags: v.hashtags,
   }
   if (v.format === 'Single Image') body.imageUrl = v.imageUrl
-  else if (v.format === 'Reel') body.videoUrl = v.reelUrl
   else if (v.format === 'Carousel') {
     body.slideUrls = (v.slideUrls ?? []).filter(
       (u): u is string => typeof u === 'string' && u.length > 0,
@@ -222,10 +218,10 @@ export async function postItemToSocials(
 
   const selected = new Set<TunerPlatform>(opts.selectedCrossPosts ?? [])
   const wantThreads = selected.has('Threads')
-  const wantYouTube
-    = selected.has('YouTube Shorts') && item.generatedVisual?.format === 'Reel'
-  // X allows Single Image, ≤4-slide Carousel, or 1-video Reel. Reject larger
-  // carousels here so we don't bother the backend.
+  // YouTube Shorts requires a Reel video; with reels removed we never send.
+  const wantYouTube = false
+  // X allows Single Image or ≤4-slide Carousel. Reject larger carousels here
+  // so we don't bother the backend.
   const xCarouselTooBig
     = item.generatedVisual?.format === 'Carousel'
     && (item.generatedVisual.slideUrls?.filter(Boolean).length ?? 0) > 4

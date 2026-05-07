@@ -9,7 +9,7 @@ interface MultiPlatformPreviewProps {
   assetKind?: 'image' | 'video'
   // Per-platform render override. When provided for the first selected
   // platform, the custom node renders instead of the built-in PreviewCard.
-  // Used by ImageLab/ReelLab/CarouselLab to keep the existing IG ContentCard
+  // Used by ImageLab/CarouselLab to keep the existing IG ContentCard
   // (with its publish flow) inside the IG/FB tab.
   customRender?: Partial<Record<TunerPlatform, () => React.ReactNode>>
   // When set, the built-in PreviewCard renders an Edit button next to Copy.

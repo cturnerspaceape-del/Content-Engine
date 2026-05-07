@@ -3,7 +3,6 @@ import type { ContentItem, InstagramFormat } from '../../types'
 import {
   generateContentForPostAsync,
   generateCarouselLoungePostAsync,
-  generateReelLoungePostAsync,
   type ResearchContext,
 } from '../../data/instagramContentTemplates'
 import {
@@ -15,7 +14,6 @@ import {
 import { toCarouselArcSeed } from '../../lib/research/researchedSeed'
 import type { ResearchedSeed } from '../../lib/research/types'
 import SingleImageVisual from '../SingleImageVisual'
-import ReelLoungeVisual from '../ReelLoungeVisual'
 import CarouselLoungeVisual from '../CarouselLoungeVisual'
 import { postItemToSocials } from '../../lib/postToInstagram'
 import type { SpaceApeFlavor } from '../../remotion/types'
@@ -60,7 +58,6 @@ async function runGenerate(
   research?: ResearchContext,
   arcId?: string,
 ): Promise<ContentItem> {
-  if (format === 'Reel') return generateReelLoungePostAsync(seedItem)
   if (format === 'Carousel') return generateCarouselLoungePostAsync(seedItem, arcId, research)
   return generateContentForPostAsync(seedItem, research)
 }
@@ -179,7 +176,7 @@ export default function IGSlotPanel({ format, item, slotResearch, platform = 'In
         </button>
         <p className="text-[10px] mt-2 italic" style={{ color: 'var(--muted)' }}>
           {canGenerate
-            ? `Calls the same generator as ${format === 'Reel' ? 'Reel Lab' : format === 'Carousel' ? 'Carousel Lab' : 'Image Lab'} — caption + visual ready in seconds.`
+            ? `Calls the same generator as ${format === 'Carousel' ? 'Carousel Lab' : 'Image Lab'} — caption + visual ready in seconds.`
             : 'Run Research on this slot first — generation needs a picked trend.'}
         </p>
       </div>
@@ -212,26 +209,6 @@ export default function IGSlotPanel({ format, item, slotResearch, platform = 'In
             onResult={(url, err) => updateGV({
               imageUrl: url ?? undefined,
               imageError: err ?? undefined,
-            })}
-          />
-        )}
-        {format === 'Reel' && gv.reelArcId !== undefined && gv.reelSeed !== undefined && (
-          <ReelLoungeVisual
-            flavor={flavor}
-            hook={gv.hook}
-            caption={gv.caption}
-            pillar={gv.pillar}
-            subcategory={gv.subcategory}
-            reelArcId={gv.reelArcId}
-            reelSeed={gv.reelSeed}
-            durationSeconds={gv.durationSeconds ?? 8}
-            variationSeed={gv.reelVariationSeed}
-            url={gv.reelUrl}
-            error={gv.reelError}
-            onResult={(url, err, seed) => updateGV({
-              reelUrl: url ?? undefined,
-              reelError: err ?? undefined,
-              ...(seed !== undefined && { reelVariationSeed: seed }),
             })}
           />
         )}

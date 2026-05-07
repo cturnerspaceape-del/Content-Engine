@@ -74,14 +74,11 @@ export interface ContentItem {
     subcategory: string
     format: InstagramFormat
     flavor?: string
-    layoutTemplate?: number // Carousel 1-8, Reel 1-6. Unused for Single Image.
+    layoutTemplate?: number // Carousel 1-8. Unused for Single Image.
     shotTemplateId?: string // Single Image only — see src/data/shotTemplates.ts
     slideCount?: number
     arcId?: string // Carousel Lounge only — presence switches Carousel rendering to AI-image slides
     carouselSeed?: number // shared anchor across all slides of one Lounge carousel
-    reelArcId?: string // Reel Lounge only — presence switches Reel rendering to AI-video
-    reelSeed?: number // Veo seed for reel determinism + Reroll diversity
-    durationSeconds?: number // Reel Lounge only — per-arc clip length
     // Persisted generation results. Presence of a URL or error is terminal —
     // the visual component will not re-fetch on mount once either is set.
     // A Reroll click clears the URL + error (and bumps the *VariationSeed) so
@@ -92,9 +89,6 @@ export interface ContentItem {
     slideUrls?: (string | null)[]
     slideErrors?: (string | null)[]
     slideVariationSeeds?: (number | undefined)[]
-    reelUrl?: string
-    reelError?: string
-    reelVariationSeed?: number
     // Trend signal that produced this content. Threaded down to the image
     // model so visuals anchor to the picked research angle instead of the
     // generic Space Ape mood pool.
@@ -134,7 +128,6 @@ export type ViewState =
   | 'day-detail'
   | 'postlog'
   | 'image-lab'
-  | 'reel-lab'
   | 'text-post-lab'
   | 'carousel-lab'
   | 'email-lab'

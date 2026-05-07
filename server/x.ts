@@ -25,10 +25,9 @@ interface PublishResult {
 
 interface ItemLike {
   generatedVisual?: {
-    format: 'Single Image' | 'Carousel' | 'Reel'
+    format: 'Single Image' | 'Carousel'
     imageUrl?: string
     slideUrls?: (string | null)[]
-    reelUrl?: string
   }
 }
 
@@ -98,15 +97,6 @@ async function uploadImage(client: TwitterApi, url: string): Promise<string> {
   }
 }
 
-async function uploadVideo(client: TwitterApi, url: string): Promise<string> {
-  const tmp = await downloadToTemp(url, '.mp4')
-  try {
-    return await client.v2.uploadMedia(tmp, { media_type: 'video/mp4', media_category: 'tweet_video' })
-  } finally {
-    await fs.unlink(tmp).catch(() => {})
-  }
-}
-
 export async function publishItemToX(args: {
   item: ItemLike
   caption: string
@@ -143,13 +133,6 @@ export async function publishItemToX(args: {
     // twitter-api-v2 types media_ids as a fixed-length tuple of 1..4 strings.
     const tuple = mediaIds as [string, ...string[]] & { length: 1 | 2 | 3 | 4 }
     const tweet = await client.v2.tweet({ text, media: { media_ids: tuple } })
-    return buildResult(tweet.data.id)
-  }
-
-  if (v.format === 'Reel') {
-    if (!v.reelUrl) throw new Error('Reel format requires reelUrl')
-    const mediaId = await uploadVideo(client, absolutize(v.reelUrl))
-    const tweet = await client.v2.tweet({ text, media: { media_ids: [mediaId] } })
     return buildResult(tweet.data.id)
   }
 

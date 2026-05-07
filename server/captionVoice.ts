@@ -1,5 +1,5 @@
-// Brand-voice prompt builder for Space Ape captions across IG, Carousel, Reel,
-// and X/Threads text posts. Centralizes the founder voice + product catalog +
+// Brand-voice prompt builder for Space Ape captions across IG, Carousel, and
+// X/Threads text posts. Centralizes the founder voice + product catalog +
 // compliance rules so every caption is on-tone and on-product.
 
 export type VoiceMode = 'raw' | 'polished' | 'compliance'

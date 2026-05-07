@@ -117,21 +117,6 @@ export async function publishSingleImage(args: {
   return publishContainer(containerId)
 }
 
-export async function publishReel(args: {
-  videoUrl: string
-  caption: string
-  hashtags?: string[]
-}): Promise<PublishResult> {
-  const caption = buildCaption({ caption: args.caption, hashtags: args.hashtags })
-  const containerId = await createContainer({
-    media_type: 'REELS',
-    video_url: absolutize(args.videoUrl),
-    caption,
-  })
-  await waitForContainerReady(containerId)
-  return publishContainer(containerId)
-}
-
 export async function publishCarousel(args: {
   slideUrls: string[]
   caption: string
@@ -155,23 +140,11 @@ export async function publishCarousel(args: {
 }
 
 export async function publishStory(args: {
-  imageUrl?: string
-  videoUrl?: string
+  imageUrl: string
 }): Promise<PublishResult> {
-  if (args.imageUrl) {
-    const containerId = await createContainer({
-      media_type: 'STORIES',
-      image_url: absolutize(args.imageUrl),
-    })
-    return publishContainer(containerId)
-  }
-  if (args.videoUrl) {
-    const containerId = await createContainer({
-      media_type: 'STORIES',
-      video_url: absolutize(args.videoUrl),
-    })
-    await waitForContainerReady(containerId)
-    return publishContainer(containerId)
-  }
-  throw new Error('publishStory requires either imageUrl or videoUrl')
+  const containerId = await createContainer({
+    media_type: 'STORIES',
+    image_url: absolutize(args.imageUrl),
+  })
+  return publishContainer(containerId)
 }

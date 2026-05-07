@@ -5,16 +5,14 @@ import {
   publishThreadsCarousel,
   publishThreadsImage,
   publishThreadsText,
-  publishThreadsVideo,
 } from './threads'
 import { recordPublishError } from './publishErrorLog'
 
-type Format = 'Text' | 'Single Image' | 'Reel' | 'Carousel'
+type Format = 'Text' | 'Single Image' | 'Carousel'
 
 interface PublishBody {
   format?: Format
   imageUrl?: string
-  videoUrl?: string
   slideUrls?: string[]
   caption?: string
   hashtags?: string[]
@@ -24,7 +22,7 @@ export async function publishToThreadsHandler(req: Request, res: Response): Prom
   const body = req.body as PublishBody
   const format = body.format
 
-  if (!format || !['Text', 'Single Image', 'Reel', 'Carousel'].includes(format)) {
+  if (!format || !['Text', 'Single Image', 'Carousel'].includes(format)) {
     res.status(400).json({ ok: false, error: `Invalid format: ${format}` })
     return
   }
@@ -40,13 +38,6 @@ export async function publishToThreadsHandler(req: Request, res: Response): Prom
       if (!body.imageUrl) throw new Error('imageUrl is required for Single Image')
       result = await publishThreadsImage({
         imageUrl: body.imageUrl,
-        caption: body.caption ?? '',
-        hashtags: body.hashtags,
-      })
-    } else if (format === 'Reel') {
-      if (!body.videoUrl) throw new Error('videoUrl is required for Reel')
-      result = await publishThreadsVideo({
-        videoUrl: body.videoUrl,
         caption: body.caption ?? '',
         hashtags: body.hashtags,
       })
