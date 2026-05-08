@@ -26,12 +26,17 @@ const CTA_POOL = [
 ]
 
 export function buildSlideArc(hook: string, caption: string, flavor: string, strainType: string): SlideContent[] {
-  const seed = seedFromText(hook)
-  const sentences = caption.split(/[.!?]+/).filter(s => s.trim().length > 15)
+  // Defensive: callers may pass undefined for caption/hook when reading
+  // partially-saved persisted state. Coerce to '' so .split / seedFromText
+  // don't throw and the arc just renders without those slides.
+  const safeHook = hook ?? ''
+  const safeCaption = caption ?? ''
+  const seed = seedFromText(safeHook)
+  const sentences = safeCaption.split(/[.!?]+/).filter(s => s.trim().length > 15)
   const usable = sentences.slice(0, 4)
   const arc: SlideContent[] = []
 
-  arc.push({ role: 'hook', text: hook })
+  arc.push({ role: 'hook', text: safeHook })
 
   if (usable.length <= 2) {
     usable.forEach(s => arc.push({ role: 'content', text: s.trim() }))

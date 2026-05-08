@@ -121,7 +121,10 @@ export default function ContentCard({
         ? loungeArc.slides.length
         : gv?.slideCount && gv.slideCount >= 2
           ? gv.slideCount
-          : gv
+          // buildSlideArc reads caption.split — guard against partial /
+          // legacy persisted items that have generatedVisual without
+          // caption or hook yet. Falls back to the default arc length.
+          : gv && gv.hook && gv.caption
             ? buildSlideArc(
                 gv.hook,
                 gv.caption,
