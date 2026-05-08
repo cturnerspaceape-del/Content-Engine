@@ -1,4 +1,4 @@
-// OpenAI gpt-image-1 backend — drop-in replacement for the old gemini.ts
+// OpenAI gpt-image-2 backend — drop-in replacement for the old gemini.ts
 // generateImage() shape. Mirrors the same ReferenceImage interface so call
 // sites (generateSingleImage, generateCarouselSlide, generatePrintImage,
 // generateEmailImage) don't care which model is rendering.
@@ -59,7 +59,6 @@ export type ImageSize = '1024x1024' | '1024x1536' | '1536x1024' | '2048x2048' | 
 export type ImageQuality = 'low' | 'medium' | 'high' | 'auto'
 export type ImageBackground = 'transparent' | 'opaque' | 'auto'
 export type ImageOutputFormat = 'png' | 'jpeg' | 'webp'
-export type ImageInputFidelity = 'high' | 'low'
 export type ImageModeration = 'auto' | 'low'
 
 export interface GenerateImageInput {
@@ -72,7 +71,6 @@ export interface GenerateImageInput {
   outputFormat?: ImageOutputFormat
   // 0–100. Only meaningful when outputFormat is jpeg or webp.
   outputCompression?: number
-  inputFidelity?: ImageInputFidelity
   moderation?: ImageModeration
   // PNG with alpha=0 = regions to edit, alpha=255 = preserve.
   // Only honored when references contain at least one image.
@@ -111,7 +109,6 @@ export async function generateImage({
   background,
   outputFormat,
   outputCompression,
-  inputFidelity,
   moderation,
   mask,
 }: GenerateImageInput): Promise<Buffer> {
@@ -164,7 +161,6 @@ export async function generateImage({
           if (typeof outputCompression === 'number') {
             form.set('output_compression', String(outputCompression))
           }
-          if (inputFidelity) form.set('input_fidelity', inputFidelity)
           if (moderation) form.set('moderation', moderation)
           for (let i = 0; i < refs.length; i++) {
             const ref = refs[i]

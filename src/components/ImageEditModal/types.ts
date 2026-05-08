@@ -4,9 +4,7 @@
 
 export type ImageSize = '1024x1024' | '1024x1536' | '1536x1024'
 export type ImageQuality = 'auto' | 'low' | 'medium' | 'high'
-export type ImageBackground = 'auto' | 'opaque' | 'transparent'
 export type ImageOutputFormat = 'png' | 'jpeg' | 'webp'
-export type ImageInputFidelity = 'low' | 'high'
 
 export interface UserRef {
   mime: string
@@ -17,16 +15,12 @@ export interface UserRef {
 
 export interface AdvancedSettings {
   quality: ImageQuality
-  background: ImageBackground
-  fidelity: ImageInputFidelity
   outputFormat: ImageOutputFormat
   outputCompression: number
 }
 
 export const DEFAULT_ADVANCED: AdvancedSettings = {
   quality: 'auto',
-  background: 'auto',
-  fidelity: 'high',
   outputFormat: 'png',
   outputCompression: 90,
 }

@@ -1,7 +1,5 @@
 import type {
   AdvancedSettings,
-  ImageBackground,
-  ImageInputFidelity,
   ImageOutputFormat,
   ImageQuality,
 } from './types'
@@ -26,17 +24,6 @@ const QUALITY: ReadonlyArray<ChipDef<ImageQuality>> = [
   { value: 'low', label: 'Low', emoji: '⚡', hint: 'Fastest, cheaper' },
   { value: 'medium', label: 'Med', emoji: '🌗', hint: 'Balanced' },
   { value: 'high', label: 'High', emoji: '💎', hint: 'Slowest, sharpest' },
-]
-
-const BACKGROUND: ReadonlyArray<ChipDef<ImageBackground>> = [
-  { value: 'auto', label: 'Auto' },
-  { value: 'opaque', label: 'Opaque', emoji: '🎨' },
-  { value: 'transparent', label: 'Sticker', emoji: '🪄', hint: 'Transparent background' },
-]
-
-const FIDELITY: ReadonlyArray<ChipDef<ImageInputFidelity>> = [
-  { value: 'low', label: 'Creative', emoji: '🎲', hint: 'Looser interpretation' },
-  { value: 'high', label: 'Faithful', emoji: '🎯', hint: 'Stick close to source' },
 ]
 
 const FORMAT: ReadonlyArray<ChipDef<ImageOutputFormat>> = [
@@ -175,22 +162,6 @@ export default function AdvancedPanel({
               options={QUALITY}
               active={value.quality}
               onPick={(v) => update('quality', v)}
-              disabled={disabled}
-            />
-          </Section>
-          <Section label="Background">
-            <ChipRow
-              options={BACKGROUND}
-              active={value.background}
-              onPick={(v) => update('background', v)}
-              disabled={disabled}
-            />
-          </Section>
-          <Section label="Fidelity">
-            <ChipRow
-              options={FIDELITY}
-              active={value.fidelity}
-              onPick={(v) => update('fidelity', v)}
               disabled={disabled}
             />
           </Section>

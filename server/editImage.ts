@@ -16,8 +16,6 @@ import type { Request, Response } from 'express'
 import { cachePath, exists, hashKey, writePng } from './cache'
 import {
   generateImage,
-  type ImageBackground,
-  type ImageInputFidelity,
   type ImageOutputFormat,
   type ImageQuality,
   type ImageSize,
@@ -51,10 +49,8 @@ interface EditImageBody {
   // Forwarded straight through to OpenAI.
   size?: ImageSize
   quality?: ImageQuality
-  background?: ImageBackground
   outputFormat?: ImageOutputFormat
   outputCompression?: number
-  inputFidelity?: ImageInputFidelity
 }
 
 const VARIATION_PROMPT =
@@ -121,10 +117,8 @@ export async function editImageHandler(req: Request, res: Response): Promise<voi
       maskBase64,
       size,
       quality,
-      background,
       outputFormat,
       outputCompression,
-      inputFidelity,
     } = body
     const userRefs = sanitizeUserRefs(body.userRefs)
 
@@ -150,10 +144,8 @@ export async function editImageHandler(req: Request, res: Response): Promise<voi
       ...(userRefs.length > 0 ? { userRefs: userRefs.map(refFingerprint) } : {}),
       ...(size ? { size } : {}),
       ...(quality ? { quality } : {}),
-      ...(background ? { background } : {}),
       ...(outputFormat ? { outputFormat } : {}),
       ...(typeof outputCompression === 'number' ? { outputCompression } : {}),
-      ...(inputFidelity ? { inputFidelity } : {}),
     })
     const { absPath, publicUrl } = cachePath(hash, kind)
 
@@ -171,7 +163,7 @@ export async function editImageHandler(req: Request, res: Response): Promise<voi
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(
-        `\n[edit-image] kind=${kind} mode=${isVariation ? 'variation' : 'edit'}\nsource=${imageUrl}\nedit=${rawEdit || '(none)'}\nuserRefs=${userRefs.length} mask=${mask ? 'yes' : 'no'} size=${size || 'default'} quality=${quality || 'default'} bg=${background || 'default'} fmt=${outputFormat || 'default'} fidelity=${inputFidelity || 'default'}\n`,
+        `\n[edit-image] kind=${kind} mode=${isVariation ? 'variation' : 'edit'}\nsource=${imageUrl}\nedit=${rawEdit || '(none)'}\nuserRefs=${userRefs.length} mask=${mask ? 'yes' : 'no'} size=${size || 'default'} quality=${quality || 'default'} fmt=${outputFormat || 'default'}\n`,
       )
     }
 
@@ -181,10 +173,8 @@ export async function editImageHandler(req: Request, res: Response): Promise<voi
       mask,
       size,
       quality,
-      background,
       outputFormat,
       outputCompression,
-      inputFidelity,
     })
     await writePng(absPath, png)
 

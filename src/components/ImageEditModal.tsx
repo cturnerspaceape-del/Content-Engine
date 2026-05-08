@@ -95,8 +95,6 @@ export default function ImageEditModal({
         : {}),
       size,
       quality: advanced.quality,
-      background: advanced.background,
-      inputFidelity: advanced.fidelity,
       outputFormat: advanced.outputFormat,
       ...(advanced.outputFormat !== 'png'
         ? { outputCompression: advanced.outputCompression }
@@ -183,11 +181,7 @@ export default function ImageEditModal({
             aspectRatio: aspect,
             borderRadius: 16,
             overflow: 'hidden',
-            background:
-              advanced.background === 'transparent'
-                ? // Checker pattern hint when sticker mode is on.
-                  'repeating-conic-gradient(rgba(255,255,255,0.06) 0% 25%, rgba(0,0,0,0.4) 0% 50%) 50% / 16px 16px'
-                : 'rgba(0,0,0,0.4)',
+            background: 'rgba(0,0,0,0.4)',
             marginBottom: 8,
             border: '1px solid var(--border)',
           }}
