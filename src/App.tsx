@@ -8,7 +8,7 @@ import TextPostLab from './components/labs/TextPostLab'
 import CarouselLab from './components/labs/CarouselLab'
 import EmailLab from './components/labs/EmailLab'
 import PrintLab from './components/labs/PrintLab'
-import { usePersistedState } from './utils/persistedState'
+import { usePersistedState, useSessionState } from './utils/persistedState'
 import type { ViewState, LoggedPost, ScheduledPost } from './types'
 
 // Migrate persisted view names from legacy Lab routes (sil-lab, x-post-lab,
@@ -24,7 +24,10 @@ const VIEW_MIGRATIONS: Record<string, ViewState> = {
 }
 
 export default function App() {
-  const [view, setView] = usePersistedState<ViewState>('sl:view', 'home')
+  // sessionStorage so backgrounding the PWA preserves the lab on resume,
+  // but fully closing it (swipe-up kill on iOS) lands the next launch on
+  // home. Generated content lives in localStorage and survives either way.
+  const [view, setView] = useSessionState<ViewState>('sl:view', 'home')
   const [animating, setAnimating] = useState(false)
   const [loggedPosts, setLoggedPosts] = usePersistedState<LoggedPost[]>('sl:loggedPosts', [])
   const [scheduledPosts, setScheduledPosts] = usePersistedState<ScheduledPost[]>('sl:scheduledPosts', [])
@@ -53,10 +56,17 @@ export default function App() {
   }
 
   // Run migration once on mount: if the user was last on a deleted route,
-  // bounce them to the corresponding new Lab.
+  // bounce them to the corresponding new Lab. Also drop the stale
+  // localStorage `sl:view` left behind from when view was persisted there —
+  // it's now read from sessionStorage and the localStorage copy is unused.
   useEffect(() => {
     const migrated = VIEW_MIGRATIONS[view as string]
     if (migrated) setView(migrated)
+    try {
+      localStorage.removeItem('sl:view')
+    } catch {
+      // non-fatal
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -36,10 +36,10 @@ interface ResearchPanelProps {
   idleTitle?: string
   idleHint?: string
   researchLabel?: string
-  // When true, CustomSeedCard renders an extra "Visual brief" textarea so
-  // users authoring a strategy from scratch can describe the photo
-  // directly. Set by visual labs (Image, Carousel, Print). When the field
-  // is left blank the lab-level handleGenerate falls back to `angle`.
+  // When true, the custom-seed editor renders an extra "Visual brief"
+  // textarea so users authoring a strategy from scratch can describe the
+  // photo directly. Set by visual labs (Image, Carousel, Print). When the
+  // field is left blank the lab-level handleGenerate falls back to `angle`.
   includeShotBrief?: boolean
 }
 
@@ -63,13 +63,62 @@ export default function ResearchPanel({
   researchLabel = 'Research trends',
   includeShotBrief = false,
 }: ResearchPanelProps) {
+  // Editor state lives at the panel level so the same form is reachable from
+  // both the idle CTA ("Write my own" peer button) and the post-research
+  // strategy grid (footer peer button).
+  const [editing, setEditing] = useState(false)
+  const [pillar, setPillar] = useState<ContentPillar>('Lifestyle')
+  const [subcategory, setSubcategory] = useState('')
+  const [angle, setAngle] = useState('')
+  const [shotBriefText, setShotBriefText] = useState('')
+
+  const customActive = activeIdx === CUSTOM_SEED_IDX
+  const hasCustomDraft = subcategory.trim().length > 0 && angle.trim().length > 0
+
   const handleFetch = async () => {
     const fresh = await fetchTrends(fetchScope)
     if (fresh) onResearched(fresh.recommendation, fresh.candidates)
   }
 
+  const handleSubmitCustom = () => {
+    if (!hasCustomDraft) return
+    const trimmedBrief = shotBriefText.trim()
+    onPickSeed(CUSTOM_SEED_IDX, {
+      pillar,
+      subcategory: subcategory.trim(),
+      angle: angle.trim(),
+      sourceAccounts: [],
+      sourceNotes: '',
+      // Only attach when the user actually filled it in — visual labs
+      // fall back to `angle` when shotBrief is absent.
+      ...(includeShotBrief && trimmedBrief ? { shotBrief: trimmedBrief } : {}),
+    })
+    setEditing(false)
+  }
+
   if (loading) {
     return <PanelShell><LoadingState /></PanelShell>
+  }
+
+  if (editing) {
+    return (
+      <PanelShell>
+        <CustomSeedEditor
+          pillar={pillar}
+          subcategory={subcategory}
+          angle={angle}
+          shotBriefText={shotBriefText}
+          includeShotBrief={includeShotBrief}
+          onPillarChange={setPillar}
+          onSubcategoryChange={setSubcategory}
+          onAngleChange={setAngle}
+          onShotBriefChange={setShotBriefText}
+          canSubmit={hasCustomDraft}
+          onSubmit={handleSubmitCustom}
+          onCancel={() => setEditing(false)}
+        />
+      </PanelShell>
+    )
   }
 
   if (!result) {
@@ -80,8 +129,19 @@ export default function ResearchPanel({
           hint={idleHint}
           label={researchLabel}
           error={error}
-          onClick={() => void handleFetch()}
+          onResearch={() => void handleFetch()}
+          onWriteOwn={() => setEditing(true)}
         />
+        {customActive && hasCustomDraft && (
+          <div className="mt-3">
+            <CustomActiveCard
+              pillar={pillar}
+              subcategory={subcategory}
+              angle={angle}
+              onEdit={() => setEditing(true)}
+            />
+          </div>
+        )}
       </PanelShell>
     )
   }
@@ -122,12 +182,18 @@ export default function ResearchPanel({
               onClick={() => onPickSeed(idx, seed)}
             />
           ))}
-          <CustomSeedCard
-            isActive={activeIdx === CUSTOM_SEED_IDX}
-            includeShotBrief={includeShotBrief}
-            onPick={(seed) => onPickSeed(CUSTOM_SEED_IDX, seed)}
-          />
         </div>
+
+        {customActive && hasCustomDraft ? (
+          <CustomActiveCard
+            pillar={pillar}
+            subcategory={subcategory}
+            angle={angle}
+            onEdit={() => setEditing(true)}
+          />
+        ) : (
+          <WriteOwnButton onClick={() => setEditing(true)} />
+        )}
 
         {error && (
           <p className="text-[11px] text-center" style={{ color: '#fb923c' }}>
@@ -161,13 +227,15 @@ function IdleState({
   hint,
   label,
   error,
-  onClick,
+  onResearch,
+  onWriteOwn,
 }: {
   title: string
   hint: string
   label: string
   error: string | null
-  onClick: () => void
+  onResearch: () => void
+  onWriteOwn: () => void
 }) {
   return (
     <div className="flex flex-col items-center gap-3 text-center">
@@ -177,23 +245,60 @@ function IdleState({
       <p className="text-xs leading-relaxed max-w-md" style={{ color: 'var(--muted)' }}>
         {hint}
       </p>
-      <button
-        onClick={onClick}
-        className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"
-        style={{
-          background: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
-          color: 'white',
-          boxShadow: '0 6px 20px -8px rgba(236,72,153,.6)',
-        }}
-      >
-        🔍 {label}
-      </button>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <button
+          onClick={onResearch}
+          className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"
+          style={{
+            background: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
+            color: 'white',
+            boxShadow: '0 6px 20px -8px rgba(236,72,153,.6)',
+          }}
+        >
+          🔍 {label}
+        </button>
+        <button
+          onClick={onWriteOwn}
+          className="text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"
+          style={{
+            background: 'var(--panel-2)',
+            color: 'var(--text)',
+            border: '1px dashed var(--border)',
+            cursor: 'pointer',
+          }}
+        >
+          ✍ Write my own
+        </button>
+      </div>
       {error && (
         <p className="text-[11px]" style={{ color: '#fb923c' }}>
           {error}
         </p>
       )}
     </div>
+  )
+}
+
+function WriteOwnButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="text-sm font-bold rounded-xl transition-all hover:scale-[1.01]"
+      style={{
+        padding: '12px 16px',
+        background: 'var(--panel-2)',
+        color: 'var(--text)',
+        border: '1px dashed var(--border)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+      }}
+    >
+      <span style={{ color: 'var(--muted)' }}>✍</span>
+      Or write my own
+    </button>
   )
 }
 
@@ -278,187 +383,162 @@ function StrategyCard({
   )
 }
 
-function CustomSeedCard({
-  isActive,
-  includeShotBrief,
-  onPick,
+function CustomActiveCard({
+  pillar,
+  subcategory,
+  angle,
+  onEdit,
 }: {
-  isActive: boolean
-  includeShotBrief: boolean
-  onPick: (seed: ResearchedSeed) => void
+  pillar: ContentPillar
+  subcategory: string
+  angle: string
+  onEdit: () => void
 }) {
-  const [editing, setEditing] = useState(false)
-  const [pillar, setPillar] = useState<ContentPillar>('Lifestyle')
-  const [subcategory, setSubcategory] = useState('')
-  const [angle, setAngle] = useState('')
-  const [shotBriefText, setShotBriefText] = useState('')
-
-  const canSubmit = subcategory.trim().length > 0 && angle.trim().length > 0
-
-  const handleSubmit = () => {
-    if (!canSubmit) return
-    const trimmedBrief = shotBriefText.trim()
-    onPick({
-      pillar,
-      subcategory: subcategory.trim(),
-      angle: angle.trim(),
-      sourceAccounts: [],
-      sourceNotes: '',
-      // Only attach when the user actually filled it in — visual labs
-      // fall back to `angle` when shotBrief is absent.
-      ...(includeShotBrief && trimmedBrief ? { shotBrief: trimmedBrief } : {}),
-    })
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <div
-        className="rounded-xl"
-        style={{
-          padding: '14px 16px',
-          background: 'var(--panel-2)',
-          border: '1.5px dashed #ec4899',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}
-      >
-        <div
-          className="text-[10px] font-bold uppercase tracking-wider"
-          style={{ color: 'var(--muted)' }}
-        >
-          Your strategy
-        </div>
-        <select
-          value={pillar}
-          onChange={(e) => setPillar(e.target.value as ContentPillar)}
-          className="text-[11px] rounded px-2 py-1"
-          style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
-        >
-          {PILLARS.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          value={subcategory}
-          onChange={(e) => setSubcategory(e.target.value)}
-          placeholder="Drop Hype Snippet"
-          className="text-[12px] rounded px-2 py-1 font-bold"
-          style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
-        />
-        <textarea
-          value={angle}
-          onChange={(e) => setAngle(e.target.value)}
-          placeholder="Frame the post like a group-chat dispatch from a friend who just got their hands on the new drop."
-          rows={3}
-          className="text-[11px] rounded px-2 py-1 leading-relaxed resize-none"
-          style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
-        />
-        {includeShotBrief && (
-          <textarea
-            value={shotBriefText}
-            onChange={(e) => setShotBriefText(e.target.value)}
-            placeholder="Visual brief (optional). e.g. Tight overhead on matte black acrylic. Hard key from camera-left, sharp shadow. Kodak Portra 400 grain. Top-right 30% reserved for caption."
-            rows={3}
-            className="text-[11px] rounded px-2 py-1 leading-relaxed resize-none"
-            style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
-          />
-        )}
-        <div className="flex gap-2 mt-1">
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            className="text-[11px] font-bold px-3 py-1.5 rounded transition-all"
-            style={{
-              background: canSubmit
-                ? 'linear-gradient(135deg, #ec4899, #8b5cf6)'
-                : 'var(--panel)',
-              color: canSubmit ? 'white' : 'var(--muted)',
-              border: canSubmit ? 'none' : '1px solid var(--border)',
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
-              flex: 1,
-            }}
-          >
-            Use this strategy
-          </button>
-          <button
-            onClick={() => setEditing(false)}
-            className="text-[11px] font-semibold px-3 py-1.5 rounded"
-            style={{
-              background: 'var(--panel)',
-              color: 'var(--muted)',
-              border: '1px solid var(--border)',
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (isActive && subcategory.trim() && angle.trim()) {
-    return (
-      <button
-        onClick={() => setEditing(true)}
-        className="text-left rounded-xl transition-all hover:scale-[1.01]"
-        style={{
-          padding: '14px 16px',
-          background: 'linear-gradient(135deg, rgba(236,72,153,.14), rgba(139,92,246,.10))',
-          border: '1.5px solid #ec4899',
-          boxShadow: '0 6px 20px -10px rgba(236,72,153,.5)',
-          cursor: 'pointer',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-        }}
-      >
-        <div
-          className="text-[10px] font-bold uppercase tracking-wider"
-          style={{ color: 'var(--muted)' }}
-        >
-          {pillar} · Your strategy
-        </div>
-        <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>
-          {subcategory}
-        </div>
-        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text)', opacity: 0.8 }}>
-          {angle}
-        </p>
-        <p className="text-[10px] mt-auto" style={{ color: 'var(--muted)' }}>
-          Tap to edit
-        </p>
-      </button>
-    )
-  }
-
   return (
     <button
-      onClick={() => setEditing(true)}
+      onClick={onEdit}
       className="text-left rounded-xl transition-all hover:scale-[1.01]"
       style={{
         padding: '14px 16px',
-        background: 'var(--panel-2)',
-        border: '1.5px dashed var(--border)',
+        background: 'linear-gradient(135deg, rgba(236,72,153,.14), rgba(139,92,246,.10))',
+        border: '1.5px solid #ec4899',
+        boxShadow: '0 6px 20px -10px rgba(236,72,153,.5)',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         gap: 6,
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 120,
       }}
     >
-      <div className="text-2xl" style={{ color: 'var(--muted)' }}>✍</div>
-      <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>
-        Write my own
+      <div
+        className="text-[10px] font-bold uppercase tracking-wider"
+        style={{ color: 'var(--muted)' }}
+      >
+        {pillar} · Your strategy
       </div>
-      <p className="text-[11px] text-center" style={{ color: 'var(--muted)' }}>
-        Skip research and write your own angle
+      <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>
+        {subcategory}
+      </div>
+      <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text)', opacity: 0.8 }}>
+        {angle}
+      </p>
+      <p className="text-[10px] mt-auto" style={{ color: 'var(--muted)' }}>
+        Tap to edit
       </p>
     </button>
+  )
+}
+
+function CustomSeedEditor({
+  pillar,
+  subcategory,
+  angle,
+  shotBriefText,
+  includeShotBrief,
+  onPillarChange,
+  onSubcategoryChange,
+  onAngleChange,
+  onShotBriefChange,
+  canSubmit,
+  onSubmit,
+  onCancel,
+}: {
+  pillar: ContentPillar
+  subcategory: string
+  angle: string
+  shotBriefText: string
+  includeShotBrief: boolean
+  onPillarChange: (p: ContentPillar) => void
+  onSubcategoryChange: (s: string) => void
+  onAngleChange: (s: string) => void
+  onShotBriefChange: (s: string) => void
+  canSubmit: boolean
+  onSubmit: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div
+      className="rounded-xl"
+      style={{
+        padding: '14px 16px',
+        background: 'var(--panel-2)',
+        border: '1.5px dashed #ec4899',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+    >
+      <div
+        className="text-[10px] font-bold uppercase tracking-wider"
+        style={{ color: 'var(--muted)' }}
+      >
+        Your strategy
+      </div>
+      <select
+        value={pillar}
+        onChange={(e) => onPillarChange(e.target.value as ContentPillar)}
+        className="text-[11px] rounded px-2 py-1"
+        style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
+      >
+        {PILLARS.map((p) => (
+          <option key={p} value={p}>{p}</option>
+        ))}
+      </select>
+      <input
+        type="text"
+        value={subcategory}
+        onChange={(e) => onSubcategoryChange(e.target.value)}
+        placeholder="Drop Hype Snippet"
+        className="text-[12px] rounded px-2 py-1 font-bold"
+        style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
+      />
+      <textarea
+        value={angle}
+        onChange={(e) => onAngleChange(e.target.value)}
+        placeholder="Frame the post like a group-chat dispatch from a friend who just got their hands on the new drop."
+        rows={3}
+        className="text-[11px] rounded px-2 py-1 leading-relaxed resize-none"
+        style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
+      />
+      {includeShotBrief && (
+        <textarea
+          value={shotBriefText}
+          onChange={(e) => onShotBriefChange(e.target.value)}
+          placeholder="Visual brief (optional). e.g. Tight overhead on matte black acrylic. Hard key from camera-left, sharp shadow. Kodak Portra 400 grain. Top-right 30% reserved for caption."
+          rows={3}
+          className="text-[11px] rounded px-2 py-1 leading-relaxed resize-none"
+          style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
+        />
+      )}
+      <div className="flex gap-2 mt-1">
+        <button
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className="text-[11px] font-bold px-3 py-1.5 rounded transition-all"
+          style={{
+            background: canSubmit
+              ? 'linear-gradient(135deg, #ec4899, #8b5cf6)'
+              : 'var(--panel)',
+            color: canSubmit ? 'white' : 'var(--muted)',
+            border: canSubmit ? 'none' : '1px solid var(--border)',
+            cursor: canSubmit ? 'pointer' : 'not-allowed',
+            flex: 1,
+          }}
+        >
+          Use this strategy
+        </button>
+        <button
+          onClick={onCancel}
+          className="text-[11px] font-semibold px-3 py-1.5 rounded"
+          style={{
+            background: 'var(--panel)',
+            color: 'var(--muted)',
+            border: '1px solid var(--border)',
+            cursor: 'pointer',
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   )
 }
