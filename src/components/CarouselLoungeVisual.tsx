@@ -6,7 +6,8 @@ import ImageEditModal from './ImageEditModal'
 import { fetchSlide } from './CarouselLoungeVisual/fetchSlide'
 import { SlidePlaceholder } from './CarouselLoungeVisual/SlidePlaceholder'
 import { ThumbnailStrip } from './CarouselLoungeVisual/ThumbnailStrip'
-import { CarouselLoungeNav } from './CarouselLoungeVisual/CarouselLoungeNav'
+import CarouselNav from './ui/CarouselNav'
+import IconActionButton from './ui/IconActionButton'
 
 interface CarouselLoungeVisualProps {
   flavor: SpaceApeFlavor
@@ -332,14 +333,17 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
           {current + 1} / {slideCount}
         </div>
 
-        <CarouselLoungeNav
+        <CarouselNav
+          size="lg"
           current={current}
           total={slideCount}
           onPrev={() => setCurrent((s) => Math.max(0, s - 1))}
           onNext={() => setCurrent((s) => Math.min(slideCount - 1, s + 1))}
         />
 
-        {/* Per-slide reroll — keeps other slides untouched; fires one fresh image call */}
+        {/* Per-slide actions: edit (full ImageEditModal) + reroll (instant
+            regenerate). Use the same affordance vocabulary as the rest of the
+            app — accent color for Edit, amber for Reroll. */}
         {showRerollButton && (
           <div
             style={{
@@ -351,49 +355,23 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
             }}
           >
             {currentUrl && (
-              <button
-                onClick={() => setEditingSlide(current)}
+              <IconActionButton
+                icon="✏️"
+                label="Edit"
+                tone="edit"
+                size="md"
                 title="Edit just this slide"
-                style={{
-                  background: 'rgba(245,158,11,0.92)',
-                  color: '#1a1a1a',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  padding: '6px 10px',
-                  borderRadius: 8,
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                }}
-              >
-                ✏️ Edit
-              </button>
+                onClick={() => setEditingSlide(current)}
+              />
             )}
-            <button
-              onClick={() => handleReroll(current)}
+            <IconActionButton
+              icon="🎲"
+              label="Reroll"
+              tone="reroll"
+              size="md"
               title="Regenerate just this slide with a fresh variation (~$0.05)"
-              style={{
-                background: 'rgba(251,146,60,0.92)',
-                color: '#1a1a1a',
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: '0.04em',
-                padding: '6px 10px',
-                borderRadius: 8,
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-              }}
-            >
-              🎲 Reroll
-            </button>
+              onClick={() => handleReroll(current)}
+            />
           </div>
         )}
       </div>

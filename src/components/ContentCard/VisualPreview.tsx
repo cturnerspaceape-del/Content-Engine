@@ -5,7 +5,7 @@ import type { CarouselProps } from '../../remotion/types'
 import SingleImageVisual from '../SingleImageVisual'
 import CarouselLoungeVisual from '../CarouselLoungeVisual'
 import { MockVisual } from './MockVisual'
-import { CarouselNav } from './CarouselNav'
+import CarouselNav from '../ui/CarouselNav'
 
 // Cast component to satisfy Thumbnail LooseComponentType constraint
 const CarouselComponent = Carousel as unknown as React.FC<Record<string, unknown>>

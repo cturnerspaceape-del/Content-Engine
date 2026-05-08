@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { PlatformVariant, TunerPlatform } from '../lib/platformTuners'
 import { platformColors } from './PlatformContentItem'
+import IconActionButton from './ui/IconActionButton'
 
 interface MultiPlatformPreviewProps {
   selected: ReadonlyArray<TunerPlatform>
@@ -143,20 +144,17 @@ function PreviewCard({ platform, variant, assetUrl, assetKind, onEdit }: Preview
         <DefaultFields variant={variant} />
       )}
 
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-2 mt-4 items-stretch">
         <CopyButton variant={variant} />
         {onEdit && (
-          <button
+          <IconActionButton
+            icon="✏️"
+            label="Edit"
+            tone="edit"
+            size="lg"
+            title={`Edit ${PLATFORM_LABELS[platform]} caption`}
             onClick={onEdit}
-            className="text-xs font-bold px-3 py-2 rounded-lg transition-all"
-            style={{
-              background: 'rgba(148,163,184,.1)',
-              color: 'var(--text)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            ✏️ Edit
-          </button>
+          />
         )}
       </div>
     </div>

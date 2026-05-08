@@ -3,6 +3,7 @@ import PlatformPicker, { defaultSelectedPlatforms } from '../PlatformPicker'
 import MultiPlatformPreview from '../MultiPlatformPreview'
 import TextVariantEditDialog from '../TextVariantEditDialog'
 import TextPostReviewModal from '../TextPostReviewModal'
+import { useToast, ToastView } from '../ui/Toast'
 import { usePersistedState } from '../../utils/persistedState'
 import {
   TEXT_ARCHETYPES,
@@ -187,11 +188,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     setVariants(replicate(canonical))
   }
 
-  const [toast, setToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(null)
-  const showToast = (kind: 'success' | 'warn', text: string) => {
-    setToast({ kind, text })
-    window.setTimeout(() => setToast(null), 4000)
-  }
+  const { toast, show: showToast } = useToast()
 
   const buildClipboardPayload = (): string => {
     const sections: string[] = []
@@ -213,7 +210,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
   const handlePost = () => {
     const payload = buildClipboardPayload()
     if (!payload) {
-      showToast('warn', 'Nothing to copy yet — click Generate first')
+      showToast({ kind: 'warn', text: 'Nothing to copy yet — click Generate first' })
       return
     }
     setPostReviewing(true)
@@ -223,7 +220,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     setPostReviewing(false)
     const payload = buildClipboardPayload()
     if (!payload) {
-      showToast('warn', 'Nothing to copy')
+      showToast({ kind: 'warn', text: 'Nothing to copy' })
       return
     }
     try {
@@ -232,9 +229,9 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
         .filter((p) => variants[p])
         .map((p) => PLATFORM_LABELS[p])
         .join(' & ')
-      showToast('success', `${labels} captions copied — paste into apps`)
+      showToast({ kind: 'success', text: `${labels} captions copied — paste into apps` })
     } catch {
-      showToast('warn', 'Could not copy to clipboard')
+      showToast({ kind: 'warn', text: 'Could not copy to clipboard' })
     }
   }
 
@@ -345,21 +342,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
               📤 Post to {selectedPlatforms.map((p) => PLATFORM_LABELS[p]).join(' & ')}
             </button>
 
-            {toast && (
-              <div
-                className="text-xs font-semibold px-4 py-2 rounded-lg"
-                style={{
-                  background:
-                    toast.kind === 'success'
-                      ? 'rgba(16,185,129,.12)'
-                      : 'rgba(251,146,60,.12)',
-                  color: toast.kind === 'success' ? '#10b981' : '#fb923c',
-                  border: `1px solid ${toast.kind === 'success' ? '#10b981' : '#fb923c'}`,
-                }}
-              >
-                {toast.text}
-              </div>
-            )}
+            <ToastView toast={toast} />
           </div>
         )}
 

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import GeneratingPlaceholder from './ui/GeneratingPlaceholder'
+import Modal from './ui/Modal'
 import AdvancedPanel from './ImageEditModal/AdvancedPanel'
 import AspectChips from './ImageEditModal/AspectChips'
 import MaskCanvas, { type MaskCanvasHandle } from './ImageEditModal/MaskCanvas'
@@ -140,36 +141,20 @@ export default function ImageEditModal({
   const canApply = !busy && (editPrompt.trim().length > 0 || maskHasStrokes || userRefs.length > 0)
 
   return (
-    <div
-      onClick={busy ? undefined : onCancel}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.65)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 100,
-        padding: 16,
+    <Modal
+      open
+      onCancel={onCancel}
+      busy={busy}
+      maxWidth={600}
+      padding={24}
+      panelStyle={{
+        borderRadius: 24,
+        background:
+          'linear-gradient(135deg, rgba(29,155,240,0.12), rgba(139,92,246,0.12))',
+        border: '1px solid var(--border)',
+        maxHeight: '92vh',
       }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="glass-panel"
-        style={{
-          width: '100%',
-          maxWidth: 600,
-          padding: 24,
-          borderRadius: 24,
-          background:
-            'linear-gradient(135deg, rgba(29,155,240,0.12), rgba(139,92,246,0.12))',
-          border: '1px solid var(--border)',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-        }}
-      >
         <div style={{ textAlign: 'center', marginBottom: 14 }}>
           <div style={{ fontSize: 28, marginBottom: 4 }}>✏️</div>
           <h2
@@ -472,8 +457,7 @@ export default function ImageEditModal({
             ✨ Apply edit
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 

@@ -1,4 +1,5 @@
 import type { getFlavorTheme } from '../../remotion/flavorThemes'
+import IconActionButton from '../ui/IconActionButton'
 
 export function ThumbnailStrip({
   urls,
@@ -80,33 +81,17 @@ export function ThumbnailStrip({
               </div>
             )}
             {showRerollIcon && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onReroll(idx)
-                }}
-                title={`Reroll slide ${idx + 1} (~$0.05)`}
-                aria-label={`Reroll slide ${idx + 1}`}
-                style={{
-                  position: 'absolute',
-                  top: 2,
-                  right: 2,
-                  width: 20,
-                  height: 20,
-                  borderRadius: 4,
-                  background: 'rgba(251,146,60,0.92)',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  fontSize: 10,
-                  lineHeight: '20px',
-                  textAlign: 'center',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-                }}
-              >
-                🎲
-              </button>
+              <div style={{ position: 'absolute', top: 2, right: 2 }}>
+                <IconActionButton
+                  icon="🎲"
+                  label=""
+                  tone="reroll"
+                  size="sm"
+                  title={`Reroll slide ${idx + 1} (~$0.05)`}
+                  stopPropagation
+                  onClick={() => onReroll(idx)}
+                />
+              </div>
             )}
           </div>
         )

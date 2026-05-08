@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
 import type { ContentItem, PostDestination } from '../types'
-import { MAX_CAPTION_LENGTH, buildCaption } from '../lib/instagramCaption'
+import {
+  MAX_CAPTION_LENGTH,
+  buildCaption,
+  formatHashtagsForInput,
+  parseHashtagInput,
+} from '../lib/instagramCaption'
 import type { TunerPlatform } from '../lib/platformTuners'
+import Modal from './ui/Modal'
+import IconActionButton from './ui/IconActionButton'
+import CaptionEditDialog from './CaptionEditDialog'
 
 type PostLocationId = 'IG' | 'FB' | TunerPlatform
 
@@ -22,23 +29,6 @@ export interface PostConfirmOptions {
 export interface PostConfirmEdits {
   caption?: string
   hashtags?: string[]
-}
-
-// Parses a space / comma / newline separated hashtag string into a normalized
-// array. Drops empty tokens, strips leading # so storage stays consistent with
-// how the generator writes hashtags.
-export function parseHashtagInput(raw: string): string[] {
-  return raw
-    .split(/[\s,]+/)
-    .map((t) => t.trim().replace(/^#+/, ''))
-    .filter((t) => t.length > 0)
-}
-
-export function formatHashtagsForInput(tags: string[] | undefined): string {
-  return (tags ?? [])
-    .filter((t) => typeof t === 'string' && t.length > 0)
-    .map((t) => (t.startsWith('#') ? t : `#${t}`))
-    .join(' ')
 }
 
 interface PostConfirmModalProps {
@@ -190,22 +180,6 @@ export default function PostConfirmModal({
     return undefined
   }, [])
 
-  useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [])
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel()
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [onCancel])
-
   const v = item.generatedVisual
   const format = v?.format
   const slideCount = v?.slideUrls?.filter(Boolean).length ?? 0
@@ -249,39 +223,14 @@ export default function PostConfirmModal({
     return `Posts to ${igLabel}`
   })()
 
-  return createPortal(
-    <div
-      className="fade-in"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 10_000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(26,18,48,0.55)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        padding: 16,
-      }}
-      onClick={onCancel}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="post-confirm-title"
+  return (
+    <Modal
+      open
+      onCancel={onCancel}
+      ariaLabelledBy="post-confirm-title"
+      maxWidth={440}
+      busy={busy}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="card-enter glass-panel"
-        style={{
-          width: '100%',
-          maxWidth: 440,
-          maxHeight: 'calc(100vh - 32px)',
-          overflowY: 'auto',
-          borderRadius: 16,
-          padding: 20,
-          background: 'var(--panel)',
-        }}
-      >
         <h2
           id="post-confirm-title"
           className="text-lg font-bold mb-1"
@@ -446,114 +395,48 @@ export default function PostConfirmModal({
           </div>
         ) : (
           <div className="mb-4">
-            <div className="flex items-center justify-end mb-1.5 gap-1.5" style={{ minHeight: 22 }}>
-              {editsDirty && (
-                <span
-                  className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{ background: 'rgba(59,130,246,.15)', color: 'var(--accent)' }}
-                >
-                  edited
-                </span>
-              )}
-              {captionEditable && !isEditingCaption && (
-                <button
-                  onClick={() => setIsEditingCaption(true)}
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-md"
-                  style={{
-                    background: 'var(--panel-2)',
-                    color: 'var(--accent)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  ✎ Edit
-                </button>
-              )}
-            </div>
-            {isEditingCaption ? (
-              <>
-                <textarea
-                  value={editedCaption}
-                  onChange={(e) => setEditedCaption(e.target.value)}
-                  rows={6}
-                  autoFocus
-                  className="w-full rounded-lg p-3 text-[11px] leading-snug"
-                  style={{
-                    background: 'var(--panel-2)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text)',
-                    resize: 'vertical',
-                    fontFamily: 'inherit',
-                  }}
-                />
-                <input
-                  type="text"
-                  value={editedHashtagInput}
-                  onChange={(e) => setEditedHashtagInput(e.target.value)}
-                  placeholder="#spaceape #liveresin #premium"
-                  className="w-full rounded-lg p-2 text-[11px] mt-2"
-                  style={{
-                    background: 'var(--panel-2)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text)',
-                    fontFamily: 'inherit',
-                  }}
-                />
-                <p className="text-[9px] mt-1" style={{ color: 'var(--muted)' }}>
-                  {editedHashtags.length} tag{editedHashtags.length === 1 ? '' : 's'}
-                  {editedHashtags.length > 30 && ' — IG caps at 30'}
-                </p>
-                <div className="flex items-center justify-between mt-3">
-                  <span
-                    className="text-[10px]"
-                    style={{ color: captionOverLimit ? '#ef4444' : 'var(--muted)' }}
-                  >
-                    Caption: {editedCaption.length} / {MAX_CAPTION_LENGTH}
-                    {captionOverLimit && ' — will be truncated'}
+            <div className="flex items-center justify-between mb-1.5 gap-1.5" style={{ minHeight: 22 }}>
+              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--muted)', letterSpacing: '0.05em' }}>
+                Caption
+                {captionOverLimit && (
+                  <span style={{ color: '#ef4444', marginLeft: 6 }}>
+                    {editedCaption.length}/{MAX_CAPTION_LENGTH} — truncated
                   </span>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => {
-                        setEditedCaption(originalCaption)
-                        setEditedHashtagInput(formatHashtagsForInput(originalHashtags))
-                        setIsEditingCaption(false)
-                      }}
-                      className="text-[10px] font-bold px-2 py-1 rounded-md"
-                      style={{
-                        background: 'var(--panel-2)',
-                        color: 'var(--muted)',
-                        border: '1px solid var(--border)',
-                      }}
-                    >
-                      Revert
-                    </button>
-                    <button
-                      onClick={() => setIsEditingCaption(false)}
-                      className="text-[10px] font-bold px-2 py-1 rounded-md"
-                      style={{
-                        background: 'var(--accent)',
-                        color: '#fff',
-                        border: '1px solid var(--accent)',
-                      }}
-                    >
-                      Done
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div
-                className="rounded-lg p-3 text-[11px] leading-snug whitespace-pre-wrap"
-                style={{
-                  background: 'var(--panel-2)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                  maxHeight: 180,
-                  overflowY: 'auto',
-                }}
-              >
-                {previewCaption || <span style={{ color: 'var(--muted)' }}>(no caption)</span>}
+                )}
+              </span>
+              <div className="flex items-center gap-1.5">
+                {editsDirty && (
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: 'rgba(59,130,246,.15)', color: 'var(--accent)' }}
+                  >
+                    edited
+                  </span>
+                )}
+                {captionEditable && (
+                  <IconActionButton
+                    icon="✎"
+                    label="Edit"
+                    tone="edit"
+                    size="sm"
+                    title="Edit caption & hashtags"
+                    onClick={() => setIsEditingCaption(true)}
+                  />
+                )}
               </div>
-            )}
+            </div>
+            <div
+              className="rounded-lg p-3 text-[11px] leading-snug whitespace-pre-wrap"
+              style={{
+                background: 'var(--panel-2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                maxHeight: 180,
+                overflowY: 'auto',
+              }}
+            >
+              {previewCaption || <span style={{ color: 'var(--muted)' }}>(no caption)</span>}
+            </div>
           </div>
         )}
 
@@ -623,8 +506,22 @@ export default function PostConfirmModal({
             {busy ? 'Posting…' : confirmLabel}
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+      {isEditingCaption && (
+        <CaptionEditDialog
+          captionDraft={editedCaption}
+          hashtagInputDraft={editedHashtagInput}
+          onCaptionChange={setEditedCaption}
+          onHashtagsChange={setEditedHashtagInput}
+          onCancel={() => {
+            // Cancel discards in-progress edits, matching the previous Revert
+            // behavior that snapped state back to the original on close.
+            setEditedCaption(originalCaption)
+            setEditedHashtagInput(formatHashtagsForInput(originalHashtags))
+            setIsEditingCaption(false)
+          }}
+          onSave={() => setIsEditingCaption(false)}
+        />
+      )}
+    </Modal>
   )
 }

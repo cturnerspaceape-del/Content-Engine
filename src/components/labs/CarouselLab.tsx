@@ -21,6 +21,7 @@ import {
   type TunerSource,
 } from '../../lib/platformTuners'
 import { platformColors } from '../PlatformContentItem'
+import { useToast, ToastView } from '../ui/Toast'
 
 interface CarouselLabProps {
   onBack: () => void
@@ -250,9 +251,7 @@ export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: 
   const [postConfirming, setPostConfirming] = useState(false)
   const [postBusy, setPostBusy] = useState(false)
   const [postError, setPostError] = useState<string | null>(null)
-  const [postToast, setPostToast] = useState<{ kind: 'success' | 'warn'; text: string } | null>(
-    null,
-  )
+  const { toast: postToast, show: showToast } = useToast()
   const [schedulingOpen, setSchedulingOpen] = useState(false)
 
   const handleConfirmSchedule = (date: string, time: string) => {
@@ -270,8 +269,7 @@ export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: 
     }
     onSchedulePost(post)
     setSchedulingOpen(false)
-    setPostToast({ kind: 'success', text: `📅 Locked in for ${date} at ${time}` })
-    window.setTimeout(() => setPostToast(null), 4000)
+    showToast({ kind: 'success', text: `📅 Locked in for ${date} at ${time}` })
   }
 
   const nonIgSelected = selectedPlatforms.filter((p) => p !== 'IG/FB')
@@ -302,11 +300,6 @@ export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: 
     }
   }
 
-  const showToast = (kind: 'success' | 'warn', text: string) => {
-    setPostToast({ kind, text })
-    window.setTimeout(() => setPostToast(null), 4000)
-  }
-
   const handleUnifiedPost = async () => {
     if (!item.generatedVisual?.slideUrls?.length) return
     if (selectedPlatforms.includes('IG/FB')) {
@@ -316,9 +309,9 @@ export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: 
     const copied = await copyNonIgVariantsToClipboard()
     if (copied) {
       const labels = nonIgSelected.map((p) => PLATFORM_LABELS[p]).join(' & ')
-      showToast('success', `${labels} captions copied — paste into apps`)
+      showToast({ kind: 'success', text: `${labels} captions copied — paste into apps` })
     } else {
-      showToast('warn', 'Could not copy to clipboard')
+      showToast({ kind: 'warn', text: 'Could not copy to clipboard' })
     }
   }
 
@@ -340,11 +333,11 @@ export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: 
         ? ` — ${clipboardPlatforms.map((p) => PLATFORM_LABELS[p]).join(' & ')} captions copied`
         : ''
       setPostConfirming(false)
-      showToast(summary.hasError ? 'warn' : 'success', `${summary.text}${copyLine}`)
+      showToast({ kind: summary.hasError ? 'warn' : 'success', text: `${summary.text}${copyLine}` })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setPostError(msg)
-      showToast('warn', `Post failed: ${msg}`)
+      showToast({ kind: 'warn', text: `Post failed: ${msg}` })
     } finally {
       setPostBusy(false)
     }
@@ -480,21 +473,7 @@ export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: 
               </div>
             ) : null}
 
-            {postToast && (
-              <div
-                className="text-xs font-semibold px-4 py-2 rounded-lg"
-                style={{
-                  background:
-                    postToast.kind === 'success'
-                      ? 'rgba(16,185,129,.12)'
-                      : 'rgba(251,146,60,.12)',
-                  color: postToast.kind === 'success' ? '#10b981' : '#fb923c',
-                  border: `1px solid ${postToast.kind === 'success' ? '#10b981' : '#fb923c'}`,
-                }}
-              >
-                {postToast.text}
-              </div>
-            )}
+            <ToastView toast={postToast} />
           </div>
         )}
 

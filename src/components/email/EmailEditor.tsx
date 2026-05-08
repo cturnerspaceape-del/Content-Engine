@@ -5,6 +5,7 @@ import type {
   ProductSectionData,
   ProductCellData,
 } from '../../lib/email/types'
+import IconActionButton from '../ui/IconActionButton'
 
 export interface ReRollTarget {
   sectionIdx: number
@@ -59,26 +60,6 @@ const inputStyle: React.CSSProperties = {
   fontSize: 14,
   fontFamily: 'inherit',
   outline: 'none',
-}
-
-const reRollBtnStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
-  padding: '6px 10px',
-  borderRadius: 8,
-  background: 'rgba(245,158,11,.15)',
-  color: '#f59e0b',
-  border: '1px solid #f59e0b',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-}
-
-const reRollBusyStyle: React.CSSProperties = {
-  ...reRollBtnStyle,
-  background: 'rgba(148,163,184,.1)',
-  color: 'var(--muted)',
-  border: '1px solid var(--border)',
-  cursor: 'wait',
 }
 
 export default function EmailEditor({
@@ -224,26 +205,26 @@ function ImageRow({
       </div>
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
         {onEdit && imageUrl && (
-          <button
-            onClick={onEdit}
+          <IconActionButton
+            icon="✏️"
+            label="Edit"
+            tone="edit"
+            size="md"
+            title="Edit this image"
             disabled={busy}
-            style={
-              busy
-                ? { ...reRollBusyStyle, background: 'rgba(245,158,11,0.18)', color: '#f59e0b', borderColor: '#f59e0b55' }
-                : { ...reRollBtnStyle, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', borderColor: '#f59e0b55' }
-            }
-          >
-            ✏️ Edit
-          </button>
+            onClick={onEdit}
+          />
         )}
         {onReRoll && (
-          <button
-            onClick={onReRoll}
+          <IconActionButton
+            icon={busy ? '' : '🎲'}
+            label={busy ? '…' : 'Reroll'}
+            tone="reroll"
+            size="md"
+            title="Reroll this image"
             disabled={busy}
-            style={busy ? reRollBusyStyle : reRollBtnStyle}
-          >
-            {busy ? '…' : '🔀 Re-roll'}
-          </button>
+            onClick={onReRoll}
+          />
         )}
       </div>
     </div>

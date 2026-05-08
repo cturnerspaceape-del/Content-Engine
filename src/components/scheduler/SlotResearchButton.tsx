@@ -8,6 +8,7 @@ import {
   pickedSeed,
   type SlotResearch,
 } from '../../lib/research/slotResearch'
+import Modal from '../ui/Modal'
 
 // Per-slot research control. Lives inside a CadenceCard's action row, to
 // the left of the Schedule button. Three states:
@@ -238,17 +239,6 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
     }
   }, [anchor])
 
-  // Lock body scroll while the mobile modal is open so the page underneath
-  // can't drift while the user scrolls the cards list.
-  useEffect(() => {
-    if (!pos || pos.mode !== 'modal') return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [pos])
-
   // Desktop only: dismiss on click outside the picker (and the trigger).
   // Mobile dismiss is handled by the backdrop's onClick.
   useEffect(() => {
@@ -266,42 +256,19 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
 
   if (!pos) return null
 
-  // Lock body scroll while the mobile modal is open so the page underneath
-  // can't drift while the user scrolls the cards list.
+  // Mobile: full-screen backdrop + centered modal sheet via the shared Modal
+  // shell. Body scroll lock + Escape come for free.
   if (pos.mode === 'modal') {
-    return createPortal(
-      <>
-        <div
-          onClick={onClose}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            zIndex: 49,
-          }}
-          aria-hidden
-        />
-        <div
-          id="slot-research-picker"
-          className="rounded-2xl shadow-xl"
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 'min(380px, calc(100vw - 24px))',
-            maxHeight: '80vh',
-            zIndex: 50,
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--panel)',
-            border: '1px solid var(--border)',
-            padding: 14,
-          }}
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => e.stopPropagation()}
-        >
+    return (
+      <Modal
+        open
+        onCancel={onClose}
+        maxWidth={380}
+        padding={14}
+        panelStyle={{ borderRadius: 16, maxHeight: '80vh' }}
+        panelClassName=""
+      >
+        <div id="slot-research-picker" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           <PickerContent
             data={data}
             loading={loading}
@@ -311,8 +278,7 @@ function Picker({ data, loading, error, anchor, onPick, onClose, onRefresh }: Pi
             onRefresh={onRefresh}
           />
         </div>
-      </>,
-      document.body,
+      </Modal>
     )
   }
 

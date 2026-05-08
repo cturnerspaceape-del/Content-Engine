@@ -5,6 +5,23 @@
 export const MAX_CAPTION_LENGTH = 2200
 const MAX_HASHTAGS = 30
 
+// Parses a space / comma / newline separated hashtag string into a normalized
+// array. Drops empty tokens, strips leading # so storage stays consistent with
+// how the generator writes hashtags.
+export function parseHashtagInput(raw: string): string[] {
+  return raw
+    .split(/[\s,]+/)
+    .map((t) => t.trim().replace(/^#+/, ''))
+    .filter((t) => t.length > 0)
+}
+
+export function formatHashtagsForInput(tags: string[] | undefined): string {
+  return (tags ?? [])
+    .filter((t) => typeof t === 'string' && t.length > 0)
+    .map((t) => (t.startsWith('#') ? t : `#${t}`))
+    .join(' ')
+}
+
 export function buildCaption({
   caption,
   hashtags,

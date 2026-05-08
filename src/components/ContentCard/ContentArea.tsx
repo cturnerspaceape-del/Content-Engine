@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { ContentItem } from '../../types'
 import CaptionEditDialog from '../CaptionEditDialog'
-import { formatHashtagsForInput, parseHashtagInput } from '../PostConfirmModal'
+import IconActionButton from '../ui/IconActionButton'
+import { formatHashtagsForInput, parseHashtagInput } from '../../lib/instagramCaption'
 
 type VisualPatch = Partial<NonNullable<ContentItem['generatedVisual']>>
 
@@ -45,27 +46,22 @@ export function ContentArea({
     <>
       <div className="flex-1 mb-3 relative">
         {showEditButton && (
-          <button
-            onClick={() =>
-              setEditState({
-                open: true,
-                captionDraft: item.generatedVisual?.caption ?? '',
-                hashtagInputDraft: formatHashtagsForInput(item.generatedVisual?.hashtags),
-              })
-            }
-            title="Edit caption & hashtags"
-            aria-label="Edit caption and hashtags"
-            className="absolute -top-1 right-0 text-[10px] font-bold px-2 py-0.5 rounded-md transition-all hover:scale-105"
-            style={{
-              background: 'var(--panel-2)',
-              color: 'var(--accent)',
-              border: '1px solid var(--border)',
-              lineHeight: 1.2,
-              zIndex: 1,
-            }}
-          >
-            ✎ Edit
-          </button>
+          <div style={{ position: 'absolute', top: -4, right: 0, zIndex: 1 }}>
+            <IconActionButton
+              icon="✎"
+              label="Edit"
+              tone="edit"
+              size="sm"
+              title="Edit caption & hashtags"
+              onClick={() =>
+                setEditState({
+                  open: true,
+                  captionDraft: item.generatedVisual?.caption ?? '',
+                  hashtagInputDraft: formatHashtagsForInput(item.generatedVisual?.hashtags),
+                })
+              }
+            />
+          </div>
         )}
         {isGenerated ? (
           // Generated content sourced from generatedVisual so caption edits

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Platform, ScheduledPost } from '../types'
+import Modal from './ui/Modal'
 
 interface ScheduleModalProps {
   // Friendly label rendered in the modal header so the user knows what
@@ -67,34 +68,18 @@ export default function ScheduleModal({
   const canConfirm = selectedDate && selectedTime
 
   return (
-    <div
-      onClick={onCancel}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.6)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 100,
-        padding: 16,
+    <Modal
+      open
+      onCancel={onCancel}
+      maxWidth={520}
+      padding={24}
+      panelStyle={{
+        borderRadius: 24,
+        background:
+          'linear-gradient(135deg, rgba(29,155,240,0.12), rgba(139,92,246,0.12))',
+        border: '1px solid var(--border)',
       }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="glass-panel"
-        style={{
-          width: '100%',
-          maxWidth: 520,
-          padding: 24,
-          borderRadius: 24,
-          background:
-            'linear-gradient(135deg, rgba(29,155,240,0.12), rgba(139,92,246,0.12))',
-          border: '1px solid var(--border)',
-        }}
-      >
         <div style={{ textAlign: 'center', marginBottom: 16 }}>
           <div style={{ fontSize: 28, marginBottom: 4 }}>📅</div>
           <h2
@@ -262,8 +247,7 @@ export default function ScheduleModal({
             ✨ Schedule it
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 

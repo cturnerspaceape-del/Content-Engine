@@ -1,7 +1,6 @@
-import { useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import type { PlatformVariant, TunerPlatform } from '../lib/platformTuners'
 import { platformColors } from './PlatformContentItem'
+import Modal from './ui/Modal'
 
 interface TextPostReviewModalProps {
   platforms: ReadonlyArray<TunerPlatform>
@@ -40,57 +39,11 @@ export default function TextPostReviewModal({
   onCancel,
   onConfirm,
 }: TextPostReviewModalProps) {
-  useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [])
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel()
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [onCancel])
-
   const populated = platforms.filter((p) => variants[p])
   const labels = populated.map((p) => PLATFORM_LABELS[p]).join(' & ')
 
-  return createPortal(
-    <div
-      className="fade-in"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 10_000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(26,18,48,0.55)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        padding: 16,
-      }}
-      onClick={onCancel}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="card-enter glass-panel"
-        style={{
-          width: '100%',
-          maxWidth: 520,
-          maxHeight: 'calc(100vh - 32px)',
-          overflowY: 'auto',
-          borderRadius: 16,
-          padding: 20,
-          background: 'var(--panel)',
-        }}
-      >
+  return (
+    <Modal open onCancel={onCancel} maxWidth={520}>
         <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--text)' }}>
           Post to {labels || 'selected platforms'}
         </h2>
@@ -190,8 +143,6 @@ export default function TextPostReviewModal({
             📋 Copy &amp; finish
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </Modal>
   )
 }
