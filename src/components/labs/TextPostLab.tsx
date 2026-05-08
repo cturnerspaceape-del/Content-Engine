@@ -72,6 +72,11 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
   const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
   // -1 = nothing picked yet; Generate stays disabled until the user picks.
   const [activeResearchIdx, setActiveResearchIdx] = useState<number>(-1)
+  // Source of truth for "which seed feeds Generate." Stored as the seed
+  // object, not an index, so the user-authored Custom seed (sentinel
+  // CUSTOM_SEED_IDX = 99 in ResearchPanel) is preserved — array indexing
+  // would treat 99 as out-of-range and silently disable Generate.
+  const [selectedSeed, setSelectedSeed] = useState<ResearchedSeed | null>(null)
   const {
     result: researchResult,
     loading: researchLoading,
@@ -79,10 +84,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     fetchTrends: fetchResearchTrends,
   } = useResearch('text')
 
-  const activeResearchSeed: ResearchedSeed | null =
-    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
-      ? researchSeeds[activeResearchIdx]
-      : null
+  const activeResearchSeed: ResearchedSeed | null = selectedSeed
 
   const buildSource = (a: TextArchetype): TunerSource => ({
     format: 'text',
@@ -106,6 +108,7 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     setVariants({})
     setResearchSeeds([])
     setActiveResearchIdx(-1)
+    setSelectedSeed(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -146,11 +149,13 @@ export default function TextPostLab({ onBack }: TextPostLabProps) {
     // Don't auto-select — user picks the strategy they like best. Archetype
     // is set later by handlePickSeed once they choose.
     setActiveResearchIdx(-1)
+    setSelectedSeed(null)
     setVariants({})
   }
 
   const handlePickSeed = (idx: number, seed: ResearchedSeed) => {
     setActiveResearchIdx(idx)
+    setSelectedSeed(seed)
     setArchetype(toTextArchetype(seed))
     setVariants({})
   }

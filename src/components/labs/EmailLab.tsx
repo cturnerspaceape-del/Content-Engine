@@ -108,6 +108,11 @@ export default function EmailLab({ onBack, scheduledPosts, onSchedulePost }: Ema
   // Resets to -1 whenever the user changes emailType (research is scoped
   // to the type, so switching slots into a different cached set).
   const [activeResearchIdx, setActiveResearchIdx] = useState(-1)
+  // Source of truth for "which seed feeds Generate." Stored as the seed
+  // object, not an index, so the user-authored Custom seed (sentinel
+  // CUSTOM_SEED_IDX = 99 in ResearchPanel) is preserved — array indexing
+  // would treat 99 as out-of-range and silently disable Generate.
+  const [selectedSeed, setSelectedSeed] = useState<ResearchedSeed | null>(null)
 
   const historicalContext = useMemo(() => buildHistoricalContext(campaign), [campaign])
 
@@ -121,6 +126,7 @@ export default function EmailLab({ onBack, scheduledPosts, onSchedulePost }: Ema
   // Reset active idx when the type-scoped result switches under us.
   useEffect(() => {
     setActiveResearchIdx(-1)
+    setSelectedSeed(null)
   }, [campaign.emailType])
 
   // Open the lab to a clean slate — drop the current draft and any cached
@@ -131,13 +137,7 @@ export default function EmailLab({ onBack, scheduledPosts, onSchedulePost }: Ema
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const researchSeeds: ResearchedSeed[] = researchResult
-    ? [researchResult.recommendation, ...researchResult.candidates].slice(0, 3)
-    : []
-  const activeResearchSeed: ResearchedSeed | null =
-    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
-      ? researchSeeds[activeResearchIdx]
-      : null
+  const activeResearchSeed: ResearchedSeed | null = selectedSeed
 
   const html = useMemo(() => (campaign.email ? composeHtml(campaign.email) : ''), [campaign.email])
 
@@ -153,6 +153,7 @@ export default function EmailLab({ onBack, scheduledPosts, onSchedulePost }: Ema
       cache: {},
     }))
     setActiveResearchIdx(-1)
+    setSelectedSeed(null)
   }
 
   const runGenerate = async (audience: AudienceType, emailType: EmailType, force: boolean) => {
@@ -214,10 +215,12 @@ export default function EmailLab({ onBack, scheduledPosts, onSchedulePost }: Ema
     // Don't auto-select — user picks the strategy they like best. Seeds
     // are sourced from researchResult, so no local copy is needed.
     setActiveResearchIdx(-1)
+    setSelectedSeed(null)
   }
 
-  const handlePickSeed = (idx: number) => {
+  const handlePickSeed = (idx: number, seed: ResearchedSeed) => {
     setActiveResearchIdx(idx)
+    setSelectedSeed(seed)
   }
 
   const parseRecipients = (raw: string): string[] =>

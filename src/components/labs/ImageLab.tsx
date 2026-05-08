@@ -87,6 +87,11 @@ export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: Ima
   // always land on the idle CTA, not last session's seeds.
   const [researchSeeds, setResearchSeeds] = useState<ResearchedSeed[]>([])
   const [activeResearchIdx, setActiveResearchIdx] = useState<number>(-1)
+  // Source of truth for "which seed feeds Generate." Stored as the seed
+  // object, not an index, so the user-authored Custom seed (sentinel
+  // CUSTOM_SEED_IDX = 99 in ResearchPanel) is preserved — array indexing
+  // would treat 99 as out-of-range and silently disable Generate.
+  const [selectedSeed, setSelectedSeed] = useState<ResearchedSeed | null>(null)
   const {
     result: researchResult,
     loading: researchLoading,
@@ -94,10 +99,7 @@ export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: Ima
     fetchTrends: fetchResearchTrends,
   } = useResearch('image')
 
-  const activeResearchSeed: ResearchedSeed | null =
-    researchSeeds.length > 0 && activeResearchIdx >= 0 && activeResearchIdx < researchSeeds.length
-      ? researchSeeds[activeResearchIdx]
-      : null
+  const activeResearchSeed: ResearchedSeed | null = selectedSeed
 
   // Open the lab to a clean slate — drop any prior generated image,
   // variants, and research seeds. Selected platforms are kept.
@@ -106,6 +108,7 @@ export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: Ima
     setVariants({})
     setResearchSeeds([])
     setActiveResearchIdx(-1)
+    setSelectedSeed(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -157,12 +160,14 @@ export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: Ima
     setResearchSeeds(seeds)
     // Don't auto-select — user picks the strategy they like best.
     setActiveResearchIdx(-1)
+    setSelectedSeed(null)
     setItem(makeSeed(PLACEHOLDER_TITLE))
     setVariants({})
   }
 
   const handlePickSeed = (idx: number, seed: ResearchedSeed) => {
     setActiveResearchIdx(idx)
+    setSelectedSeed(seed)
     setItem(makeSeed(formatPillarSeedTitle(SEED_PREFIX, toPillarImageSeed(seed))))
     setVariants({})
   }
