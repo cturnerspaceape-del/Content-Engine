@@ -5,7 +5,8 @@ const TTL_MS = 24 * 60 * 60 * 1000
 
 export interface ResearchScope {
   // EmailLab passes the user-selected email type so research is scoped to
-  // that category. Changing types re-reads under a different storage key.
+  // that category. Switching types resets the result so the panel returns
+  // to its idle CTA for the new scope.
   emailType?: string
   // Recent style/voice anchor (e.g. last few subject lines + section kinds).
   // Hashed server-side and folded into the cache key.
@@ -21,51 +22,19 @@ interface UseResearchReturn {
   clear: () => void
 }
 
-// Per-scope storage key so different email types cache independently and
-// switching scopes re-reads from the right slot.
-function storageKey(format: ResearchFormat, scope?: ResearchScope): string {
-  if (format === 'email' && scope?.emailType) {
-    return `sl:research:email:${scope.emailType}`
-  }
-  return `sl:research:${format}`
-}
-
-function readResult(key: string): ResearchResult | null {
-  try {
-    const raw = localStorage.getItem(key)
-    if (raw === null) return null
-    return JSON.parse(raw) as ResearchResult
-  } catch {
-    return null
-  }
-}
-
 export function useResearch(format: ResearchFormat, scope?: ResearchScope): UseResearchReturn {
-  const key = storageKey(format, scope)
-  const [result, setResult] = useState<ResearchResult | null>(() => readResult(key))
+  const [result, setResult] = useState<ResearchResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // When the scope-derived storage key changes (e.g. EmailLab switches from
-  // promo to newsletter), re-read the slot for that scope so the panel shows
-  // the right cached result without a refresh.
+  // Reset when the scope changes (e.g. EmailLab switches from promo to
+  // newsletter) so the panel lands on its idle CTA for the new scope
+  // instead of showing the previous scope's seeds.
+  const scopeKey = format === 'email' ? `email:${scope?.emailType ?? ''}` : format
   useEffect(() => {
-    setResult(readResult(key))
+    setResult(null)
     setError(null)
-  }, [key])
-
-  // Persist whenever result changes for the current key.
-  useEffect(() => {
-    try {
-      if (result) {
-        localStorage.setItem(key, JSON.stringify(result))
-      } else {
-        localStorage.removeItem(key)
-      }
-    } catch {
-      // storage full or unavailable — non-fatal
-    }
-  }, [key, result])
+  }, [scopeKey])
 
   const fetchTrends = useCallback(
     async (callScope?: ResearchScope): Promise<ResearchResult | null> => {
