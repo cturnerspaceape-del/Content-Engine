@@ -8,7 +8,10 @@ export interface ResearchedSeed {
   // 1-2 sentence creative direction. Fed to /api/generate-caption so the LLM
   // anchors copy to this angle instead of falling back to its template defaults.
   angle: string
-  sourceBrands: string[]
+  // IG/TikTok handles or creator names where Claude saw the trend in action
+  // (e.g. "@handle", "creator name"). Free-form — no longer constrained to a
+  // curated brand list.
+  sourceAccounts: string[]
   // Raw observation Claude pulled from web_search. Kept verbatim so users can
   // see *why* this angle was recommended.
   sourceNotes: string

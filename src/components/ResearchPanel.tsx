@@ -1,5 +1,20 @@
+import { useState } from 'react'
 import type { ResearchedSeed, ResearchResult } from '../lib/research/types'
+import type { ContentPillar } from '../types'
 import type { ResearchScope } from '../lib/research/useResearch'
+
+// Sentinel index for the user-authored custom seed. Sits past the 3 research
+// cards so the parent's activeIdx logic treats it as a normal selection.
+const CUSTOM_SEED_IDX = 99
+
+const PILLARS: ContentPillar[] = [
+  'Lifestyle',
+  'Product Centric',
+  'Education',
+  'Entertainment',
+  'Brand Building',
+  'Social Proof',
+]
 
 interface ResearchPanelProps {
   loading: boolean
@@ -39,7 +54,7 @@ export default function ResearchPanel({
   fetchTrends,
   fetchScope,
   idleTitle = 'Find what’s hot right now',
-  idleHint = 'Pulls fresh trend signal from Supreme, Scotch and Soda, Chomps, and @starface — then writes you 3 ideas to ship next.',
+  idleHint = 'Hunts trending posts on Instagram and TikTok across cannabis-adjacent lifestyle (nightlife, streetwear, music, party culture) — then writes you 3 ideas to ship next.',
   researchLabel = 'Research trends',
 }: ResearchPanelProps) {
   const handleFetch = async () => {
@@ -101,6 +116,10 @@ export default function ResearchPanel({
               onClick={() => onPickSeed(idx, seed)}
             />
           ))}
+          <CustomSeedCard
+            isActive={activeIdx === CUSTOM_SEED_IDX}
+            onPick={(seed) => onPickSeed(CUSTOM_SEED_IDX, seed)}
+          />
         </div>
 
         {error && (
@@ -187,7 +206,7 @@ function LoadingState() {
         🔭 Scanning trends…
       </p>
       <p className="text-[11px]" style={{ color: 'var(--muted)' }}>
-        Reading Supreme, Scotch and Soda, Chomps, @starface — last 14 days
+        Scanning IG + TikTok — last 14 days
       </p>
     </div>
   )
@@ -231,14 +250,182 @@ function StrategyCard({
       <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text)', opacity: 0.8 }}>
         {seed.angle}
       </p>
-      {seed.sourceBrands.length > 0 && (
+      {seed.sourceAccounts.length > 0 && (
         <p className="text-[10px] mt-auto" style={{ color: 'var(--muted)' }}>
-          Inspired by{' '}
+          Seen on{' '}
           <span style={{ color: 'var(--text)', fontWeight: 600 }}>
-            {seed.sourceBrands.join(', ')}
+            {seed.sourceAccounts.join(', ')}
           </span>
         </p>
       )}
+    </button>
+  )
+}
+
+function CustomSeedCard({
+  isActive,
+  onPick,
+}: {
+  isActive: boolean
+  onPick: (seed: ResearchedSeed) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [pillar, setPillar] = useState<ContentPillar>('Lifestyle')
+  const [subcategory, setSubcategory] = useState('')
+  const [angle, setAngle] = useState('')
+
+  const canSubmit = subcategory.trim().length > 0 && angle.trim().length > 0
+
+  const handleSubmit = () => {
+    if (!canSubmit) return
+    onPick({
+      pillar,
+      subcategory: subcategory.trim(),
+      angle: angle.trim(),
+      sourceAccounts: [],
+      sourceNotes: '',
+    })
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div
+        className="rounded-xl"
+        style={{
+          padding: '14px 16px',
+          background: 'var(--panel-2)',
+          border: '1.5px dashed #ec4899',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}
+      >
+        <div
+          className="text-[10px] font-bold uppercase tracking-wider"
+          style={{ color: 'var(--muted)' }}
+        >
+          Your strategy
+        </div>
+        <select
+          value={pillar}
+          onChange={(e) => setPillar(e.target.value as ContentPillar)}
+          className="text-[11px] rounded px-2 py-1"
+          style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
+        >
+          {PILLARS.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={subcategory}
+          onChange={(e) => setSubcategory(e.target.value)}
+          placeholder="Drop Hype Snippet"
+          className="text-[12px] rounded px-2 py-1 font-bold"
+          style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
+        />
+        <textarea
+          value={angle}
+          onChange={(e) => setAngle(e.target.value)}
+          placeholder="Frame the post like a group-chat dispatch from a friend who just got their hands on the new drop."
+          rows={3}
+          className="text-[11px] rounded px-2 py-1 leading-relaxed resize-none"
+          style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
+        />
+        <div className="flex gap-2 mt-1">
+          <button
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className="text-[11px] font-bold px-3 py-1.5 rounded transition-all"
+            style={{
+              background: canSubmit
+                ? 'linear-gradient(135deg, #ec4899, #8b5cf6)'
+                : 'var(--panel)',
+              color: canSubmit ? 'white' : 'var(--muted)',
+              border: canSubmit ? 'none' : '1px solid var(--border)',
+              cursor: canSubmit ? 'pointer' : 'not-allowed',
+              flex: 1,
+            }}
+          >
+            Use this strategy
+          </button>
+          <button
+            onClick={() => setEditing(false)}
+            className="text-[11px] font-semibold px-3 py-1.5 rounded"
+            style={{
+              background: 'var(--panel)',
+              color: 'var(--muted)',
+              border: '1px solid var(--border)',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (isActive && subcategory.trim() && angle.trim()) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="text-left rounded-xl transition-all hover:scale-[1.01]"
+        style={{
+          padding: '14px 16px',
+          background: 'linear-gradient(135deg, rgba(236,72,153,.14), rgba(139,92,246,.10))',
+          border: '1.5px solid #ec4899',
+          boxShadow: '0 6px 20px -10px rgba(236,72,153,.5)',
+          cursor: 'pointer',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+        }}
+      >
+        <div
+          className="text-[10px] font-bold uppercase tracking-wider"
+          style={{ color: 'var(--muted)' }}
+        >
+          {pillar} · Your strategy
+        </div>
+        <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>
+          {subcategory}
+        </div>
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text)', opacity: 0.8 }}>
+          {angle}
+        </p>
+        <p className="text-[10px] mt-auto" style={{ color: 'var(--muted)' }}>
+          Tap to edit
+        </p>
+      </button>
+    )
+  }
+
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      className="text-left rounded-xl transition-all hover:scale-[1.01]"
+      style={{
+        padding: '14px 16px',
+        background: 'var(--panel-2)',
+        border: '1.5px dashed var(--border)',
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 120,
+      }}
+    >
+      <div className="text-2xl" style={{ color: 'var(--muted)' }}>✍</div>
+      <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>
+        Write my own
+      </div>
+      <p className="text-[11px] text-center" style={{ color: 'var(--muted)' }}>
+        Skip research and write your own angle
+      </p>
     </button>
   )
 }

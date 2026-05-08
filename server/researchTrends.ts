@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express'
 import { createHash } from 'node:crypto'
 import Anthropic from '@anthropic-ai/sdk'
-import { RELATED_BRANDS } from '../src/config/relatedBrands'
 import type { ResearchedSeed, ResearchResult, ResearchFormat } from '../src/lib/research/types'
 
 const MODEL = process.env.ANTHROPIC_RESEARCH_MODEL || 'claude-sonnet-4-6'
@@ -89,8 +88,6 @@ function isResearchFormat(s: unknown): s is ResearchFormat {
 }
 
 function buildPrompt(format: ResearchFormat, scope: ScopeArgs): string {
-  const brandList = RELATED_BRANDS.map((b) => `- ${b.handle} (${b.why})`).join('\n')
-
   const formatLine =
     format === 'email' && scope.emailType
       ? `Format being planned: ${format} (specifically a **${scope.emailType}** email — scope your research to what's working for ${scope.emailType} emails specifically; do not return ideas that fit a different email type).`
@@ -124,11 +121,11 @@ function buildPrompt(format: ResearchFormat, scope: ScopeArgs): string {
       ]`
     : ''
 
-  return `You're researching trend signals for Space Ape, an ultra-premium cannabis live-resin vape brand. Their voice is "cool Charlie Sheen" — confident, fun, cosmic, sticker-pop. Founder admires these brands as creative references:
+  return `You're researching trend signals for Space Ape, an ultra-premium cannabis live-resin vape brand. Voice is "cool Charlie Sheen" — confident, fun, cosmic, sticker-pop.
 
-${brandList}
+Your job: use web_search to find posts on **Instagram and TikTok** that are getting real traction in the **cannabis-adjacent lifestyle** space over the last 14 days. That means cannabis culture itself plus the worlds Space Ape's audience overlaps with — nightlife, streetwear, music, party culture, cocktail / dispensary aesthetics, "future cool" lifestyle. You're hunting for: viral post formats, hot copywriting moves, visual treatments, sticker-pop edits, drop-tease patterns — anything Space Ape could remix. The post itself is what matters; you do NOT need the creator to be a vape brand or even cannabis-adjacent if the format is right.
 
-Your job: use web_search to find what these brands have actually been doing in the last 14 days — drops, campaigns, copywriting moves, visual treatments, social activations, collabs. Focus on signal that translates into a content idea Space Ape could remix.
+You may not be able to read the IG/TikTok app directly. Search public post URLs, creator profile pages, trend-aggregator articles, and news coverage of viral posts. Cite whatever you actually retrieved.
 
 ${formatLine}
 
@@ -146,8 +143,8 @@ Return ONLY a JSON object with this exact shape (no markdown fences, no commenta
       "pillar": "<one of the allowed pillars>",
       "subcategory": "<short noun phrase>",
       "angle": "<1-2 sentences telling Space Ape's caption writer how to frame the post>",
-      "sourceBrands": ["<which admired brand inspired this — pick from the list above, can be multiple>"],
-      "sourceNotes": "<short observation from web_search: what the brand actually did, with a date or campaign name where possible>",
+      "sourceAccounts": ["<IG/TikTok handles or creator names where you saw the trend — e.g. '@handle' or 'Creator Name'. Can be multiple. Use whatever names showed up in your search results.>"],
+      "sourceNotes": "<short observation from web_search: what the post actually was, with a date or context where possible>",
       "sourceUrls": ["<page URLs from your web_search results that show this trend in action — up to 3, only include URLs you actually retrieved; omit the field if none>"],
       "sourceImageUrls": ["<direct image URLs (jpg/png/webp) from your web_search results — up to 3, only include if you actually saw them in results; omit if none. These will be downloaded as visual references for image generation, so prefer hero/lookbook/campaign shots over thumbnails>"]${shotBriefLine}${slidesLine}
     }
@@ -159,7 +156,7 @@ interface RawSeed {
   pillar?: unknown
   subcategory?: unknown
   angle?: unknown
-  sourceBrands?: unknown
+  sourceAccounts?: unknown
   sourceNotes?: unknown
   sourceUrls?: unknown
   sourceImageUrls?: unknown
@@ -222,8 +219,8 @@ function normalizeSeed(raw: RawSeed): ResearchedSeed | null {
   const subcategory = typeof raw.subcategory === 'string' ? raw.subcategory.trim() : ''
   const angle = typeof raw.angle === 'string' ? raw.angle.trim() : ''
   const sourceNotes = typeof raw.sourceNotes === 'string' ? raw.sourceNotes.trim() : ''
-  const sourceBrandsRaw = Array.isArray(raw.sourceBrands) ? raw.sourceBrands : []
-  const sourceBrands = sourceBrandsRaw
+  const sourceAccountsRaw = Array.isArray(raw.sourceAccounts) ? raw.sourceAccounts : []
+  const sourceAccounts = sourceAccountsRaw
     .filter((b): b is string => typeof b === 'string' && b.trim().length > 0)
     .map((b) => b.trim())
 
@@ -236,7 +233,7 @@ function normalizeSeed(raw: RawSeed): ResearchedSeed | null {
     pillar,
     subcategory,
     angle,
-    sourceBrands,
+    sourceAccounts,
     sourceNotes,
     ...(sourceUrls.length > 0 ? { sourceUrls } : {}),
     ...(sourceImageUrls.length > 0 ? { sourceImageUrls } : {}),
