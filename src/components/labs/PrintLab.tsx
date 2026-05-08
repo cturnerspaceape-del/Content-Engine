@@ -102,7 +102,10 @@ export default function PrintLab({ onBack }: PrintLabProps) {
     const sig = activeResearchSeed.sourceNotes
       ? `\nSignal: ${activeResearchSeed.sourceNotes}`
       : ''
-    return `Trend angle: ${activeResearchSeed.angle}${sig}\n\nFormat: ${FORMAT_SCAFFOLD[format]}`
+    const visual = activeResearchSeed.shotBrief
+      ? `\n\nVisual brief: ${activeResearchSeed.shotBrief}`
+      : ''
+    return `Trend angle: ${activeResearchSeed.angle}${sig}${visual}\n\nFormat: ${FORMAT_SCAFFOLD[format]}`
   }
 
   const handleResearched = (rec: ResearchedSeed, candidates: ResearchedSeed[]) => {
@@ -164,6 +167,7 @@ export default function PrintLab({ onBack }: PrintLabProps) {
           idleTitle="What's hot for print?"
           idleHint="Pulls fresh signal from Supreme, Scotch and Soda, Chomps, and @starface — then writes you 3 print angles to ship next."
           researchLabel="Research print trends"
+          includeShotBrief
         />
 
         {/* Format picker */}

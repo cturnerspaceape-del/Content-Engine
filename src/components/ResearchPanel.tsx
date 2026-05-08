@@ -36,6 +36,11 @@ interface ResearchPanelProps {
   idleTitle?: string
   idleHint?: string
   researchLabel?: string
+  // When true, CustomSeedCard renders an extra "Visual brief" textarea so
+  // users authoring a strategy from scratch can describe the photo
+  // directly. Set by visual labs (Image, Carousel, Print). When the field
+  // is left blank the lab-level handleGenerate falls back to `angle`.
+  includeShotBrief?: boolean
 }
 
 const VISIBLE_COUNT = 3
@@ -56,6 +61,7 @@ export default function ResearchPanel({
   idleTitle = 'Find what’s hot right now',
   idleHint = 'Hunts trending posts on Instagram and TikTok across cannabis-adjacent lifestyle (nightlife, streetwear, music, party culture) — then writes you 3 ideas to ship next.',
   researchLabel = 'Research trends',
+  includeShotBrief = false,
 }: ResearchPanelProps) {
   const handleFetch = async () => {
     const fresh = await fetchTrends(fetchScope)
@@ -118,6 +124,7 @@ export default function ResearchPanel({
           ))}
           <CustomSeedCard
             isActive={activeIdx === CUSTOM_SEED_IDX}
+            includeShotBrief={includeShotBrief}
             onPick={(seed) => onPickSeed(CUSTOM_SEED_IDX, seed)}
           />
         </div>
@@ -273,26 +280,33 @@ function StrategyCard({
 
 function CustomSeedCard({
   isActive,
+  includeShotBrief,
   onPick,
 }: {
   isActive: boolean
+  includeShotBrief: boolean
   onPick: (seed: ResearchedSeed) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [pillar, setPillar] = useState<ContentPillar>('Lifestyle')
   const [subcategory, setSubcategory] = useState('')
   const [angle, setAngle] = useState('')
+  const [shotBriefText, setShotBriefText] = useState('')
 
   const canSubmit = subcategory.trim().length > 0 && angle.trim().length > 0
 
   const handleSubmit = () => {
     if (!canSubmit) return
+    const trimmedBrief = shotBriefText.trim()
     onPick({
       pillar,
       subcategory: subcategory.trim(),
       angle: angle.trim(),
       sourceAccounts: [],
       sourceNotes: '',
+      // Only attach when the user actually filled it in — visual labs
+      // fall back to `angle` when shotBrief is absent.
+      ...(includeShotBrief && trimmedBrief ? { shotBrief: trimmedBrief } : {}),
     })
     setEditing(false)
   }
@@ -342,6 +356,16 @@ function CustomSeedCard({
           className="text-[11px] rounded px-2 py-1 leading-relaxed resize-none"
           style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
         />
+        {includeShotBrief && (
+          <textarea
+            value={shotBriefText}
+            onChange={(e) => setShotBriefText(e.target.value)}
+            placeholder="Visual brief (optional). e.g. Tight overhead on matte black acrylic. Hard key from camera-left, sharp shadow. Kodak Portra 400 grain. Top-right 30% reserved for caption."
+            rows={3}
+            className="text-[11px] rounded px-2 py-1 leading-relaxed resize-none"
+            style={{ background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--border)' }}
+          />
+        )}
         <div className="flex gap-2 mt-1">
           <button
             onClick={handleSubmit}

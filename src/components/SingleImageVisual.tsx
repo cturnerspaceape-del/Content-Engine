@@ -127,9 +127,15 @@ export default function SingleImageVisual(props: SingleImageVisualProps) {
     }
 
     // Research-only flow: no prompt → no generation. Server would 400 anyway.
+    // Surface this as an error rather than leaving both url and error null,
+    // which would leave the GeneratingPlaceholder spinner running forever
+    // (the silent-failure UX trap that bit "Write my own" custom seeds).
     if (!body.prompt) {
+      const msg =
+        'No visual brief — pick a research card or add a Visual brief on the custom strategy.'
       setLocalUrl(null)
-      setLocalError(null)
+      setLocalError(msg)
+      onResultRef.current(null, msg)
       return () => {
         cancelledRef.current = true
       }

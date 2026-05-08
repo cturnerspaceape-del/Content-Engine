@@ -171,10 +171,14 @@ export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: 
 
   const handleGenerate = async () => {
     if (!activeResearchSeed) return
+    // Always send a shotBrief — slides without per-slide briefs fall back
+    // to this. Custom seeds (and any research seeds Claude returned without
+    // a shotBrief) reuse the angle so the image model still has visual
+    // direction to work with.
     const research = {
       angle: activeResearchSeed.angle,
       notes: activeResearchSeed.sourceNotes,
-      ...(activeResearchSeed.shotBrief ? { shotBrief: activeResearchSeed.shotBrief } : {}),
+      shotBrief: activeResearchSeed.shotBrief ?? activeResearchSeed.angle,
       ...(activeResearchSeed.sourceUrls?.length
         ? { sourceUrls: activeResearchSeed.sourceUrls }
         : {}),
@@ -399,6 +403,7 @@ export default function CarouselLab({ onBack, scheduledPosts, onSchedulePost }: 
           idleTitle="What's hot for carousels?"
           idleHint="Pulls fresh signal from Supreme, Scotch and Soda, Chomps, and @starface — then writes you 3 carousel arcs to ship next."
           researchLabel="Research carousel trends"
+          includeShotBrief
         />
 
         <PlatformPicker

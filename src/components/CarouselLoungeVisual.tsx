@@ -151,7 +151,17 @@ export default function CarouselLoungeVisual(props: CarouselLoungeVisualProps) {
     const isCancelled = () => cancelledRef.current
 
     // Research-only flow: nothing fires until at least one prompt is in hand.
+    // Surface this as a per-slide error rather than leaving every slot in the
+    // null/null state, which would leave the SlidePlaceholder spinners running
+    // forever — the silent-failure UX trap that bit "Write my own" seeds.
     if (!hasAnyPrompt) {
+      const msg =
+        'No visual brief — pick a research card or add a Visual brief on the custom strategy.'
+      const errs: (string | null)[] = Array(slideCount).fill(msg)
+      setErrors(errs)
+      for (let i = 0; i < slideCount; i++) {
+        onSlideResultRef.current(i, null, msg, undefined)
+      }
       return () => {
         cancelledRef.current = true
       }

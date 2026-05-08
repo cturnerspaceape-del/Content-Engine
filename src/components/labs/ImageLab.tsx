@@ -174,10 +174,14 @@ export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: Ima
 
   const handleGenerate = async () => {
     if (!activeResearchSeed) return
+    // Always send a shotBrief — the image endpoint requires a non-empty
+    // prompt. Custom seeds (and any research seeds Claude returned without
+    // a shotBrief) fall back to the angle so the image model still has
+    // visual direction to work with.
     const research = {
       angle: activeResearchSeed.angle,
       notes: activeResearchSeed.sourceNotes,
-      ...(activeResearchSeed.shotBrief ? { shotBrief: activeResearchSeed.shotBrief } : {}),
+      shotBrief: activeResearchSeed.shotBrief ?? activeResearchSeed.angle,
       ...(activeResearchSeed.sourceUrls?.length
         ? { sourceUrls: activeResearchSeed.sourceUrls }
         : {}),
@@ -391,6 +395,7 @@ export default function ImageLab({ onBack, scheduledPosts, onSchedulePost }: Ima
           idleTitle="What's hot for image posts?"
           idleHint="Pulls fresh signal from Supreme, Scotch and Soda, Chomps, and @starface — then writes you 3 image angles to ship next."
           researchLabel="Research image trends"
+          includeShotBrief
         />
 
         <PlatformPicker
