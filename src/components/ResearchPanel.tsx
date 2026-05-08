@@ -250,14 +250,23 @@ function StrategyCard({
       <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text)', opacity: 0.8 }}>
         {seed.angle}
       </p>
-      {seed.sourceAccounts.length > 0 && (
-        <p className="text-[10px] mt-auto" style={{ color: 'var(--muted)' }}>
-          Seen on{' '}
-          <span style={{ color: 'var(--text)', fontWeight: 600 }}>
-            {seed.sourceAccounts.join(', ')}
-          </span>
-        </p>
-      )}
+      {(() => {
+        // Pre-rename caches stored this field as `sourceBrands`. Read both
+        // so a stale persisted ResearchResult doesn't white-screen the lab.
+        const accounts =
+          seed.sourceAccounts ??
+          (seed as unknown as { sourceBrands?: string[] }).sourceBrands ??
+          []
+        if (accounts.length === 0) return null
+        return (
+          <p className="text-[10px] mt-auto" style={{ color: 'var(--muted)' }}>
+            Seen on{' '}
+            <span style={{ color: 'var(--text)', fontWeight: 600 }}>
+              {accounts.join(', ')}
+            </span>
+          </p>
+        )
+      })()}
     </button>
   )
 }
