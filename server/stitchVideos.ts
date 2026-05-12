@@ -24,9 +24,14 @@ interface ClipInput {
 
 interface StitchBody {
   clips?: ClipInput[]
+  // Smart Match Cut: drops one duplicate frame from the start of every clip
+  // after the first. Works because the user's Veo workflow re-uses clip N's
+  // end frame as clip N+1's start frame — the duplicate frame would otherwise
+  // produce a 1-frame stutter at each cut. Default true.
+  smartCut?: boolean
 }
 
-const CACHE_VERSION = 1
+const CACHE_VERSION = 2 // smart-cut
 
 function hashB64(b64: string): string {
   return createHash('sha256').update(b64).digest('hex').slice(0, 16)
@@ -59,6 +64,36 @@ function runCommand(
       }
     })
   })
+}
+
+async function probeFps(absPath: string): Promise<number> {
+  try {
+    const { stdout } = await runCommand(
+      FFPROBE,
+      [
+        '-v',
+        'error',
+        '-select_streams',
+        'v:0',
+        '-show_entries',
+        'stream=r_frame_rate',
+        '-of',
+        'default=noprint_wrappers=1:nokey=1',
+        absPath,
+      ],
+      { label: 'ffprobe-fps' },
+    )
+    // r_frame_rate comes back like "24/1" or "30000/1001".
+    const raw = stdout.trim()
+    const [num, den] = raw.split('/').map(Number)
+    if (Number.isFinite(num) && Number.isFinite(den) && den > 0) {
+      const fps = num / den
+      if (fps > 0 && fps < 240) return fps
+    }
+  } catch {
+    // fall through to default
+  }
+  return 24 // Veo default
 }
 
 async function probeDurationSeconds(absPath: string): Promise<number | null> {
@@ -149,8 +184,11 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
       return
     }
 
+    const smartCut = body.smartCut !== false
+
     const hash = hashKey({
       v: CACHE_VERSION,
+      smartCut,
       parts: clips.map((c) => ({
         b: hashB64(c.base64),
         s: c.trimStart ?? 0,
@@ -184,11 +222,24 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
       inputPaths.push(p)
     }
 
+    // For Smart Match Cut, compute a per-clip "drop one frame from the head"
+    // offset for every clip after the first. Probe fps so the offset matches
+    // the actual frame duration of each clip (Veo is 24fps; mixed inputs may
+    // differ).
+    const headOffsets: number[] = new Array(clips.length).fill(0)
+    if (smartCut && clips.length > 1) {
+      for (let i = 1; i < clips.length; i++) {
+        const fps = await probeFps(inputPaths[i])
+        headOffsets[i] = 1 / fps
+      }
+    }
+
     // Build ffmpeg argv. Per input: optional -ss / -to for trim, then -i path.
     const args: string[] = ['-y', '-hide_banner', '-loglevel', 'error']
     for (let i = 0; i < clips.length; i++) {
       const c = clips[i]
-      if (c.trimStart != null) args.push('-ss', String(c.trimStart))
+      const effectiveStart = (c.trimStart ?? 0) + headOffsets[i]
+      if (effectiveStart > 0) args.push('-ss', effectiveStart.toFixed(4))
       if (c.trimEnd != null) args.push('-to', String(c.trimEnd))
       args.push('-i', inputPaths[i])
     }

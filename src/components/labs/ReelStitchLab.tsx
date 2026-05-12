@@ -76,6 +76,10 @@ export default function ReelStitchLab({ onBack }: ReelStitchLabProps) {
   const [error, setError] = useState<string | null>(null)
   const [stitchedUrl, setStitchedUrl] = useState<string | null>(null)
   const [stitchedDuration, setStitchedDuration] = useState<number | null>(null)
+  // Smart Match Cut: drops 1 duplicate frame at each cut. Default on because
+  // the user's Veo workflow chains end-frame → next start-frame, which would
+  // otherwise produce a 1-frame stutter.
+  const [smartCut, setSmartCut] = useState(true)
 
   // Clean up object URLs on unmount.
   useEffect(() => {
@@ -156,6 +160,7 @@ export default function ReelStitchLab({ onBack }: ReelStitchLabProps) {
     const tick = setInterval(() => setElapsed(Math.floor((Date.now() - tStart) / 1000)), 1000)
     try {
       const payload = {
+        smartCut,
         clips: filledSlots.map((s) => ({
           mime: s.mime,
           base64: s.base64!,
@@ -292,6 +297,66 @@ export default function ReelStitchLab({ onBack }: ReelStitchLabProps) {
           >
             🗑️ Clear all
           </button>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 14px',
+            borderRadius: 12,
+            background: smartCut
+              ? 'linear-gradient(135deg, rgba(168,85,247,0.12), rgba(99,102,241,0.12))'
+              : 'rgba(15,23,42,0.3)',
+            border: smartCut ? '1px solid #a855f799' : '1px solid var(--border)',
+            marginBottom: 16,
+            cursor: busy ? 'not-allowed' : 'pointer',
+            opacity: busy ? 0.5 : 1,
+          }}
+          onClick={() => {
+            if (!busy) setSmartCut((v) => !v)
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: smartCut ? '#a855f7' : 'var(--text)',
+              }}
+            >
+              {smartCut ? '✨ Smart Match Cut · on' : 'Smart Match Cut · off'}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
+              Drops the duplicate frame at every cut so chained Veo clips splice seamlessly.
+            </div>
+          </div>
+          <div
+            style={{
+              width: 36,
+              height: 20,
+              borderRadius: 999,
+              background: smartCut ? '#a855f7' : 'rgba(148,163,184,0.3)',
+              position: 'relative',
+              transition: 'background 0.15s',
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 2,
+                left: smartCut ? 18 : 2,
+                width: 16,
+                height: 16,
+                borderRadius: 999,
+                background: '#fff',
+                transition: 'left 0.15s',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              }}
+            />
+          </div>
         </div>
 
         {error && (
