@@ -13,6 +13,18 @@ const MIN_CLIPS = 2
 const MAX_CLIPS = 7
 const MIN_SPEED = 0.5
 const MAX_SPEED = 2.0
+const MAX_FADE_SECONDS = 5
+
+type FadeCurve = 'linear' | 'smooth' | 'fast'
+
+// Curve → multiplier on the nominal fade duration. The fade always ends at the
+// stitched output's last frame; the start is pushed earlier (smooth) or later
+// (fast) so the same slider value produces visibly different "feels".
+const CURVE_MULT: Record<FadeCurve, number> = {
+  linear: 1.0,
+  smooth: 1.4,
+  fast: 0.6,
+}
 
 interface ClipInput {
   mime: string
@@ -22,19 +34,33 @@ interface ClipInput {
   speed?: number
 }
 
+interface FadeOut {
+  seconds: number
+  color: string // ffmpeg-compatible color spec (named or `0xRRGGBB`)
+  curve: FadeCurve
+}
+
 interface StitchBody {
   clips?: ClipInput[]
   // Smart Match Cut: drops one duplicate frame from the start of every clip
-  // after the first. Works because the user's Veo workflow re-uses clip N's
-  // end frame as clip N+1's start frame — the duplicate frame would otherwise
-  // produce a 1-frame stutter at each cut. Default true.
+  // after the first. Default true.
   smartCut?: boolean
+  // Fade out: applied at the tail of the stitched output. 0 / omitted = off.
+  fadeOutSeconds?: number
+  fadeOutColor?: string
+  fadeOutCurve?: FadeCurve
 }
 
-const CACHE_VERSION = 2 // smart-cut
+const CACHE_VERSION = 3 // fade-out
+
+const HEX_RE = /^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
 
 function hashB64(b64: string): string {
   return createHash('sha256').update(b64).digest('hex').slice(0, 16)
+}
+
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, n))
 }
 
 function runCommand(
@@ -83,7 +109,6 @@ async function probeFps(absPath: string): Promise<number> {
       ],
       { label: 'ffprobe-fps' },
     )
-    // r_frame_rate comes back like "24/1" or "30000/1001".
     const raw = stdout.trim()
     const [num, den] = raw.split('/').map(Number)
     if (Number.isFinite(num) && Number.isFinite(den) && den > 0) {
@@ -151,7 +176,54 @@ function validate(clips: ClipInput[] | undefined): ClipInput[] {
   })
 }
 
-function buildFilterComplex(n: number, speeds: (number | undefined)[]): string {
+function validateFade(body: StitchBody): FadeOut | null {
+  const raw = body.fadeOutSeconds
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) return null
+  const seconds = clamp(raw, 0, MAX_FADE_SECONDS)
+  if (seconds === 0) return null
+
+  // Color: 'black' | 'white' | '#RRGGBB' | '#RRGGBBAA'. Convert hex form to
+  // ffmpeg's preferred `0xRRGGBB[AA]` syntax.
+  let color: string = 'black'
+  const rawColor = body.fadeOutColor
+  if (typeof rawColor === 'string' && rawColor.trim()) {
+    const trimmed = rawColor.trim().toLowerCase()
+    if (trimmed === 'black' || trimmed === 'white') {
+      color = trimmed
+    } else if (HEX_RE.test(trimmed)) {
+      color = '0x' + trimmed.replace(/^#/, '')
+    } else {
+      throw new Error(
+        `fadeOutColor must be 'black', 'white', or a #RRGGBB/#RRGGBBAA hex (got '${rawColor}')`,
+      )
+    }
+  }
+
+  const curve: FadeCurve =
+    body.fadeOutCurve === 'smooth' || body.fadeOutCurve === 'fast'
+      ? body.fadeOutCurve
+      : 'linear'
+
+  return { seconds, color, curve }
+}
+
+function computeClipOutputSeconds(
+  clip: ClipInput,
+  rawDuration: number | null,
+  headOffset: number,
+): number {
+  const start = (clip.trimStart ?? 0) + headOffset
+  const end = clip.trimEnd ?? rawDuration ?? 0
+  const trimmed = Math.max(0, end - start)
+  const speed = clip.speed ?? 1
+  return trimmed / speed
+}
+
+function buildFilterComplex(
+  n: number,
+  speeds: (number | undefined)[],
+  fade: { start: number; duration: number; color: string } | null,
+): string {
   const parts: string[] = []
   const concatInputs: string[] = []
   for (let i = 0; i < n; i++) {
@@ -159,16 +231,23 @@ function buildFilterComplex(n: number, speeds: (number | undefined)[]): string {
     if (s && s !== 1) {
       parts.push(`[${i}:v]setpts=PTS/${s}[v${i}]`)
       parts.push(`[${i}:a]atempo=${s}[a${i}]`)
-      concatInputs.push(`[v${i}][a${i}]`)
     } else {
-      // Pass-through label rename so the concat filter sees a uniform interface
-      // for every input (avoids mixing raw [i:v] and labelled [vi] handles).
       parts.push(`[${i}:v]setpts=PTS[v${i}]`)
       parts.push(`[${i}:a]anull[a${i}]`)
-      concatInputs.push(`[v${i}][a${i}]`)
     }
+    concatInputs.push(`[v${i}][a${i}]`)
   }
-  parts.push(`${concatInputs.join('')}concat=n=${n}:v=1:a=1[outv][outa]`)
+  if (fade) {
+    parts.push(`${concatInputs.join('')}concat=n=${n}:v=1:a=1[outv0][outa0]`)
+    parts.push(
+      `[outv0]fade=t=out:st=${fade.start.toFixed(4)}:d=${fade.duration.toFixed(4)}:color=${fade.color}[outv]`,
+    )
+    parts.push(
+      `[outa0]afade=t=out:st=${fade.start.toFixed(4)}:d=${fade.duration.toFixed(4)}[outa]`,
+    )
+  } else {
+    parts.push(`${concatInputs.join('')}concat=n=${n}:v=1:a=1[outv][outa]`)
+  }
   return parts.join(';')
 }
 
@@ -177,8 +256,10 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
   try {
     const body = (req.body ?? {}) as StitchBody
     let clips: ClipInput[]
+    let fadeReq: FadeOut | null
     try {
       clips = validate(body.clips)
+      fadeReq = validateFade(body)
     } catch (err) {
       res.status(400).json({ error: err instanceof Error ? err.message : 'invalid body' })
       return
@@ -189,6 +270,7 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
     const hash = hashKey({
       v: CACHE_VERSION,
       smartCut,
+      fade: fadeReq, // null when off
       parts: clips.map((c) => ({
         b: hashB64(c.base64),
         s: c.trimStart ?? 0,
@@ -211,7 +293,6 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
       return
     }
 
-    // Ensure the cache directory exists — ffmpeg won't mkdir parents.
     await fs.mkdir(path.dirname(absPath), { recursive: true })
 
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), `stitch-${hash}-`))
@@ -222,19 +303,49 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
       inputPaths.push(p)
     }
 
-    // For Smart Match Cut, compute a per-clip "drop one frame from the head"
-    // offset for every clip after the first. Probe fps so the offset matches
-    // the actual frame duration of each clip (Veo is 24fps; mixed inputs may
-    // differ).
+    // Probe fps + duration for each input in parallel — needed for Smart Match
+    // Cut offset and for computing total stitched duration so we can position
+    // the fade-out correctly.
+    const probes = await Promise.all(
+      inputPaths.map(async (p) => ({
+        fps: await probeFps(p),
+        duration: await probeDurationSeconds(p),
+      })),
+    )
+
     const headOffsets: number[] = new Array(clips.length).fill(0)
     if (smartCut && clips.length > 1) {
       for (let i = 1; i < clips.length; i++) {
-        const fps = await probeFps(inputPaths[i])
-        headOffsets[i] = 1 / fps
+        headOffsets[i] = 1 / probes[i].fps
       }
     }
 
-    // Build ffmpeg argv. Per input: optional -ss / -to for trim, then -i path.
+    const perClipOutSecs = clips.map((c, i) =>
+      computeClipOutputSeconds(c, probes[i].duration, headOffsets[i]),
+    )
+    const totalOutSecs = perClipOutSecs.reduce((acc, n) => acc + n, 0)
+
+    // Build the optional fade timing. Server clamp: never longer than the last
+    // clip's output seconds (so the fade can't bleed into the previous clip)
+    // and never longer than total - 0.05s.
+    let fadeTiming: { start: number; duration: number; color: string } | null = null
+    if (fadeReq) {
+      const lastClipOutSecs = perClipOutSecs[perClipOutSecs.length - 1] ?? 0
+      const cappedSeconds = clamp(
+        fadeReq.seconds,
+        0,
+        Math.max(0.05, Math.min(lastClipOutSecs, totalOutSecs - 0.05)),
+      )
+      if (cappedSeconds > 0) {
+        const mult = CURVE_MULT[fadeReq.curve]
+        const desiredD = cappedSeconds * mult
+        // Hold the end-of-fade at totalOutSecs; shift the start.
+        const duration = Math.min(desiredD, totalOutSecs - 0.05)
+        const start = Math.max(0, totalOutSecs - duration)
+        fadeTiming = { start, duration, color: fadeReq.color }
+      }
+    }
+
     const args: string[] = ['-y', '-hide_banner', '-loglevel', 'error']
     for (let i = 0; i < clips.length; i++) {
       const c = clips[i]
@@ -246,6 +357,7 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
     const filter = buildFilterComplex(
       clips.length,
       clips.map((c) => c.speed),
+      fadeTiming,
     )
     args.push(
       '-filter_complex',
@@ -270,7 +382,11 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
     const reqId = Math.random().toString(36).slice(2, 8)
     const t0 = Date.now()
     console.log(
-      `[stitch-videos ${reqId}] clips=${clips.length} hash=${hash} starting ffmpeg`,
+      `[stitch-videos ${reqId}] clips=${clips.length} fade=${
+        fadeTiming
+          ? `${fadeTiming.duration.toFixed(2)}s@${fadeTiming.start.toFixed(2)} color=${fadeTiming.color}`
+          : 'off'
+      } hash=${hash} starting ffmpeg`,
     )
 
     await runCommand(FFMPEG, args, { label: 'ffmpeg' })

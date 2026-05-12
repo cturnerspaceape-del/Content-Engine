@@ -80,6 +80,14 @@ export default function ReelStitchLab({ onBack }: ReelStitchLabProps) {
   // the user's Veo workflow chains end-frame → next start-frame, which would
   // otherwise produce a 1-frame stutter.
   const [smartCut, setSmartCut] = useState(true)
+  // Fade out on the very last clip of the stitch. Top-level state so it
+  // survives slot reorder/add/remove and naturally re-attaches to whichever
+  // slot ends up last. 0 = off; toggling the header restores `lastFadeOut`.
+  const [fadeOut, setFadeOut] = useState(0)
+  const [lastFadeOut, setLastFadeOut] = useState(1)
+  const [fadeColor, setFadeColor] = useState<'black' | 'white' | 'custom'>('black')
+  const [fadeCustomHex, setFadeCustomHex] = useState('#a855f7')
+  const [fadeCurve, setFadeCurve] = useState<'linear' | 'smooth' | 'fast'>('linear')
 
   // Clean up object URLs on unmount.
   useEffect(() => {
@@ -159,8 +167,21 @@ export default function ReelStitchLab({ onBack }: ReelStitchLabProps) {
     const tStart = Date.now()
     const tick = setInterval(() => setElapsed(Math.floor((Date.now() - tStart) / 1000)), 1000)
     try {
+      const fadeColorSpec =
+        fadeColor === 'black'
+          ? 'black'
+          : fadeColor === 'white'
+            ? 'white'
+            : fadeCustomHex
       const payload = {
         smartCut,
+        ...(fadeOut > 0
+          ? {
+              fadeOutSeconds: fadeOut,
+              fadeOutColor: fadeColorSpec,
+              fadeOutCurve: fadeCurve,
+            }
+          : {}),
         clips: filledSlots.map((s) => ({
           mime: s.mime,
           base64: s.base64!,
@@ -230,17 +251,48 @@ export default function ReelStitchLab({ onBack }: ReelStitchLabProps) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 16 }}>
-          {slots.map((slot, idx) => (
-            <ClipRow
-              key={slot.id}
-              slot={slot}
-              position={idx + 1}
-              busy={busy}
-              onPickFile={(f) => handlePickFile(slot.id, f)}
-              onClear={() => handleClearSlot(slot.id)}
-              onChange={(patch) => updateSlot(slot.id, patch)}
-            />
-          ))}
+          {slots.map((slot, idx) => {
+            const isLastFilled =
+              filledSlots.length >= MIN_TO_STITCH &&
+              filledSlots[filledSlots.length - 1].id === slot.id
+            return (
+              <ClipRow
+                key={slot.id}
+                slot={slot}
+                position={idx + 1}
+                busy={busy}
+                onPickFile={(f) => handlePickFile(slot.id, f)}
+                onClear={() => handleClearSlot(slot.id)}
+                onChange={(patch) => updateSlot(slot.id, patch)}
+                fadeProps={
+                  isLastFilled
+                    ? {
+                        fadeOut,
+                        lastFadeOut,
+                        fadeColor,
+                        fadeCustomHex,
+                        fadeCurve,
+                        onToggleFade: () => {
+                          if (fadeOut > 0) {
+                            setLastFadeOut(fadeOut)
+                            setFadeOut(0)
+                          } else {
+                            setFadeOut(lastFadeOut || 1)
+                          }
+                        },
+                        onChangeFade: (s) => {
+                          setFadeOut(s)
+                          if (s > 0) setLastFadeOut(s)
+                        },
+                        onChangeColor: setFadeColor,
+                        onChangeCustomHex: setFadeCustomHex,
+                        onChangeCurve: setFadeCurve,
+                      }
+                    : undefined
+                }
+              />
+            )
+          })}
         </div>
 
         {slots.length < MAX_SLOTS && (
@@ -451,6 +503,19 @@ export default function ReelStitchLab({ onBack }: ReelStitchLabProps) {
   )
 }
 
+interface FadeProps {
+  fadeOut: number
+  lastFadeOut: number
+  fadeColor: 'black' | 'white' | 'custom'
+  fadeCustomHex: string
+  fadeCurve: 'linear' | 'smooth' | 'fast'
+  onToggleFade: () => void
+  onChangeFade: (seconds: number) => void
+  onChangeColor: (c: 'black' | 'white' | 'custom') => void
+  onChangeCustomHex: (hex: string) => void
+  onChangeCurve: (c: 'linear' | 'smooth' | 'fast') => void
+}
+
 interface ClipRowProps {
   slot: ClipSlot
   position: number
@@ -458,9 +523,18 @@ interface ClipRowProps {
   onPickFile: (file: File) => void
   onClear: () => void
   onChange: (patch: Partial<ClipSlot>) => void
+  fadeProps?: FadeProps
 }
 
-function ClipRow({ slot, position, busy, onPickFile, onClear, onChange }: ClipRowProps) {
+function ClipRow({
+  slot,
+  position,
+  busy,
+  onPickFile,
+  onClear,
+  onChange,
+  fadeProps,
+}: ClipRowProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [hover, setHover] = useState(false)
@@ -642,6 +716,13 @@ function ClipRow({ slot, position, busy, onPickFile, onClear, onChange }: ClipRo
                   {fmtSeconds(outputSeconds(slot))}
                 </span>
               </div>
+              {fadeProps && (
+                <FadeSubsection
+                  maxSeconds={Math.max(0.1, outputSeconds(slot))}
+                  busy={busy}
+                  {...fadeProps}
+                />
+              )}
             </>
           )
         ) : (
@@ -761,5 +842,272 @@ function SpeedControl({ value, disabled, onChange }: SpeedControlProps) {
         ))}
       </div>
     </div>
+  )
+}
+
+interface FadeSubsectionProps extends FadeProps {
+  maxSeconds: number
+  busy: boolean
+}
+
+function FadeSubsection({
+  fadeOut,
+  fadeColor,
+  fadeCustomHex,
+  fadeCurve,
+  maxSeconds,
+  busy,
+  onToggleFade,
+  onChangeFade,
+  onChangeColor,
+  onChangeCustomHex,
+  onChangeCurve,
+}: FadeSubsectionProps) {
+  const on = fadeOut > 0
+  const sliderMax = Math.min(5, Math.max(0.2, maxSeconds))
+  // Clamp displayed value if last clip got shorter than current setting.
+  const displayed = Math.min(fadeOut, sliderMax)
+
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        padding: 10,
+        borderRadius: 10,
+        background: on
+          ? 'linear-gradient(135deg, rgba(168,85,247,0.10), rgba(99,102,241,0.10))'
+          : 'rgba(15,23,42,0.30)',
+        border: on ? '1px solid #a855f799' : '1px solid var(--border)',
+      }}
+    >
+      <button
+        onClick={onToggleFade}
+        disabled={busy}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          cursor: busy ? 'not-allowed' : 'pointer',
+          opacity: busy ? 0.6 : 1,
+        }}
+      >
+        <div style={{ textAlign: 'left' }}>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: on ? '#a855f7' : 'var(--text)',
+            }}
+          >
+            🌅 Fade out · {on ? `${displayed.toFixed(1)}s` : 'off'}
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
+            Fades the very end of the stitch. Capped at this clip's length.
+          </div>
+        </div>
+        <div
+          style={{
+            width: 32,
+            height: 18,
+            borderRadius: 999,
+            background: on ? '#a855f7' : 'rgba(148,163,184,0.3)',
+            position: 'relative',
+            transition: 'background 0.15s',
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 2,
+              left: on ? 16 : 2,
+              width: 14,
+              height: 14,
+              borderRadius: 999,
+              background: '#fff',
+              transition: 'left 0.15s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            }}
+          />
+        </div>
+      </button>
+
+      {on && (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                marginBottom: 4,
+              }}
+            >
+              Duration · {displayed.toFixed(1)}s
+            </div>
+            <input
+              type="range"
+              min={0.1}
+              max={sliderMax}
+              step={0.1}
+              value={displayed}
+              disabled={busy}
+              onChange={(e) => onChangeFade(parseFloat(e.target.value))}
+              style={{ width: '100%', accentColor: '#a855f7' }}
+              aria-label="Fade out duration"
+            />
+          </div>
+
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                marginBottom: 4,
+              }}
+            >
+              Color
+            </div>
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+              <FadeColorChip
+                active={fadeColor === 'black'}
+                disabled={busy}
+                onClick={() => onChangeColor('black')}
+                swatch="#000"
+                label="Black"
+              />
+              <FadeColorChip
+                active={fadeColor === 'white'}
+                disabled={busy}
+                onClick={() => onChangeColor('white')}
+                swatch="#fff"
+                label="White"
+              />
+              <FadeColorChip
+                active={fadeColor === 'custom'}
+                disabled={busy}
+                onClick={() => onChangeColor('custom')}
+                swatch={fadeCustomHex}
+                label="Custom"
+              />
+              {fadeColor === 'custom' && (
+                <input
+                  type="color"
+                  value={fadeCustomHex}
+                  disabled={busy}
+                  onChange={(e) => onChangeCustomHex(e.target.value)}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    padding: 0,
+                    cursor: busy ? 'not-allowed' : 'pointer',
+                    background: 'transparent',
+                  }}
+                  aria-label="Custom fade color"
+                />
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                marginBottom: 4,
+              }}
+            >
+              Curve
+            </div>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {(['linear', 'smooth', 'fast'] as const).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => onChangeCurve(c)}
+                  disabled={busy}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    border:
+                      fadeCurve === c ? '1px solid #a855f7' : '1px solid var(--border)',
+                    background:
+                      fadeCurve === c
+                        ? 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(99,102,241,0.25))'
+                        : 'rgba(148,163,184,0.08)',
+                    color: fadeCurve === c ? '#fff' : 'var(--text)',
+                    cursor: busy ? 'not-allowed' : 'pointer',
+                    opacity: busy ? 0.5 : 1,
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface FadeColorChipProps {
+  active: boolean
+  disabled: boolean
+  onClick: () => void
+  swatch: string
+  label: string
+}
+
+function FadeColorChip({ active, disabled, onClick, swatch, label }: FadeColorChipProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '4px 10px',
+        borderRadius: 999,
+        fontSize: 11,
+        fontWeight: 700,
+        border: active ? '1px solid #a855f7' : '1px solid var(--border)',
+        background: active
+          ? 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(99,102,241,0.25))'
+          : 'rgba(148,163,184,0.08)',
+        color: active ? '#fff' : 'var(--text)',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <span
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 999,
+          background: swatch,
+          border: '1px solid var(--border)',
+          display: 'inline-block',
+        }}
+      />
+      {label}
+    </button>
   )
 }
