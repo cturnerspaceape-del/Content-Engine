@@ -10,6 +10,7 @@ import { generateCaptionHandler } from './generateCaption'
 import { researchTrendsHandler } from './researchTrends'
 import { editImageHandler } from './editImage'
 import { generateVeoHandler } from './generateVeo'
+import { stitchVideosHandler } from './stitchVideos'
 import { publishToInstagramHandler, getInstagramAccountHandler } from './instagramHandler'
 import { getInstagramDebugHandler } from './instagramDebugHandler'
 import { publishToFacebookHandler, getFacebookAccountHandler } from './facebookHandler'
@@ -19,10 +20,10 @@ import { sendEmailHandler } from './emailSendHandler'
 import { publishToXHandler, getXAccountHandler } from './xHandler'
 
 const app = express()
-// 25mb so /api/edit-image can accept user-uploaded reference images and a
-// painted mask as base64 in a single JSON body (worst case ~4 high-res refs +
-// mask ≈ 15–20mb base64). All other routes send JSON well under the old 1mb.
-app.use(express.json({ limit: '25mb' }))
+// 200mb so /api/stitch-videos can accept up to 7 base64-encoded mp4 clips in a
+// single JSON body (worst case ~10mb raw × 7 ≈ 94mb base64). The smaller image
+// routes (edit-image, etc.) sit comfortably under this ceiling.
+app.use(express.json({ limit: '200mb' }))
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
@@ -45,6 +46,7 @@ if (process.env.DISABLE_GENERATION === '1') {
   app.post('/api/research-trends', deny)
   app.post('/api/edit-image', deny)
   app.post('/api/generate-veo', deny)
+  app.post('/api/stitch-videos', deny)
   console.warn('[api] DISABLE_GENERATION=1 — all generate-* routes return 503')
 } else {
   app.post('/api/generate-single-image', generateSingleImageHandler)
@@ -56,6 +58,7 @@ if (process.env.DISABLE_GENERATION === '1') {
   app.post('/api/research-trends', researchTrendsHandler)
   app.post('/api/edit-image', editImageHandler)
   app.post('/api/generate-veo', generateVeoHandler)
+  app.post('/api/stitch-videos', stitchVideosHandler)
 }
 
 // Instagram publishing — always enabled (the kill-switch covers cost-accruing

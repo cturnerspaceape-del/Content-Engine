@@ -11,6 +11,7 @@ export type CacheKind =
   | 'email-json'
   | 'print-image'
   | 'veo-video'
+  | 'veo-stitched'
 
 const EXT: Record<CacheKind, string> = {
   'single-image': 'png',
@@ -19,6 +20,7 @@ const EXT: Record<CacheKind, string> = {
   'email-json': 'json',
   'print-image': 'png',
   'veo-video': 'mp4',
+  'veo-stitched': 'mp4',
 }
 
 export function hashKey(input: unknown): string {

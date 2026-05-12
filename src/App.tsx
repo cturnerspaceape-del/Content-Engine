@@ -9,6 +9,7 @@ import CarouselLab from './components/labs/CarouselLab'
 import EmailLab from './components/labs/EmailLab'
 import PrintLab from './components/labs/PrintLab'
 import ReelLab from './components/labs/ReelLab'
+import ReelStitchLab from './components/labs/ReelStitchLab'
 import { usePersistedState, useSessionState } from './utils/persistedState'
 import type { ViewState, LoggedPost, ScheduledPost } from './types'
 
@@ -102,6 +103,7 @@ export default function App() {
               onEmailLab={() => switchView('email-lab')}
               onPrintLab={() => switchView('print-lab')}
               onReelLab={() => switchView('reel-lab')}
+              onReelStitchLab={() => switchView('reel-stitch-lab')}
               loggedCount={loggedPosts.length}
             />
           </div>
@@ -178,6 +180,11 @@ export default function App() {
         {view === 'reel-lab' && (
           <div className="fade-in">
             <ReelLab onBack={() => switchView('home')} />
+          </div>
+        )}
+        {view === 'reel-stitch-lab' && (
+          <div className="fade-in">
+            <ReelStitchLab onBack={() => switchView('home')} />
           </div>
         )}
       </div>

@@ -7,6 +7,7 @@ interface HomeScreenProps {
   onEmailLab: () => void
   onPrintLab: () => void
   onReelLab: () => void
+  onReelStitchLab: () => void
   loggedCount: number
 }
 
@@ -19,6 +20,7 @@ export default function HomeScreen({
   onEmailLab,
   onPrintLab,
   onReelLab,
+  onReelStitchLab,
   loggedCount,
 }: HomeScreenProps) {
   return (
@@ -138,6 +140,21 @@ export default function HomeScreen({
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">🎬</span>
                 <span>Reel Lab</span>
+              </div>
+            </button>
+            <button
+              onClick={onReelStitchLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(168,85,247,.18), rgba(99,102,241,.14))',
+                border: '2px solid #a855f7',
+                boxShadow: 'var(--shadow-md)',
+                color: '#a855f7',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🧵</span>
+                <span>Reel Stitch Lab</span>
               </div>
             </button>
             <button

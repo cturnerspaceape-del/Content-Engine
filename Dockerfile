@@ -5,6 +5,9 @@ COPY package.json ./
 RUN npm install --include=dev
 COPY . .
 
+# ffmpeg is required by /api/stitch-videos (Reel Stitch Lab).
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+
 # Optional: pull the reference-image pool from R2 (or any public URL) at
 # build time. Tarball must contain `references/brand/<file>` paths so it
 # extracts directly into public/. If REFS_TARBALL_URL is unset the build

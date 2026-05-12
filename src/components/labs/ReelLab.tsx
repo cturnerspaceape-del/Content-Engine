@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePersistedState } from '../../utils/persistedState'
 
 interface ReelLabProps {
@@ -21,7 +21,10 @@ const ASPECTS: { value: AspectRatio; label: string; hint: string }[] = [
   { value: '1:1', label: '1:1', hint: 'Square Feed' },
 ]
 
-const DURATIONS: Duration[] = [4, 6, 8]
+// Veo 3.1 first+last frame interpolation on the Gemini API only accepts 8s
+// requests; 4s / 6s return INVALID_ARGUMENT. Locked to 8s here so the UI
+// doesn't surface options the model will reject.
+const DURATIONS: Duration[] = [8]
 
 const CAMERA_PRESETS: { value: string; label: string; emoji: string }[] = [
   { value: '', label: 'Auto', emoji: '✨' },
@@ -77,6 +80,12 @@ export default function ReelLab({ onBack }: ReelLabProps) {
   )
   const [aspect, setAspect] = usePersistedState<AspectRatio>('sl:reelLab:aspect', '9:16')
   const [duration, setDuration] = usePersistedState<Duration>('sl:reelLab:duration', 8)
+  // Snap legacy persisted 4s/6s selections to 8s — the API rejects anything else
+  // in first+last frame mode.
+  useEffect(() => {
+    if (!DURATIONS.includes(duration)) setDuration(8)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [camera, setCamera] = usePersistedState<string>('sl:reelLab:camera', '')
   const [vibe, setVibe] = usePersistedState<string>('sl:reelLab:vibe', '')
 
@@ -237,6 +246,9 @@ export default function ReelLab({ onBack }: ReelLabProps) {
                   {d}s
                 </ChipButton>
               ))}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>
+              Veo 3.1 first+last frame supports 8s clips only.
             </div>
           </div>
         </div>

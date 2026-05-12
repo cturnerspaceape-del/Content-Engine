@@ -133,6 +133,7 @@ export type ViewState =
   | 'email-lab'
   | 'print-lab'
   | 'reel-lab'
+  | 'reel-stitch-lab'
 
 export type ScheduleStatus = 'pending' | 'posted' | 'failed'
 
