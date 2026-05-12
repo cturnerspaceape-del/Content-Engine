@@ -51,7 +51,7 @@ interface StitchBody {
   fadeOutCurve?: FadeCurve
 }
 
-const CACHE_VERSION = 3 // fade-out
+const CACHE_VERSION = 4 // uniform target W/H/fps + setsar
 
 const HEX_RE = /^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
 
@@ -90,6 +90,37 @@ function runCommand(
       }
     })
   })
+}
+
+async function probeDimensions(
+  absPath: string,
+): Promise<{ width: number; height: number } | null> {
+  try {
+    const { stdout } = await runCommand(
+      FFPROBE,
+      [
+        '-v',
+        'error',
+        '-select_streams',
+        'v:0',
+        '-show_entries',
+        'stream=width,height',
+        '-of',
+        'csv=p=0:s=x',
+        absPath,
+      ],
+      { label: 'ffprobe-dims' },
+    )
+    const [wStr, hStr] = stdout.trim().split('x')
+    const width = parseInt(wStr, 10)
+    const height = parseInt(hStr, 10)
+    if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+      return { width, height }
+    }
+  } catch {
+    // fall through
+  }
+  return null
 }
 
 async function probeFps(absPath: string): Promise<number> {
@@ -222,18 +253,29 @@ function computeClipOutputSeconds(
 function buildFilterComplex(
   n: number,
   speeds: (number | undefined)[],
+  target: { width: number; height: number; fps: number },
   fade: { start: number; duration: number; color: string } | null,
 ): string {
   const parts: string[] = []
   const concatInputs: string[] = []
+  // Normalize every input to the same (width, height, SAR, fps, pixel format)
+  // before concat — ffmpeg's concat filter rejects mismatched streams with
+  // "Input link parameters do not match the corresponding output link".
+  // scale=...:force_original_aspect_ratio=decrease + pad letterboxes any clip
+  // whose aspect differs from the target.
+  const { width: W, height: H, fps } = target
+  const videoNormalize =
+    `scale=${W}:${H}:force_original_aspect_ratio=decrease:flags=lanczos,` +
+    `pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:color=black,` +
+    `setsar=1,fps=${fps},format=yuv420p`
   for (let i = 0; i < n; i++) {
     const s = speeds[i]
     if (s && s !== 1) {
-      parts.push(`[${i}:v]setpts=PTS/${s}[v${i}]`)
-      parts.push(`[${i}:a]atempo=${s}[a${i}]`)
+      parts.push(`[${i}:v]${videoNormalize},setpts=PTS/${s}[v${i}]`)
+      parts.push(`[${i}:a]aresample=async=1,atempo=${s}[a${i}]`)
     } else {
-      parts.push(`[${i}:v]setpts=PTS[v${i}]`)
-      parts.push(`[${i}:a]anull[a${i}]`)
+      parts.push(`[${i}:v]${videoNormalize},setpts=PTS[v${i}]`)
+      parts.push(`[${i}:a]aresample=async=1[a${i}]`)
     }
     concatInputs.push(`[v${i}][a${i}]`)
   }
@@ -303,15 +345,29 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
       inputPaths.push(p)
     }
 
-    // Probe fps + duration for each input in parallel — needed for Smart Match
-    // Cut offset and for computing total stitched duration so we can position
-    // the fade-out correctly.
+    // Probe fps + duration + dimensions for each input in parallel — needed
+    // for Smart Match Cut offset, total stitched duration, and to pick a
+    // uniform target resolution so the concat filter doesn't reject mismatched
+    // streams.
     const probes = await Promise.all(
       inputPaths.map(async (p) => ({
         fps: await probeFps(p),
         duration: await probeDurationSeconds(p),
+        dims: await probeDimensions(p),
       })),
     )
+
+    // Target = max width × max height across inputs (preserves the quality of
+    // any 1080p clips; up-scales smaller ones to match). Fallback 720×1280 if
+    // every probe failed (unlikely but defensive). Target fps = max across
+    // inputs so the concat doesn't drop frames from a higher-fps source.
+    const targetWidth = Math.max(
+      ...probes.map((p) => p.dims?.width ?? 720),
+    )
+    const targetHeight = Math.max(
+      ...probes.map((p) => p.dims?.height ?? 1280),
+    )
+    const targetFps = Math.max(...probes.map((p) => p.fps))
 
     const headOffsets: number[] = new Array(clips.length).fill(0)
     if (smartCut && clips.length > 1) {
@@ -357,6 +413,7 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
     const filter = buildFilterComplex(
       clips.length,
       clips.map((c) => c.speed),
+      { width: targetWidth, height: targetHeight, fps: targetFps },
       fadeTiming,
     )
     args.push(
@@ -382,7 +439,7 @@ export async function stitchVideosHandler(req: Request, res: Response): Promise<
     const reqId = Math.random().toString(36).slice(2, 8)
     const t0 = Date.now()
     console.log(
-      `[stitch-videos ${reqId}] clips=${clips.length} fade=${
+      `[stitch-videos ${reqId}] clips=${clips.length} target=${targetWidth}x${targetHeight}@${targetFps.toFixed(2)}fps fade=${
         fadeTiming
           ? `${fadeTiming.duration.toFixed(2)}s@${fadeTiming.start.toFixed(2)} color=${fadeTiming.color}`
           : 'off'
