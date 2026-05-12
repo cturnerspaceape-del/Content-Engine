@@ -8,19 +8,20 @@ import TextPostLab from './components/labs/TextPostLab'
 import CarouselLab from './components/labs/CarouselLab'
 import EmailLab from './components/labs/EmailLab'
 import PrintLab from './components/labs/PrintLab'
+import ReelLab from './components/labs/ReelLab'
 import { usePersistedState, useSessionState } from './utils/persistedState'
 import type { ViewState, LoggedPost, ScheduledPost } from './types'
 
 // Migrate persisted view names from legacy Lab routes (sil-lab, x-post-lab,
-// carousel-lounge) to the new format-based Labs. Reel-lab was removed too,
-// so reel-lounge / shorts-lab / reel-lab redirect home.
+// carousel-lounge) to the new format-based Labs. Legacy reel-lounge /
+// shorts-lab redirect home — the new reel-lab route (Veo) lives below.
 const VIEW_MIGRATIONS: Record<string, ViewState> = {
   'sil-lab': 'image-lab',
   'x-post-lab': 'text-post-lab',
   'carousel-lounge': 'carousel-lab',
   'reel-lounge': 'home',
   'shorts-lab': 'home',
-  'reel-lab': 'home',
+  'veo-lab': 'reel-lab',
 }
 
 export default function App() {
@@ -100,6 +101,7 @@ export default function App() {
               onCarouselLab={() => switchView('carousel-lab')}
               onEmailLab={() => switchView('email-lab')}
               onPrintLab={() => switchView('print-lab')}
+              onReelLab={() => switchView('reel-lab')}
               loggedCount={loggedPosts.length}
             />
           </div>
@@ -171,6 +173,11 @@ export default function App() {
         {view === 'print-lab' && (
           <div className="fade-in">
             <PrintLab onBack={() => switchView('home')} />
+          </div>
+        )}
+        {view === 'reel-lab' && (
+          <div className="fade-in">
+            <ReelLab onBack={() => switchView('home')} />
           </div>
         )}
       </div>

@@ -132,6 +132,7 @@ export type ViewState =
   | 'carousel-lab'
   | 'email-lab'
   | 'print-lab'
+  | 'reel-lab'
 
 export type ScheduleStatus = 'pending' | 'posted' | 'failed'
 

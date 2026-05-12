@@ -4,7 +4,13 @@ import path from 'node:path'
 
 const GENERATED_ROOT = path.resolve(process.cwd(), 'public', 'generated')
 
-export type CacheKind = 'single-image' | 'carousel-slide' | 'email-image' | 'email-json' | 'print-image'
+export type CacheKind =
+  | 'single-image'
+  | 'carousel-slide'
+  | 'email-image'
+  | 'email-json'
+  | 'print-image'
+  | 'veo-video'
 
 const EXT: Record<CacheKind, string> = {
   'single-image': 'png',
@@ -12,6 +18,7 @@ const EXT: Record<CacheKind, string> = {
   'email-image': 'png',
   'email-json': 'json',
   'print-image': 'png',
+  'veo-video': 'mp4',
 }
 
 export function hashKey(input: unknown): string {
@@ -40,6 +47,10 @@ export async function exists(absPath: string): Promise<boolean> {
 }
 
 export async function writePng(absPath: string, data: Buffer): Promise<void> {
+  await writeBytes(absPath, data)
+}
+
+export async function writeVideo(absPath: string, data: Buffer): Promise<void> {
   await writeBytes(absPath, data)
 }
 

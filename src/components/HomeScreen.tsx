@@ -6,6 +6,7 @@ interface HomeScreenProps {
   onCarouselLab: () => void
   onEmailLab: () => void
   onPrintLab: () => void
+  onReelLab: () => void
   loggedCount: number
 }
 
@@ -17,6 +18,7 @@ export default function HomeScreen({
   onCarouselLab,
   onEmailLab,
   onPrintLab,
+  onReelLab,
   loggedCount,
 }: HomeScreenProps) {
   return (
@@ -121,6 +123,21 @@ export default function HomeScreen({
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">📧</span>
                 <span>Email Lab</span>
+              </div>
+            </button>
+            <button
+              onClick={onReelLab}
+              className="w-full p-6 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(236,72,153,.18), rgba(139,92,246,.14))',
+                border: '2px solid #ec4899',
+                boxShadow: 'var(--shadow-md)',
+                color: '#ec4899',
+              }}
+            >
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl">🎬</span>
+                <span>Reel Lab</span>
               </div>
             </button>
             <button
